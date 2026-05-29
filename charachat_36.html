@@ -965,19 +965,23 @@ input[type=file]{display:none}
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <div class="modal-body" style="padding:16px 20px">
-      <p style="font-size:12px;color:var(--t3);margin-bottom:12px;line-height:1.7">이 캐릭터의 스토리에서 기억하고 싶은 것들을 자유롭게 메모하세요. AI 프롬프트에 포함됩니다.</p>
-      <textarea id="note-textarea" class="fta" maxlength="1000"
-        style="min-height:300px;font-size:13px;line-height:1.8;resize:vertical"
-        placeholder="예: 3화에서 주인공이 해린에게 마법책을 빌려줬다. 해린은 사실 그 책의 비밀을 알고 있었다...&#10;&#10;메모, 복선, 기억해두고 싶은 씬 등 자유롭게 작성하세요."
-        oninput="onNoteInput(this)"></textarea>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-        <span id="note-char-count" style="font-size:11px;color:var(--t3)">0 / 1000</span>
-        <span id="note-save-status" style="font-size:11px;color:var(--teal);opacity:0;transition:opacity 0.4s">저장됨 ✓</span>
+    <div class="modal-body" style="padding:16px 20px;max-height:calc(88vh - 140px);overflow-y:auto">
+      <p style="font-size:12px;color:var(--t3);line-height:1.7;margin-bottom:14px">노트는 전체 공유예요. 토글로 <b style="color:var(--text)">이 채팅방</b>에서 사용할 노트만 켜세요. AI 프롬프트에 포함됩니다.</p>
+      <div id="note-list"></div>
+      <div class="divider"><span>새 노트 추가</span></div>
+      <div class="fg">
+        <label class="fl">노트 이름 <span>— 구분용</span></label>
+        <input class="fi" id="note-name-inp" placeholder="예: 루루 기본설정, 2회차, 탐정모드">
+      </div>
+      <div class="fg">
+        <label class="fl">내용 <span>— AI 프롬프트에 그대로 들어감</span></label>
+        <textarea class="fta" id="note-ctx-inp" style="min-height:120px" maxlength="1000" placeholder="예: 3화에서 주인공이 해린에게 마법책을 빌려줬다..."></textarea>
+        <div style="text-align:right;margin-top:4px;font-size:11px;color:var(--t3)" id="note-ctx-count">0 / 1000</div>
       </div>
     </div>
     <div class="modal-ft">
       <button class="btn btn-g" onclick="closeModal('note-modal')">닫기</button>
+      <button class="btn btn-p" onclick="addNote()" style="background:var(--amber);border-color:var(--amber)">추가</button>
     </div>
   </div>
 </div>
@@ -1322,8 +1326,8 @@ let D={
   chars:[], activeChar:null,
   rooms:{},       // rooms[charId] = [{id,name,sceneId,createdAt}]
   histories:{},   // histories[roomId] = [{role,content,time}]
-  charMemories:{}, charNotes:{}, charProfiles:{}, roomProfiles:{}, roomSummaries:{},
-  roomMemories:{}, roomNotes:{}, roomProfileDefs:{}, roomApi:{}, roomLength:{},
+  charMemories:{}, charNotes:{}, charProfiles:{}, roomProfiles:{}, roomSummaries:{}, roomNoteIds:{},
+  roomMemories:{}, roomNotes:{}, roomProfileDefs:{}, roomApi:{}, roomLength:{}, notes:[],
   profiles:[],
   editing:null,
   emoSel:EMOJIS[0], emoImg:null,
@@ -1390,7 +1394,7 @@ function save(){
     const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,activeApi:D.activeApi,
       chars:liteChars,activeChar:D.activeChar,activeRoom:D.activeRoom,
       rooms:D.rooms,histories:D.histories,
-      charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,roomSummaries:D.roomSummaries,
+      charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,roomSummaries:D.roomSummaries,notes:D.notes,roomNoteIds:D.roomNoteIds,
       roomMemories:D.roomMemories,roomNotes:D.roomNotes,roomProfileDefs:D.roomProfileDefs,roomApi:D.roomApi,roomLength:D.roomLength,
       profiles:D.profiles};
     localStorage.setItem('cc9',JSON.stringify(lite));
@@ -1402,7 +1406,7 @@ function save(){
       const lite2={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,activeApi:D.activeApi,
         chars:liteChars2,activeChar:D.activeChar,activeRoom:D.activeRoom,
         rooms:D.rooms,histories:D.histories,
-        charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,
+        charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,notes:D.notes,roomNoteIds:D.roomNoteIds,
         roomMemories:D.roomMemories,roomNotes:D.roomNotes,roomProfileDefs:D.roomProfileDefs,roomApi:D.roomApi,roomLength:D.roomLength,
         profiles:D.profiles};
       localStorage.setItem('cc9',JSON.stringify(lite2));
@@ -1432,8 +1436,13 @@ function cMems(){
   if(!D.roomMemories[rid()])D.roomMemories[rid()]=[];
   return D.roomMemories[rid()];
 }
-function cNote(){if(!rid())return'';if(!D.roomNotes)D.roomNotes={};return D.roomNotes[rid()]||''}
-function setNote(v){if(!rid())return;if(!D.roomNotes)D.roomNotes={};D.roomNotes[rid()]=v;}
+function cNote(){
+  if(!rid())return'';
+  if(!D.roomNoteIds)D.roomNoteIds={};
+  const onIds=D.roomNoteIds[rid()]||[];
+  return (D.notes||[]).filter(n=>onIds.includes(n.id)).map(n=>n.content).join('\n\n');
+}
+function setNote(v){/* 구버전 호환 — 사용안함 */}
 function cSummary(){if(!rid())return'';if(!D.roomSummaries)D.roomSummaries={};return D.roomSummaries[rid()]||''}
 function setSummary(v){if(!rid())return;if(!D.roomSummaries)D.roomSummaries={};D.roomSummaries[rid()]=v;}
 function cProfs(){
@@ -1715,6 +1724,7 @@ function deleteRoom(charId, roomId){
   if(D.roomProfileDefs)delete D.roomProfileDefs[roomId];
   if(D.roomApi)delete D.roomApi[roomId];
   if(D.roomLength)delete D.roomLength[roomId];
+  if(D.roomNoteIds)delete D.roomNoteIds[roomId];
   if(D.activeChar===charId&&D.activeRoom===roomId){
     const remaining=D.rooms[charId]||[];
     D.activeRoom=remaining[0]?.id||null;
@@ -1768,6 +1778,7 @@ function deleteStory(id){
     if(D.roomProfileDefs)delete D.roomProfileDefs[r.id];
     if(D.roomApi)delete D.roomApi[r.id];
     if(D.roomLength)delete D.roomLength[r.id];
+    if(D.roomNoteIds)delete D.roomNoteIds[r.id];
   });
   D.chars=D.chars.filter(x=>x.id!==id);
   delete D.rooms[id];
@@ -2784,28 +2795,79 @@ function openMemoryModal(){
   renderMemories(); openModal('memory-modal');
 }
 // ─── NOTES ───
-let _noteSaveTimer=null;
-function onNoteInput(ta){
-  const len=ta.value.length;
-  $('note-char-count').textContent=len+' / 1000';
-  $('note-char-count').style.color=len>900?'var(--amber)':'var(--t3)';
-  clearTimeout(_noteSaveTimer);
-  _noteSaveTimer=setTimeout(()=>{
-    setNote(ta.value);
-    save();
-    const st=$('note-save-status');
-    st.style.opacity='1';
-    setTimeout(()=>st.style.opacity='0',1500);
-  },600);
+function renderNotes(){
+  const list=$('note-list'); if(!list)return;
+  list.innerHTML='';
+  const allNotes=D.notes||[];
+  if(!allNotes.length){
+    list.innerHTML='<div style="font-size:13px;color:var(--t3);padding:4px 0 12px">노트가 없어요. 아래에서 추가하세요.</div>';
+    return;
+  }
+  if(!D.roomNoteIds)D.roomNoteIds={};
+  allNotes.forEach(n=>{
+    const isOn=rid()?(D.roomNoteIds[rid()]||[]).includes(n.id):false;
+    const card=document.createElement('div');
+    card.className='profile-card'+(isOn?' on':'');
+    card.innerHTML=`
+      <div class="profile-card-hd" onclick="toggleNoteExpand('${n.id}')">
+        <label class="p-toggle" onclick="event.stopPropagation()">
+          <input type="checkbox" ${isOn?'checked':''} onchange="toggleNote('${n.id}',this.checked)">
+          <span class="p-slider"></span>
+        </label>
+        <div class="profile-card-name">${n.name}</div>
+        <button class="profile-del" onclick="event.stopPropagation();deleteNote('${n.id}')">✕</button>
+        <div class="profile-chv ${isOn?'on':''}" id="nchv-${n.id}">▾</div>
+      </div>
+      <div class="profile-expand ${isOn?'on':''}" id="nexp-${n.id}">
+        <div class="profile-ctx">${n.content||'(내용 없음)'}</div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+function toggleNote(id, on){
+  if(!rid())return;
+  if(!D.roomNoteIds)D.roomNoteIds={};
+  if(!D.roomNoteIds[rid()])D.roomNoteIds[rid()]=[];
+  if(on){if(!D.roomNoteIds[rid()].includes(id))D.roomNoteIds[rid()].push(id);}
+  else{D.roomNoteIds[rid()]=D.roomNoteIds[rid()].filter(x=>x!==id);}
+  save(); renderNotes();
+}
+function toggleNoteExpand(id){
+  const exp=$('nexp-'+id); const chv=$('nchv-'+id);
+  if(exp)exp.classList.toggle('on');
+  if(chv)chv.classList.toggle('on');
+}
+function addNote(){
+  const name=$('note-name-inp').value.trim(); if(!name){$('note-name-inp').focus();return}
+  const content=$('note-ctx-inp').value.trim();
+  if(!D.notes)D.notes=[];
+  const newId=Date.now()+'';
+  D.notes.push({id:newId,name,content});
+  // 현재 room에서 자동 켜짐
+  if(rid()){
+    if(!D.roomNoteIds)D.roomNoteIds={};
+    if(!D.roomNoteIds[rid()])D.roomNoteIds[rid()]=[];
+    D.roomNoteIds[rid()].push(newId);
+  }
+  $('note-name-inp').value=''; $('note-ctx-inp').value='';
+  $('note-ctx-count').textContent='0 / 1000';
+  save(); renderNotes();
+}
+function deleteNote(id){
+  D.notes=(D.notes||[]).filter(n=>n.id!==id);
+  if(D.roomNoteIds){
+    Object.keys(D.roomNoteIds).forEach(rid=>{
+      D.roomNoteIds[rid]=(D.roomNoteIds[rid]||[]).filter(x=>x!==id);
+    });
+  }
+  save(); renderNotes();
 }
 function openNoteModal(){
-  if(!cid())return;
-  const el=$('note-modal-char'); if(el)el.textContent=charName();
-  const ta=$('note-textarea');
-  const v=cNote();
-  ta.value=v;
-  $('note-char-count').textContent=v.length+' / 1000';
-  openModal('note-modal');
+  const el=$('note-modal-char'); if(el)el.textContent=rid()?cRoom()?.name||charName():'전체';
+  // note-ctx-inp 글자수
+  const ta=$('note-ctx-inp');
+  if(ta){ta.oninput=()=>{ $('note-ctx-count').textContent=ta.value.length+' / 1000'; };}
+  renderNotes(); openModal('note-modal');
 }
 
 // ─── MSG CONTENT RENDER ───
