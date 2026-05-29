@@ -1151,7 +1151,7 @@ input[type=file]{display:none}
       </button>
     </div>
     <div class="modal-body">
-      <p style="font-size:12px;color:var(--t3);line-height:1.7;margin-bottom:14px">토글로 켜진 프로필이 <b style="color:var(--text)">이 스토리</b>의 AI 프롬프트에 포함됩니다. 여러 개 동시에 켤 수 있어요.</p>
+      <p style="font-size:12px;color:var(--t3);line-height:1.7;margin-bottom:14px">프로필은 전체 공유예요. 토글로 <b style="color:var(--text)">이 채팅방</b>에서 사용할 프로필만 켜세요.</p>
       <div class="profile-list" id="profile-list"></div>
       <div class="divider"><span>새 프로필 추가</span></div>
       <div class="fg">
@@ -1437,14 +1437,11 @@ function setNote(v){if(!rid())return;if(!D.roomNotes)D.roomNotes={};D.roomNotes[
 function cSummary(){if(!rid())return'';if(!D.roomSummaries)D.roomSummaries={};return D.roomSummaries[rid()]||''}
 function setSummary(v){if(!rid())return;if(!D.roomSummaries)D.roomSummaries={};D.roomSummaries[rid()]=v;}
 function cProfs(){
-  // room별 켜진 프로필만 반환 (AI 프롬프트에 전달)
+  // 전역 프로필 중 이 room에서 켜진 것만 반환
   if(!rid())return[];
-  const allProfs=getRoomProfiles();
   if(!D.roomProfiles)D.roomProfiles={};
   const on=D.roomProfiles[rid()]||[];
-  // 켜진 게 없으면 전체 다 켜진 걸로 간주 (처음 추가 시)
-  if(!on.length) return allProfs;
-  return allProfs.filter(p=>on.includes(p.id));
+  return (D.profiles||[]).filter(p=>on.includes(p.id));
 }
 function charName(){const c=cChar();return c?c.name:''}
 function cRooms(charId){
@@ -2015,8 +2012,6 @@ function showTyping(){
 }
 function hideTyping(){const t=$('typing');if(t)t.remove()}
 
-
-
 // ─── REROLL / EDIT MSG ───
 function getMsgIndex(row){
   // row의 메시지가 hist에서 몇 번째인지 반환
@@ -2050,7 +2045,8 @@ async function rerollMsg(row){
 }
 async function generateAI(hist){
   const usingGemini=(getRoomApi()==='gemini');
-  const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
+  const c=D.chars.find(x=>x.id===D.activeChar);
+  if(!c)return;
   const activeProfs=cProfs();
   const mems=cMems(); const note=cNote();
   const GENRE_GUIDE={
@@ -2118,7 +2114,8 @@ ${genreGuide}
     }).filter(Boolean);
     // user로 시작하게 앞 정리
     while(geminiMsgs.length&&geminiMsgs[0].role!=='user') geminiMsgs.shift();
-    if(!geminiMsgs.length)return;
+    if(!geminiMsgs.length){
+ return; }
     // non-streaming: AbortController로 타임아웃 + 재시도
     const geminiBody=JSON.stringify({
       system_instruction:{parts:[{text:sys}]},
@@ -2295,7 +2292,8 @@ function editMsg(row,bub,msg){
 // ─── SEND ───
 async function sendMsg(){
   const inp=$('inp'); const text=inp.value.trim();
-  if(!text||!D.activeChar||!D.activeRoom) return;
+  if(!text||!D.activeChar||!D.activeRoom) {
+ return; }
   const usingGemini=(getRoomApi()==='gemini');
   if(usingGemini&&!D.geminiKey){openModal('key-modal');return}
   if(!usingGemini&&!D.key){openModal('key-modal');return}
@@ -2549,23 +2547,20 @@ function deleteChar(){
 
 // ─── PROFILES ───
 function getRoomProfiles(){
-  if(!rid())return[];
-  if(!D.roomProfileDefs)D.roomProfileDefs={};
-  if(!D.roomProfileDefs[rid()])D.roomProfileDefs[rid()]=[];
-  return D.roomProfileDefs[rid()];
+  // 하위호환용 - 전역 profiles 반환
+  return D.profiles||[];
 }
 function renderProfiles(){
   const list=$('profile-list'); list.innerHTML='';
   const el=$('profile-modal-char'); if(el)el.textContent=charName();
-  const roomProfs=getRoomProfiles();
-  if(!roomProfs.length){
+  const allProfs=D.profiles||[];
+  if(!allProfs.length){
     list.innerHTML='<div style="font-size:13px;color:var(--t3);padding:4px 0">프로필이 없어요. 아래에서 추가하세요.</div>';
     renderProfileBadge(); return;
   }
   if(!D.roomProfiles)D.roomProfiles={};
-  if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=(roomProfs.map(p=>p.id)); // 기본 전체 켜짐
-  roomProfs.forEach(p=>{
-    const isOn=(D.roomProfiles[rid()]||[]).includes(p.id);
+  allProfs.forEach(p=>{
+    const isOn=rid()?(D.roomProfiles[rid()]||[]).includes(p.id):false;
     const card=document.createElement('div');
     card.className='profile-card'+(isOn?' on':'');
     card.innerHTML=`
@@ -2599,24 +2594,28 @@ function toggleProfileExpand(id){
   if(chv)chv.classList.toggle('on');
 }
 function addProfile(){
-  if(!rid())return;
   const name=$('p-name').value.trim(); if(!name){$('p-name').focus();return}
   const ctx=$('p-ctx').value.trim();
-  const profs=getRoomProfiles();
+  if(!D.profiles)D.profiles=[];
   const newId=Date.now()+'';
-  profs.push({id:newId,name,ctx});
-  // 새 프로필 자동 켜짐
-  if(!D.roomProfiles)D.roomProfiles={};
-  if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=[];
-  D.roomProfiles[rid()].push(newId);
+  D.profiles.push({id:newId,name,ctx});
+  // 현재 room에서 자동 켜짐
+  if(rid()){
+    if(!D.roomProfiles)D.roomProfiles={};
+    if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=[];
+    D.roomProfiles[rid()].push(newId);
+  }
   $('p-name').value=''; $('p-ctx').value='';
   save(); renderProfiles();
 }
 function deleteProfile(id){
-  if(!rid())return;
-  const profs=getRoomProfiles();
-  const idx=profs.findIndex(p=>p.id===id);
-  if(idx>=0)profs.splice(idx,1);
+  D.profiles=(D.profiles||[]).filter(p=>p.id!==id);
+  // 모든 room에서 제거
+  if(D.roomProfiles){
+    Object.keys(D.roomProfiles).forEach(rid=>{
+      D.roomProfiles[rid]=(D.roomProfiles[rid]||[]).filter(x=>x!==id);
+    });
+  }
   save(); renderProfiles();
 }
 // ─── THEME ───
@@ -2660,11 +2659,10 @@ function renderProfileBadge(){
   }
 }
 function openProfileModal(){
-  if(!cid()||!rid())return;
   const el=$('profile-modal-char');
   if(el){
     const room=cRoom();
-    el.textContent=room?room.name:charName();
+    el.textContent=room?room.name:(cid()?charName():'전체');
   }
   renderProfiles(); openModal('profile-modal');
 }
