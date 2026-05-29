@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
 <title>CharaChat ✦</title>
-<script src="https://js.puter.com/v2/"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -164,6 +163,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   font-style:normal;color:var(--t2);font-size:13px;
 }
 /* 요약 노트 말풍선 */
+.msg-row.summary-note{
+  padding-left:0;
+}
 .msg-row.summary-note .msg-bub{
   background:rgba(232,121,160,0.08)!important;
   border:1px solid rgba(232,121,160,0.3)!important;
@@ -307,8 +309,20 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 }
 .msg-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .msg-body{max-width:500px}
-.msg-who{font-size:11px;color:var(--t3);margin-bottom:3px;padding:0 3px}
-.msg-row.me .msg-who{text-align:right}
+/* 아바타+이름 헤더줄 */
+.msg-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.msg-av-sm{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--s3);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;overflow:hidden;
+}
+.msg-av-sm img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.msg-who{font-size:12px;font-weight:600;color:var(--text)}
+.msg-row.me .msg-header{display:none}
+/* AI 아바타는 헤더줄로 대체, 유저 아바타는 유지 */
+.msg-row:not(.me) .msg-av{display:none}
+.msg-row.me .msg-av{display:flex}
 .msg-bub{
   padding:10px 14px;border-radius:16px;
   font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;
@@ -321,11 +335,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   background:var(--user-bub);border:1px solid rgba(157,127,244,0.18);
   border-bottom-right-radius:4px;color:var(--text);
 }
-.msg-t{font-size:10px;color:var(--t3);margin-top:3px;padding:0 3px}
+.msg-t{display:none}
 .msg-row.me .msg-t{text-align:right}
 
 /* streaming cursor */
-.streaming::after{content:'▌';color:var(--accent);animation:blink 0.8s infinite}
+.streaming::after{content:'';display:none}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
 .typing-row{display:flex;gap:9px;animation:fadeUp 0.2s ease}
@@ -358,7 +372,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 
 /* ─── INPUT ─── */
 #input-wrap{
-  padding:10px 16px 14px;
+  padding:6px 16px 10px;
   border-top:1px solid var(--border);
   background:var(--s1);flex-shrink:0;
 }
@@ -372,7 +386,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 #inp{
   flex:1;background:transparent;border:none;outline:none;
   color:var(--text);font-family:'Noto Sans KR',sans-serif;
-  font-size:14px;resize:none;max-height:130px;min-height:22px;
+  font-size:16px;resize:none;max-height:130px;min-height:22px;
   line-height:1.55;
 }
 #inp::placeholder{color:var(--t3)}
@@ -653,6 +667,10 @@ input[type=file]{display:none}
   opacity:0;transition:opacity 0.15s;
 }
 .msg-row:hover .msg-actions{opacity:1}
+/* 모바일: 항상 표시 */
+@media(max-width:700px){
+  .msg-actions{opacity:1}
+}
 .msg-row.me .msg-actions{justify-content:flex-end}
 .msg-act-btn{
   background:none;border:1px solid var(--border);
@@ -752,26 +770,14 @@ input[type=file]{display:none}
   </button>
 
   <div class="sb-bot">
-    <!-- API 토글 -->
-    <div style="padding:6px 4px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
-      <div style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:1px;margin-bottom:6px;padding:0 4px">AI 엔진</div>
-      <div style="display:flex;gap:4px;padding:0 4px">
-        <button id="api-btn-puter" onclick="setActiveApi('puter')"
-          style="flex:1;padding:7px 4px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;font-weight:500;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s">
-          무료✨
-        </button>
-        <button id="api-btn-claude" onclick="setActiveApi('claude')"
-          style="flex:1;padding:7px 4px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;font-weight:500;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s">
-          Claude
-        </button>
-        <button id="api-btn-gemini" onclick="setActiveApi('gemini')"
-          style="flex:1;padding:7px 4px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;font-weight:500;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s">
-          Gemini
-        </button>
-        <button onclick="openModal('key-modal')" title="API 키 설정"
-          style="padding:7px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:13px;transition:all 0.15s"
-          onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'">🔑</button>
-      </div>
+
+    <!-- 출력량 -->
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 8px 2px">
+      <span style="font-size:10px;color:var(--t3);flex-shrink:0;letter-spacing:0.5px">출력량</span>
+      <input type="range" id="length-slider" min="0" max="4" step="1" value="2"
+        oninput="updateLengthSlider(this.value)"
+        style="flex:1;accent-color:var(--accent);height:3px;cursor:pointer;min-width:0">
+      <span id="length-label" style="font-size:10px;color:var(--accent);font-weight:600;min-width:28px;text-align:right">보통</span>
     </div>
     <button class="sb-btn" onclick="openNoteModal()">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
@@ -809,6 +815,20 @@ input[type=file]{display:none}
       <div class="tb-sub" id="tb-sub"></div>
     </div>
     <div class="tb-acts">
+      <!-- AI 엔진 토글 (topbar) -->
+      <div style="display:flex;gap:3px;align-items:center">
+        <button id="api-btn-claude" onclick="setActiveApi('claude')" title="Claude"
+          style="padding:4px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;font-weight:500;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s">
+          Claude
+        </button>
+        <button id="api-btn-gemini" onclick="setActiveApi('gemini')" title="Gemini"
+          style="padding:4px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;font-weight:500;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s">
+          Gemini
+        </button>
+        <button onclick="openModal('key-modal')" title="API 키 설정"
+          style="padding:4px 7px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12px;transition:all 0.15s"
+          onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'">🔑</button>
+      </div>
       <button class="ico-btn" id="summary-btn" onclick="openSummaryModal()" title="이전 스토리 요약">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>
       </button>
@@ -844,7 +864,6 @@ input[type=file]{display:none}
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
     </div>
-    <div class="inp-hint">Enter 전송 · Shift+Enter 줄바꿈 · 스트리밍 지원</div>
   </div>
 </div>
 
@@ -1217,10 +1236,6 @@ input[type=file]{display:none}
     </div>
     <div class="modal-body">
       <div class="fg">
-        <label class="fl">대화방 이름 <span>— 비워두면 자동 지정</span></label>
-        <input class="fi" id="newroom-name" placeholder="예: 도서관에서 첫 만남, 2회차">
-      </div>
-      <div class="fg">
         <label class="fl">시작 장면 선택 <span>— 선택하면 해당 장면으로 대화 시작</span></label>
         <div id="newroom-scene-list" style="display:flex;flex-direction:column;gap:6px;margin-top:4px"></div>
       </div>
@@ -1303,11 +1318,12 @@ const GENRES=[
 let D={
   key:'', model:'claude-sonnet-4-20250514',
   geminiKey:'', geminiModel:'gemini-2.5-flash',
-  activeApi:'puter',
+  activeApi:'claude', outputLength:2,
   chars:[], activeChar:null,
   rooms:{},       // rooms[charId] = [{id,name,sceneId,createdAt}]
   histories:{},   // histories[roomId] = [{role,content,time}]
   charMemories:{}, charNotes:{}, charProfiles:{}, roomProfiles:{}, roomSummaries:{},
+  roomMemories:{}, roomNotes:{}, roomProfileDefs:{}, roomApi:{}, roomLength:{},
   profiles:[],
   editing:null,
   emoSel:EMOJIS[0], emoImg:null,
@@ -1360,6 +1376,8 @@ function load(){
     });
     // activeScene → activeRoom 마이그레이션
     if(D.activeScene&&!D.activeRoom)D.activeRoom=D.activeScene;
+    // puter 제거: 이전에 puter로 저장된 경우 claude로 교정
+    if(D.activeApi==='puter')D.activeApi='claude';
   }catch(e){console.warn('load 실패',e);}
 }
 function save(){
@@ -1373,6 +1391,7 @@ function save(){
       chars:liteChars,activeChar:D.activeChar,activeRoom:D.activeRoom,
       rooms:D.rooms,histories:D.histories,
       charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,roomSummaries:D.roomSummaries,
+      roomMemories:D.roomMemories,roomNotes:D.roomNotes,roomProfileDefs:D.roomProfileDefs,roomApi:D.roomApi,roomLength:D.roomLength,
       profiles:D.profiles};
     localStorage.setItem('cc9',JSON.stringify(lite));
     try{localStorage.setItem('cc9_imgs',JSON.stringify(imgMap));}
@@ -1384,6 +1403,7 @@ function save(){
         chars:liteChars2,activeChar:D.activeChar,activeRoom:D.activeRoom,
         rooms:D.rooms,histories:D.histories,
         charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,
+        roomMemories:D.roomMemories,roomNotes:D.roomNotes,roomProfileDefs:D.roomProfileDefs,roomApi:D.roomApi,roomLength:D.roomLength,
         profiles:D.profiles};
       localStorage.setItem('cc9',JSON.stringify(lite2));
     }catch(e2){console.warn('저장 실패',e2);}
@@ -1406,16 +1426,25 @@ function cHist(){
   if(!D.histories[rid()])D.histories[rid()]=[];
   return D.histories[rid()];
 }
-function cMems(){if(!cid())return[];if(!D.charMemories[cid()])D.charMemories[cid()]=[];return D.charMemories[cid()]}
-function cNote(){if(!cid())return'';return D.charNotes[cid()]||''}
-function setNote(v){if(!cid())return;D.charNotes[cid()]=v;}
+function cMems(){
+  if(!rid())return[];
+  if(!D.roomMemories)D.roomMemories={};
+  if(!D.roomMemories[rid()])D.roomMemories[rid()]=[];
+  return D.roomMemories[rid()];
+}
+function cNote(){if(!rid())return'';if(!D.roomNotes)D.roomNotes={};return D.roomNotes[rid()]||''}
+function setNote(v){if(!rid())return;if(!D.roomNotes)D.roomNotes={};D.roomNotes[rid()]=v;}
 function cSummary(){if(!rid())return'';if(!D.roomSummaries)D.roomSummaries={};return D.roomSummaries[rid()]||''}
 function setSummary(v){if(!rid())return;if(!D.roomSummaries)D.roomSummaries={};D.roomSummaries[rid()]=v;}
 function cProfs(){
+  // room별 켜진 프로필만 반환 (AI 프롬프트에 전달)
   if(!rid())return[];
+  const allProfs=getRoomProfiles();
   if(!D.roomProfiles)D.roomProfiles={};
-  if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=[];
-  return D.roomProfiles[rid()];
+  const on=D.roomProfiles[rid()]||[];
+  // 켜진 게 없으면 전체 다 켜진 걸로 간주 (처음 추가 시)
+  if(!on.length) return allProfs;
+  return allProfs.filter(p=>on.includes(p.id));
 }
 function charName(){const c=cChar();return c?c.name:''}
 function cRooms(charId){
@@ -1625,11 +1654,15 @@ function renderChars(){
             ${preview?`<div style="font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${preview}</div>`:''}
           </div>
           ${cnt?`<div style="font-size:10px;color:var(--t3);flex-shrink:0">${cnt}턴</div>`:''}
+          <button onclick="event.stopPropagation();renameRoom('${c.id}','${room.id}')"
+            style="background:none;border:none;color:var(--t3);cursor:pointer;padding:1px 4px;font-size:11px;opacity:0;transition:opacity 0.15s;flex-shrink:0" class="edit-room-btn" title="이름 수정">✎</button>
+          <button onclick="event.stopPropagation();clearRoomChat('${c.id}','${room.id}')"
+            style="background:none;border:none;color:var(--t3);cursor:pointer;padding:1px 4px;font-size:11px;opacity:0;transition:opacity 0.15s;flex-shrink:0" class="clr-btn" title="대화 초기화">↺</button>
           <button onclick="event.stopPropagation();deleteRoom('${c.id}','${room.id}')"
-            style="background:none;border:none;color:var(--t3);cursor:pointer;padding:1px 3px;font-size:10px;opacity:0;transition:opacity 0.15s;flex-shrink:0" class="del-btn">✕</button>`;
+            style="background:none;border:none;color:var(--t3);cursor:pointer;padding:1px 3px;font-size:10px;opacity:0;transition:opacity 0.15s;flex-shrink:0" class="del-btn" title="방 삭제">✕</button>`;
         item.onclick=()=>selectRoom(c.id,room.id);
-        item.onmouseenter=()=>item.querySelector('.del-btn').style.opacity='1';
-        item.onmouseleave=()=>item.querySelector('.del-btn').style.opacity='0';
+        item.onmouseenter=()=>{item.querySelectorAll('.del-btn,.clr-btn,.edit-room-btn').forEach(b=>b.style.opacity='1');};
+        item.onmouseleave=()=>{item.querySelectorAll('.del-btn,.clr-btn,.edit-room-btn').forEach(b=>b.style.opacity='0');};
         bl.appendChild(item);
       });
 
@@ -1658,11 +1691,33 @@ function selectRoom(charId, roomId){
   D._openChars[charId]=true;
   save(); renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
 }
+function clearRoomChat(charId, roomId){
+  if(!confirm('이 대화 내용을 초기화할까요?\n(방은 유지되고 대화만 지워져요)'))return;
+  D.histories[roomId]=[];
+  save();
+  if(D.activeChar===charId&&D.activeRoom===roomId){renderChat();}
+  renderChars();
+}
+function renameRoom(charId, roomId){
+  const rooms=D.rooms[charId]||[];
+  const room=rooms.find(r=>r.id===roomId); if(!room)return;
+  const newName=prompt('대화방 이름 수정', room.name);
+  if(newName===null)return;
+  const trimmed=newName.trim();
+  if(!trimmed)return;
+  room.name=trimmed;
+  save(); renderChars();
+}
 function deleteRoom(charId, roomId){
   if(!confirm('이 대화를 삭제할까요?'))return;
   D.rooms[charId]=(D.rooms[charId]||[]).filter(r=>r.id!==roomId);
   delete D.histories[roomId];
   if(D.roomProfiles)delete D.roomProfiles[roomId];
+  if(D.roomMemories)delete D.roomMemories[roomId];
+  if(D.roomNotes)delete D.roomNotes[roomId];
+  if(D.roomProfileDefs)delete D.roomProfileDefs[roomId];
+  if(D.roomApi)delete D.roomApi[roomId];
+  if(D.roomLength)delete D.roomLength[roomId];
   if(D.activeChar===charId&&D.activeRoom===roomId){
     const remaining=D.rooms[charId]||[];
     D.activeRoom=remaining[0]?.id||null;
@@ -1708,7 +1763,15 @@ function deleteBranch(charId, sceneId){
 function deleteStory(id){
   if(!confirm('이 스토리를 삭제할까요?\n대화·기억·노트가 모두 삭제됩니다.'))return;
   // 대화방 히스토리 전부 삭제
-  (D.rooms[id]||[]).forEach(r=>{delete D.histories[r.id];if(D.roomProfiles)delete D.roomProfiles[r.id];});
+  (D.rooms[id]||[]).forEach(r=>{
+    delete D.histories[r.id];
+    if(D.roomProfiles)delete D.roomProfiles[r.id];
+    if(D.roomMemories)delete D.roomMemories[r.id];
+    if(D.roomNotes)delete D.roomNotes[r.id];
+    if(D.roomProfileDefs)delete D.roomProfileDefs[r.id];
+    if(D.roomApi)delete D.roomApi[r.id];
+    if(D.roomLength)delete D.roomLength[r.id];
+  });
   D.chars=D.chars.filter(x=>x.id!==id);
   delete D.rooms[id];
   delete D.charMemories[id];
@@ -1738,7 +1801,7 @@ function renderTopbar(){
   }
   const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
   tb.style.display='flex'; iw.style.display='block';
-  const hasKey=(D.activeApi==='puter')?true:((D.activeApi==='gemini')?!!D.geminiKey:!!D.key);
+  const hasKey=(getRoomApi()==='gemini')?!!D.geminiKey:!!D.key;
   nk.style.display=(hasKey&&D.activeRoom)?'none':'flex';
   renderAvatar($('tb-emo'),c);
   $('tb-name').textContent=c.name;
@@ -1746,6 +1809,8 @@ function renderTopbar(){
   $('tb-sub').textContent=room?room.name:'';
   const sb=$('story-bar'); sb.classList.remove('on');
   renderProfileBadge();
+  initLengthSlider();
+  updateApiToggleBtns();
 }
 
 // ─── CHAT ───
@@ -1766,7 +1831,7 @@ function appendSummaryCard(area){
   const acts=document.createElement('div'); acts.style.cssText='margin-top:4px;padding:0 3px';
   acts.innerHTML=`<button onclick="openSummaryModal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:2px 4px;border-radius:6px;font-family:'Noto Sans KR',sans-serif" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='var(--t3)'">✏️ 요약 편집</button>`;
   body.appendChild(who); body.appendChild(bub); body.appendChild(acts);
-  row.appendChild(av); row.appendChild(body);
+  row.appendChild(body);
   area.appendChild(row);
 }
 function renderSummaryCard(){
@@ -1796,7 +1861,7 @@ function renderChat(){
     empty.appendChild(ch2);
     area.appendChild(empty); return;
   }
-  hist.forEach(m=>appendMsg(m,false));
+  hist.forEach((m,i)=>{ const r=appendMsg(m,false); });
   area.scrollTop=area.scrollHeight;
 }
 function appendMsg(msg,scroll=true){
@@ -1828,10 +1893,15 @@ function appendMsg(msg,scroll=true){
     delBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:6px;color:var(--t3);cursor:pointer;font-size:11px;padding:2px 6px;transition:all 0.15s;font-family:inherit;display:flex;align-items:center;gap:3px';
     delBtn.onmouseover=()=>{delBtn.style.color='var(--danger)';delBtn.style.borderColor='rgba(240,112,112,0.4)'};
     delBtn.onmouseout=()=>{delBtn.style.color='var(--t3)';delBtn.style.borderColor='var(--border)'};
-    delBtn.onclick=()=>row.remove();
+    delBtn.onclick=()=>{
+      const hist=cHist();
+      const idx=hist.findIndex(m=>m.role==='summary_note'&&m.content===msg.content);
+      if(idx>=0){hist.splice(idx,1);save();}
+      row.remove(); renderChars();
+    };
     acts.appendChild(editBtn); acts.appendChild(delBtn);
-    body.appendChild(who); body.appendChild(bub); body.appendChild(t); body.appendChild(acts);
-    row.appendChild(av); row.appendChild(body);
+    body.appendChild(who); body.appendChild(bub); body.appendChild(acts);
+    row.appendChild(body);
     area.appendChild(row);
     if(scroll) area.scrollTop=area.scrollHeight;
     return bub;
@@ -1840,16 +1910,21 @@ function appendMsg(msg,scroll=true){
   const isMe=msg.role==='user';
   const row=document.createElement('div');
   row.className='msg-row'+(isMe?' me':'');
-  const av=document.createElement('div');
-  av.className='msg-av';
-  if(isMe){
-    av.textContent='😊';
-  } else {
-    renderAvatar(av,c||{emoji:'🤖',emoImg:null});
-  }
+  // hist 인덱스 추적용 (DOM↔data 매핑)
+  const histIdx=cHist().indexOf(msg);
+  if(histIdx>=0) row.dataset.histIdx=histIdx;
+  // AI 아바타는 msg-header 안에서 처리
   const body=document.createElement('div'); body.className='msg-body';
-  const who=document.createElement('div'); who.className='msg-who';
-  who.textContent=isMe?'유저':(c?c.name:'AI');
+  // 헤더줄: 아바타 + 이름 (AI 메시지만)
+  if(!isMe){
+    const header=document.createElement('div'); header.className='msg-header';
+    const avSm=document.createElement('div'); avSm.className='msg-av-sm';
+    renderAvatar(avSm, c||{emoji:'🤖',emoImg:null});
+    const who=document.createElement('div'); who.className='msg-who';
+    who.textContent=c?c.name:'AI';
+    header.appendChild(avSm); header.appendChild(who);
+    body.appendChild(header);
+  }
   const bub=document.createElement('div'); bub.className='msg-bubble msg-bub';
   // *이탤릭* → 회색 em 태그로 렌더링
   bub.innerHTML=renderMsgContent(msg.content);
@@ -1858,7 +1933,7 @@ function appendMsg(msg,scroll=true){
   // ─── 액션 버튼 ───
   const acts=document.createElement('div'); acts.className='msg-actions';
   if(!isMe){
-    // AI: 리롤 + 수정
+    // AI: 리롤 + 수정 + 삭제
     const rerollBtn=document.createElement('button');
     rerollBtn.className='msg-act-btn reroll';
     rerollBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>리롤';
@@ -1867,18 +1942,62 @@ function appendMsg(msg,scroll=true){
     editBtn.className='msg-act-btn edit-btn';
     editBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>수정';
     editBtn.onclick=()=>editMsg(row,bub,msg);
-    acts.appendChild(rerollBtn); acts.appendChild(editBtn);
+    const aiDelBtn=document.createElement('button');
+    aiDelBtn.className='msg-act-btn';
+    aiDelBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>삭제';
+    aiDelBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:6px;color:var(--t3);cursor:pointer;font-size:11px;padding:2px 6px;font-family:inherit;display:flex;align-items:center;gap:3px;transition:all 0.15s';
+    aiDelBtn.onmouseover=()=>{aiDelBtn.style.color='var(--danger)';aiDelBtn.style.borderColor='rgba(240,112,112,0.4)'};
+    aiDelBtn.onmouseout=()=>{aiDelBtn.style.color='var(--t3)';aiDelBtn.style.borderColor='var(--border)'};
+    aiDelBtn.onclick=()=>{
+      const hist=cHist();
+      // content로 정확히 매칭 (인덱스 오류 방지)
+      const idx=hist.findIndex(m=>m.role==='assistant'&&m.content===msg.content);
+      if(idx>=0){hist.splice(idx,1);save();}
+      row.remove(); renderChars();
+    };
+    acts.appendChild(rerollBtn); acts.appendChild(editBtn); acts.appendChild(aiDelBtn);
   } else {
-    // 유저: 수정만
+    // 유저: 수정 + 삭제
     const editBtn=document.createElement('button');
     editBtn.className='msg-act-btn edit-btn';
     editBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>수정';
     editBtn.onclick=()=>editMsg(row,bub,msg);
-    acts.appendChild(editBtn);
+    const delBtn=document.createElement('button');
+    delBtn.className='msg-act-btn';
+    delBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>삭제';
+    delBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:6px;color:var(--t3);cursor:pointer;font-size:11px;padding:2px 6px;transition:all 0.15s;font-family:inherit;display:flex;align-items:center;gap:3px';
+    delBtn.onmouseover=()=>{delBtn.style.color='var(--danger)';delBtn.style.borderColor='rgba(240,112,112,0.4)'};
+    delBtn.onmouseout=()=>{delBtn.style.color='var(--t3)';delBtn.style.borderColor='var(--border)'};
+    delBtn.onclick=async()=>{
+      const hist=cHist();
+      let idx=parseInt(row.dataset.histIdx??'-1');
+      if(idx<0||idx>=hist.length){
+        const rows=[...$('chat').querySelectorAll('.msg-row')];
+        idx=rows.indexOf(row);
+      }
+      if(idx<0||idx>=hist.length)return;
+      // 이 메시지 이후 전부 제거 (유저 메시지 삭제 → 그 뒤 AI 응답도 같이)
+      hist.splice(idx);
+      save();
+      // DOM에서 이 row 이후 전부 제거
+      const allRows=[...$('chat').querySelectorAll('.msg-row')];
+      const domIdx=allRows.indexOf(row);
+      for(let i=allRows.length-1;i>=domIdx;i--){if(allRows[i]?.parentNode)allRows[i].remove();}
+      // 직전에 user 메시지가 있으면 자동으로 AI 응답 생성
+      const lastUser=hist.filter(m=>m.role==='user').slice(-1)[0];
+      if(lastUser){
+        $('send').disabled=true; showTyping();
+        try{await generateAI(hist);}catch(e){hideTyping();}
+        $('send').disabled=false;
+      } else {
+        renderChat();
+      }
+    };
+    acts.appendChild(editBtn); acts.appendChild(delBtn);
   }
 
-  body.appendChild(who); body.appendChild(bub); body.appendChild(t); body.appendChild(acts);
-  row.appendChild(av); row.appendChild(body);
+  body.appendChild(bub); body.appendChild(acts);
+  row.appendChild(body);
   area.appendChild(row);
   if(scroll) area.scrollTop=area.scrollHeight;
   return bub;
@@ -1897,61 +2016,6 @@ function showTyping(){
 function hideTyping(){const t=$('typing');if(t)t.remove()}
 
 
-// ─── OPENROUTER 무료 ───
-async function generatePuter(hist){
-  const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
-  const activeProfs=cProfs().map(id=>D.profiles.find(p=>p.id===id)).filter(Boolean);
-  const mems=cMems(); const note=cNote();
-  const ROLEPLAY_CORE=`[역할 설정]\n당신은 유저와 함께 몰입감 넘치는 세계를 창조해 나가는 베스트셀러 소설 작가이자, 완벽한 롤플레이 파트너입니다.\n기계적이거나 AI 어시스턴트 같은 건조하고 딱딱한 말투는 절대 금지합니다.\n모든 응답은 한 편의 완성도 높은 웹소설처럼 문학적인 표현, 섬세한 감정선, 생동감 넘치는 묘사로 연출하세요.\n\n[절대 규칙]\n- AI임을 밝히거나 스스로 캐릭터를 깨지 않습니다.\n- 유저의 행동·대사·감정을 대신 쓰거나 가로채지 않습니다.\n\n[제작자 프롬프트]\n`;
-  let sys=ROLEPLAY_CORE+(c.prompt||`당신은 ${c.name}입니다.`);
-  if(activeProfs.length){sys+='\n\n[유저 정보]\n';activeProfs.forEach(p=>{if(p.ctx)sys+=p.ctx+'\n';});}
-  if(note.trim()){sys+=`\n\n[유저 노트]\n${note}`;}
-  if(mems.length){sys+='\n\n[장기 기억]\n';mems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
-
-  const rawMsgs=hist.slice(-20).map(m=>{
-    if(m.role==='summary_note') return {role:'user',content:`[📌 스토리 요약 메모]\n${m.content}`};
-    return {role:m.role,content:m.content};
-  });
-  const fixed=[];
-  for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;if(fixed.length&&fixed[fixed.length-1].role===m.role)continue;fixed.push(m);}
-
-  // puter.ai.chat은 마지막 user 메시지 + system prompt 방식으로 호출
-  const lastUser=fixed.filter(x=>x.role==='user').slice(-1)[0];
-  const userContent=lastUser?lastUser.content:'안녕';
-
-  hideTyping();
-  const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
-  const c2=D.chars.find(x=>x.id===D.activeChar);
-  const row2=document.createElement('div'); row2.className='msg-row';
-  const av2=document.createElement('div'); av2.className='msg-av'; renderAvatar(av2,c2||{emoji:'🤖',emoImg:null});
-  const body2=document.createElement('div'); body2.className='msg-body';
-  const who2=document.createElement('div'); who2.className='msg-who'; who2.textContent=c2?c2.name:'AI';
-  const bub2=document.createElement('div'); bub2.className='msg-bub streaming'; bub2.textContent='';
-  const tm2=document.createElement('div'); tm2.className='msg-t'; tm2.textContent=now();
-  body2.appendChild(who2);body2.appendChild(bub2);body2.appendChild(tm2);
-  row2.appendChild(av2);row2.appendChild(body2); area.appendChild(row2);
-
-  // puter.js 로드 확인
-  if(typeof puter==='undefined'||!puter?.ai?.chat){
-    row2.remove();
-    throw new Error('puter.js가 로드되지 않았어요. 인터넷 연결 또는 깃허브 Pages 환경을 확인해주세요.');
-  }
-
-  // 이전 대화 컨텍스트 포함해서 system+history 구성
-  const puterMessages=[{role:'system',content:sys},...fixed.slice(-14)];
-  let full='';
-  try{
-    const resp=await puter.ai.chat(puterMessages,{model:'gpt-4o-mini'});
-    full=typeof resp==='string'?resp:(resp?.message?.content||resp?.content||'');
-  }catch(e){
-    row2.remove();
-    throw new Error('무료 AI 오류: '+e.message);
-  }
-  bub2.classList.remove('streaming'); bub2.innerHTML=renderMsgContent(full);
-  const newMsg={role:'assistant',content:full,time:now()};
-  _addActionsToRow(row2,bub2,newMsg);
-  if(full.trim()){cHist().push(newMsg);save();renderChars();}
-}
 
 // ─── REROLL / EDIT MSG ───
 function getMsgIndex(row){
@@ -1961,17 +2025,23 @@ function getMsgIndex(row){
   return idx;
 }
 async function rerollMsg(row){
-  // AI 메시지 리롤: 해당 메시지를 hist에서 제거하고 다시 생성
-  const rows=[...$('chat').querySelectorAll('.msg-row')];
-  const idx=rows.indexOf(row);
   const hist=cHist();
+  // data-hist-idx로 정확한 인덱스 찾기
+  let idx=parseInt(row.dataset.histIdx??'-1');
+  // fallback: data-hist-idx 없으면 내용으로 매칭
+  if(idx<0||idx>=hist.length){
+    const bubText=row.querySelector('.msg-bub')?.textContent||'';
+    idx=hist.findIndex(m=>m.role==='assistant'&&m.content.startsWith(bubText.slice(0,30)));
+  }
   if(idx<0||idx>=hist.length)return;
-  // 해당 메시지와 그 이후 모두 제거
+  // 해당 메시지와 그 이후 제거
   hist.splice(idx);
   save();
-  // DOM에서도 해당 row 이후 전부 제거
-  for(let i=rows.length-1;i>=idx;i--){if(rows[i]&&rows[i].parentNode)rows[i].remove();}
-  // 다시 AI 응답 생성 (마지막 user 메시지로 재요청)
+  // DOM에서 해당 row 이후 전부 제거
+  const allRows=[...$('chat').querySelectorAll('.msg-row')];
+  const domIdx=allRows.indexOf(row);
+  for(let i=allRows.length-1;i>=domIdx;i--){if(allRows[i]?.parentNode)allRows[i].remove();}
+  // 다시 AI 응답 생성
   const lastUser=hist.filter(m=>m.role==='user').slice(-1)[0];
   if(!lastUser)return;
   $('send').disabled=true; showTyping();
@@ -1979,10 +2049,9 @@ async function rerollMsg(row){
   $('send').disabled=false; $('inp').focus();
 }
 async function generateAI(hist){
-  if(D.activeApi==='puter'){await generatePuter(hist);return;}
-  const usingGemini=(D.activeApi==='gemini');
+  const usingGemini=(getRoomApi()==='gemini');
   const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
-  const activeProfs=cProfs().map(id=>D.profiles.find(p=>p.id===id)).filter(Boolean);
+  const activeProfs=cProfs();
   const mems=cMems(); const note=cNote();
   const GENRE_GUIDE={
     fantasy:`\n🔮 장르 지침 (판타지)\n세계관의 질감이 대사와 지문에 자연스럽게 배어있어야 합니다.\n설정 설명을 의도적으로 나열하지 않고 묘사 속에 자연스럽게 녹입니다.`,
@@ -2031,78 +2100,145 @@ async function generateAI(hist){
 - 매 응답마다 새로운 각도·디테일로 장면을 전개합니다.
 
 [분량 규칙]
-- 분량은 장면의 흐름과 감정 밀도에 맞게 자유롭게 조절합니다.
-- 짧아야 할 순간은 짧게, 몰입이 필요한 장면은 충분히 길게 씁니다.
+- ${LENGTH_PRESETS[getRoomLength()].prompt}
 - 분량을 채우려 억지로 늘이지 않습니다. 밀도가 먼저입니다.
-- 세부 분량 기준은 제작자 프롬프트에서 지정할 수 있습니다.
 ${genreGuide}
 [제작자 프롬프트]
 `;
   let sys=ROLEPLAY_CORE+(c.prompt||`당신은 ${c.name}입니다.`);
   if(activeProfs.length){sys+=`\n\n[유저 정보]\n`;activeProfs.forEach(p=>{if(p.ctx)sys+=p.ctx+'\n';});}
   if(note.trim()){sys+=`\n\n[유저 노트]\n${note}`;}
-  // 요약은 시스템 프롬프트에 포함하지 않음 (유저 참고용 UI 카드만 표시)
   if(mems.length){sys+=`\n\n[장기 기억 — 항상 참고]\n`;mems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
 
   let full='';
   if(usingGemini){
-    const geminiMsgs=hist.slice(-16).map(m=>{
-      if(m.role==='summary_note') return {role:'user',parts:[{text:`[📌 스토리 요약 메모 — 이 내용을 참고해 대화를 이어가세요]\n${m.content}`}]};
+    let geminiMsgs=hist.slice(-16).map(m=>{
+      if(m.role==='summary_note') return {role:'model',parts:[{text:`[스토리 요약]\n${m.content}`}]};
       return {role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]};
+    }).filter(Boolean);
+    // user로 시작하게 앞 정리
+    while(geminiMsgs.length&&geminiMsgs[0].role!=='user') geminiMsgs.shift();
+    if(!geminiMsgs.length)return;
+    // non-streaming: AbortController로 타임아웃 + 재시도
+    const geminiBody=JSON.stringify({
+      system_instruction:{parts:[{text:sys}]},
+      contents:geminiMsgs,
+      generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength()].tokens}
     });
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:geminiMsgs,generationConfig:{maxOutputTokens:650}})});
-    if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini API 오류')}
-    hideTyping();
+    const geminiUrl=`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:generateContent?key=${D.geminiKey}`;
+    let lastErr='';
+    for(let attempt=0;attempt<3;attempt++){
+      if(attempt>0){
+        hideTyping(); showTyping();
+        // 재시도 표시
+        const retryMsg=document.getElementById('retry-msg');
+        if(!retryMsg){
+          const rm=document.createElement('div');
+          rm.id='retry-msg';
+          rm.style.cssText='font-size:11px;color:var(--amber);text-align:center;padding:4px';
+          rm.textContent=`⟳ 재시도 중... (${attempt}/2)`;
+          $('chat').appendChild(rm);
+        }
+        await new Promise(r=>setTimeout(r,1500));
+      }
+      const ctrl=new AbortController();
+      const timer=setTimeout(()=>ctrl.abort(),120000); // 120초
+      try{
+        const res=await fetch(geminiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:geminiBody,signal:ctrl.signal});
+        clearTimeout(timer);
+        if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini API 오류')}
+        const data=await res.json();
+        const parts=data.candidates?.[0]?.content?.parts||[];
+        for(const p of parts){if(p.thought)continue;if(p.text)full+=p.text;}
+        break; // 성공
+      }catch(e){
+        clearTimeout(timer);
+        lastErr=e.message;
+        if(e.name==='AbortError')lastErr='응답 시간 초과 (120초)';
+        if(attempt===2)throw new Error(lastErr);
+      }
+    }
+    const retryEl=document.getElementById('retry-msg');
+    if(retryEl)retryEl.remove();
+    if(!full)throw new Error('응답이 비어있어요. 잠시 후 다시 시도해주세요.');
+    hideTyping(); // 응답 완전히 받은 후 인디케이터 제거
     const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
     const c2=D.chars.find(x=>x.id===D.activeChar);
     const row2=document.createElement('div'); row2.className='msg-row';
-    const av2=document.createElement('div'); av2.className='msg-av'; renderAvatar(av2,c2||{emoji:'🤖',emoImg:null});
     const body2=document.createElement('div'); body2.className='msg-body';
+    const hdr2=document.createElement('div'); hdr2.className='msg-header';
+    const avSm2=document.createElement('div'); avSm2.className='msg-av-sm'; renderAvatar(avSm2,c2||{emoji:'🤖',emoImg:null});
     const who2=document.createElement('div'); who2.className='msg-who'; who2.textContent=c2?c2.name:'AI';
-    const bub2=document.createElement('div'); bub2.className='msg-bub streaming'; bub2.textContent='';
-    const tm2=document.createElement('div'); tm2.className='msg-t'; tm2.textContent=now();
-    body2.appendChild(who2);body2.appendChild(bub2);body2.appendChild(tm2);
-    row2.appendChild(av2);row2.appendChild(body2); area.appendChild(row2);
-    const reader=res.body.getReader(); const decoder=new TextDecoder();
-    while(true){const {done,value}=await reader.read();if(done)break;const chunk=decoder.decode(value);const lines=chunk.split('\n');for(const line of lines){if(line.startsWith('data: ')){const data=line.slice(6);if(data==='[DONE]')break;try{const j=JSON.parse(data);const t=j.candidates?.[0]?.content?.parts?.[0]?.text;if(t){full+=t;bub2.textContent=full;area.scrollTop=area.scrollHeight;}}catch(e){}}}}
-    bub2.classList.remove('streaming'); bub2.innerHTML=renderMsgContent(full);
-    // 액션버튼 추가
+    hdr2.appendChild(avSm2); hdr2.appendChild(who2);
+    const bub2=document.createElement('div'); bub2.className='msg-bub'; bub2.innerHTML=renderMsgContent(full);
+    body2.appendChild(hdr2);body2.appendChild(bub2);
+    row2.appendChild(body2); area.appendChild(row2); area.scrollTop=area.scrollHeight;
     const newMsg={role:'assistant',content:full,time:now()};
+    cHist().push(newMsg); save(); renderChars();
     _addActionsToRow(row2,bub2,newMsg);
   } else {
     let rawMsgs=hist.slice(-30).map(m=>{
-      if(m.role==='summary_note') return {role:'user',content:`[📌 스토리 요약 메모 — 이 내용을 참고해 대화를 이어가세요]\n${m.content}`};
+      if(m.role==='summary_note') return {role:'assistant',content:`[스토리 요약]\n${m.content}`};
       return {role:m.role,content:m.content};
     });
     const fixed=[];
-    for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;if(fixed.length&&fixed[fixed.length-1].role===m.role)continue;fixed.push(m);}
+    for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
+    // 마지막이 assistant면 제거
+    while(fixed.length&&fixed[fixed.length-1].role!=='user') fixed.pop();
     const messages=fixed.slice(-16);
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:650,system:sys,messages,stream:true})});
+    if(!messages.length)return;
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength()].tokens,system:sys,messages,stream:true})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류')}
     hideTyping();
     const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
     const c2=D.chars.find(x=>x.id===D.activeChar);
     const row2=document.createElement('div'); row2.className='msg-row';
-    const av2=document.createElement('div'); av2.className='msg-av'; renderAvatar(av2,c2||{emoji:'🤖',emoImg:null});
     const body2=document.createElement('div'); body2.className='msg-body';
+    const hdr2=document.createElement('div'); hdr2.className='msg-header';
+    const avSm2=document.createElement('div'); avSm2.className='msg-av-sm'; renderAvatar(avSm2,c2||{emoji:'🤖',emoImg:null});
     const who2=document.createElement('div'); who2.className='msg-who'; who2.textContent=c2?c2.name:'AI';
+    hdr2.appendChild(avSm2); hdr2.appendChild(who2);
     const bub2=document.createElement('div'); bub2.className='msg-bub streaming'; bub2.textContent='';
-    const tm2=document.createElement('div'); tm2.className='msg-t'; tm2.textContent=now();
-    body2.appendChild(who2);body2.appendChild(bub2);body2.appendChild(tm2);
-    row2.appendChild(av2);row2.appendChild(body2); area.appendChild(row2);
+    body2.appendChild(hdr2);body2.appendChild(bub2);
+    row2.appendChild(body2); area.appendChild(row2);
     const reader=res.body.getReader(); const decoder=new TextDecoder();
-    while(true){const {done,value}=await reader.read();if(done)break;const chunk=decoder.decode(value);const lines=chunk.split('\n');for(const line of lines){if(line.startsWith('data: ')){const data=line.slice(6);if(data==='[DONE]')break;try{const j=JSON.parse(data);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;bub2.textContent=full;area.scrollTop=area.scrollHeight;}}catch(e){}}}}
+    let buf2='';
+    try{
+      while(true){
+        const {done,value}=await reader.read();
+        if(done)break;
+        buf2+=decoder.decode(value,{stream:true});
+        const lines=buf2.split('\n');
+        buf2=lines.pop()||'';
+        for(const line of lines){
+          if(!line.startsWith('data: '))continue;
+          const data=line.slice(6).trim();
+          if(data==='[DONE]')break;
+          try{
+            const j=JSON.parse(data);
+            if(j.type==='content_block_delta'&&j.delta?.text){
+              full+=j.delta.text;
+              bub2.textContent=full;
+              area.scrollTop=area.scrollHeight;
+            }
+            if(j.type==='message_stop'){
+              bub2.innerHTML=renderMsgContent(full); break;
+            }
+          }catch(e){}
+        }
+      }
+    }catch(e){if(!full){bub2.textContent='⚠️ 스트리밍 오류: '+e.message;}}
     bub2.classList.remove('streaming'); bub2.innerHTML=renderMsgContent(full);
-    const newMsg={role:'assistant',content:full,time:now()};
-    _addActionsToRow(row2,bub2,newMsg);
-  }
-  if(full.trim()){
-    const am={role:'assistant',content:full,time:now()};
-    cHist().push(am); save(); renderChars();
+    const newMsg2={role:'assistant',content:full,time:now()};
+    cHist().push(newMsg2); save(); renderChars();
+    _addActionsToRow(row2,bub2,newMsg2);
   }
 }
 function _addActionsToRow(row,bub,msg){
   const body=row.querySelector('.msg-body'); if(!body)return;
+  // 스트리밍 완료 후 hist 인덱스 저장
+  const hi=cHist().lastIndexOf(msg);
+  if(hi>=0) row.dataset.histIdx=hi;
   const acts=document.createElement('div'); acts.className='msg-actions';
   const rerollBtn=document.createElement('button');
   rerollBtn.className='msg-act-btn reroll';
@@ -2112,7 +2248,19 @@ function _addActionsToRow(row,bub,msg){
   editBtn.className='msg-act-btn edit-btn';
   editBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>수정';
   editBtn.onclick=()=>editMsg(row,bub,msg);
-  acts.appendChild(rerollBtn); acts.appendChild(editBtn);
+  const delBtn=document.createElement('button');
+  delBtn.className='msg-act-btn';
+  delBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>삭제';
+  delBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:6px;color:var(--t3);cursor:pointer;font-size:11px;padding:2px 6px;font-family:inherit;display:flex;align-items:center;gap:3px;transition:all 0.15s';
+  delBtn.onmouseover=()=>{delBtn.style.color='var(--danger)';delBtn.style.borderColor='rgba(240,112,112,0.4)'};
+  delBtn.onmouseout=()=>{delBtn.style.color='var(--t3)';delBtn.style.borderColor='var(--border)'};
+  delBtn.onclick=()=>{
+    const hist=cHist();
+    const idx=hist.findIndex(m=>m.role==='assistant'&&m.content===msg.content);
+    if(idx>=0){hist.splice(idx,1);save();}
+    row.remove(); renderChars();
+  };
+  acts.appendChild(rerollBtn); acts.appendChild(editBtn); acts.appendChild(delBtn);
   body.appendChild(acts);
 }
 function editMsg(row,bub,msg){
@@ -2129,11 +2277,10 @@ function editMsg(row,bub,msg){
   cancelBtn.onclick=()=>{wrap.remove();bub.style.display='';};
   saveBtn.onclick=()=>{
     const newText=ta.value.trim(); if(!newText)return;
-    // hist에서 해당 메시지 찾아 수정
-    const rows=[...$('chat').querySelectorAll('.msg-row')];
-    const idx=rows.indexOf(row);
     const hist=cHist();
-    if(idx>=0&&idx<hist.length){hist[idx].content=newText;save();}
+    // content로 정확히 찾아서 수정
+    const idx=hist.findIndex(m=>m.content===msg.content&&m.role===msg.role);
+    if(idx>=0){hist[idx].content=newText; save();}
     msg.content=newText;
     bub.innerHTML=renderMsgContent(newText);
     bub.style.display=''; wrap.remove();
@@ -2149,10 +2296,9 @@ function editMsg(row,bub,msg){
 async function sendMsg(){
   const inp=$('inp'); const text=inp.value.trim();
   if(!text||!D.activeChar||!D.activeRoom) return;
-  const usingGemini=(D.activeApi==='gemini');
-  const usingPuter=(D.activeApi==='puter');
-  if(!usingPuter&&usingGemini&&!D.geminiKey){openModal('key-modal');return}
-  if(!usingPuter&&!usingGemini&&!D.key){openModal('key-modal');return}
+  const usingGemini=(getRoomApi()==='gemini');
+  if(usingGemini&&!D.geminiKey){openModal('key-modal');return}
+  if(!usingGemini&&!D.key){openModal('key-modal');return}
   inp.value=''; inp.style.height='auto';
   const um={role:'user',content:text,time:now()};
   cHist().push(um);
@@ -2176,7 +2322,6 @@ function openNewRoomModal(charId){
   _newRoomCharId=charId; _newRoomSceneId=null;
   const c=D.chars.find(x=>x.id===charId); if(!c)return;
   $('newroom-char-name').textContent=c.name;
-  $('newroom-name').value='';
   // 시작장면 목록 렌더
   const sl=$('newroom-scene-list');
   sl.innerHTML='';
@@ -2209,7 +2354,7 @@ function createRoom(){
   const sceneTitle=_newRoomSceneId?(c.scenes||[]).find(s=>s.id===_newRoomSceneId)?.title||'':'';
   const baseName=sceneTitle||c.name;
   const existCount=rooms.filter(r=>(r.name||'').startsWith(baseName)).length;
-  const name=$('newroom-name').value.trim()||(existCount>0?`${baseName} (${existCount+1})`:`${baseName}`);
+  const name=existCount>0?`${baseName} (${existCount+1})`:baseName;
   const roomId='room_'+Date.now();
   const room={id:roomId,name,sceneId:_newRoomSceneId||null,createdAt:Date.now()};
   if(!D.rooms[charId])D.rooms[charId]=[];
@@ -2281,8 +2426,9 @@ function updateKeySt(){
 }
 function updateGeminiKeySt(){
   const v=$('gemini-key-inp').value; const el=$('gemini-key-st');
-  if(v.startsWith('AIza')){el.className='key-st ok';el.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 올바른 키 형식'}
-  else if(v.length>0){el.className='key-st no';el.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> AIza로 시작해야 합니다'}
+  if(v.length>=20&&(v.startsWith('AIza')||v.startsWith('AI'))){el.className='key-st ok';el.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 올바른 키 형식'}
+  else if(v.length>0&&v.length>=10){el.className='key-st ok';el.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 키 입력됨'}
+  else if(v.length>0){el.className='key-st no';el.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> 너무 짧아요'}
   else{el.className='key-st no';el.innerHTML='API 키를 입력하세요'}
 }
 function toggleEye(inputId, iconId){
@@ -2295,36 +2441,28 @@ function switchKeyTab(api){
   $('kpanel-gemini').style.display=api==='gemini'?'block':'none';
 }
 function setActiveApi(api){
-  D.activeApi=api; save();
-  updateActiveApiBar();
-  updateApiToggleBtns();
-  renderTopbar();
+  if(rid()){
+    if(!D.roomApi)D.roomApi={};
+    D.roomApi[rid()]=api;
+  } else {
+    D.activeApi=api;
+  }
+  save(); updateApiToggleBtns(); renderTopbar();
+}
+function getRoomApi(){
+  if(rid()&&D.roomApi&&D.roomApi[rid()])return D.roomApi[rid()];
+  return D.activeApi||'claude';
 }
 function updateApiToggleBtns(){
-  const claude=$('api-btn-claude'); const gemini=$('api-btn-gemini'); const puter=$('api-btn-puter');
-  const btns=[claude,gemini,puter].filter(Boolean);
+  const claude=$('api-btn-claude'); const gemini=$('api-btn-gemini');
+  const btns=[claude,gemini].filter(Boolean);
   btns.forEach(b=>{b.style.background='var(--s3)';b.style.color='var(--t2)';b.style.borderColor='var(--border2)';});
-  const a=D.activeApi||'claude';
-  const active=a==='gemini'?gemini:a==='puter'?puter:claude;
-  const col=a==='puter'?'var(--teal)':'var(--accent2)';
+  const a=getRoomApi();
+  const active=a==='gemini'?gemini:claude;
+  const col='var(--accent2)';
   if(active){active.style.background=col;active.style.color='#fff';active.style.borderColor=col;}
 }
-function updateActiveApiBar(){
-  const bar=$('active-api-bar');
-  const label=$('active-api-label');
-  if(!bar||!label)return;
-  if(D.activeApi==='gemini'){
-    label.textContent='현재 사용 중: Gemini (Google)';
-    bar.style.background='rgba(56,217,192,0.06)';
-    bar.style.borderColor='rgba(56,217,192,0.2)';
-    bar.style.color='var(--teal)';
-  } else {
-    label.textContent='현재 사용 중: Claude (Anthropic)';
-    bar.style.background='var(--ag2)';
-    bar.style.borderColor='rgba(157,127,244,0.15)';
-    bar.style.color='var(--accent)';
-  }
-}
+function updateActiveApiBar(){/* 제거됨 */}
 function saveKey(){
   D.key=$('key-inp').value.trim();
   D.geminiKey=$('gemini-key-inp').value.trim();
@@ -2410,15 +2548,24 @@ function deleteChar(){
 (function(){const btn=document.querySelector('.sb-add');if(btn)btn.onclick=()=>openCharModal(false);})();
 
 // ─── PROFILES ───
+function getRoomProfiles(){
+  if(!rid())return[];
+  if(!D.roomProfileDefs)D.roomProfileDefs={};
+  if(!D.roomProfileDefs[rid()])D.roomProfileDefs[rid()]=[];
+  return D.roomProfileDefs[rid()];
+}
 function renderProfiles(){
   const list=$('profile-list'); list.innerHTML='';
   const el=$('profile-modal-char'); if(el)el.textContent=charName();
-  if(!D.profiles.length){
+  const roomProfs=getRoomProfiles();
+  if(!roomProfs.length){
     list.innerHTML='<div style="font-size:13px;color:var(--t3);padding:4px 0">프로필이 없어요. 아래에서 추가하세요.</div>';
     renderProfileBadge(); return;
   }
-  D.profiles.forEach(p=>{
-    const isOn=cProfs().includes(p.id);
+  if(!D.roomProfiles)D.roomProfiles={};
+  if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=(roomProfs.map(p=>p.id)); // 기본 전체 켜짐
+  roomProfs.forEach(p=>{
+    const isOn=(D.roomProfiles[rid()]||[]).includes(p.id);
     const card=document.createElement('div');
     card.className='profile-card'+(isOn?' on':'');
     card.innerHTML=`
@@ -2429,9 +2576,9 @@ function renderProfiles(){
         </label>
         <div class="profile-card-name">${p.name}</div>
         <button class="profile-del" onclick="event.stopPropagation();deleteProfile('${p.id}')">✕</button>
-        <div class="profile-chv${isOn?' on':''}" id="pchv-${p.id}">▾</div>
+        <div class="profile-chv ${isOn?'on':''}" id="pchv-${p.id}">▾</div>
       </div>
-      <div class="profile-expand${isOn?' on':''}" id="pexp-${p.id}">
+      <div class="profile-expand ${isOn?'on':''}" id="pexp-${p.id}">
         <div class="profile-ctx">${p.ctx||'(컨텍스트 없음)'}</div>
       </div>`;
     list.appendChild(card);
@@ -2439,12 +2586,12 @@ function renderProfiles(){
   renderProfileBadge();
 }
 function toggleProfile(id, on){
-  if(!cid())return;
+  if(!rid())return;
   if(!D.roomProfiles)D.roomProfiles={};
   if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=[];
   if(on){if(!D.roomProfiles[rid()].includes(id))D.roomProfiles[rid()].push(id);}
   else{D.roomProfiles[rid()]=D.roomProfiles[rid()].filter(x=>x!==id);}
-  save(); renderProfiles();
+  save(); renderProfiles(); renderProfileBadge();
 }
 function toggleProfileExpand(id){
   const exp=$('pexp-'+id); const chv=$('pchv-'+id);
@@ -2452,18 +2599,24 @@ function toggleProfileExpand(id){
   if(chv)chv.classList.toggle('on');
 }
 function addProfile(){
+  if(!rid())return;
   const name=$('p-name').value.trim(); if(!name){$('p-name').focus();return}
   const ctx=$('p-ctx').value.trim();
-  D.profiles.push({id:Date.now()+'',name,ctx});
+  const profs=getRoomProfiles();
+  const newId=Date.now()+'';
+  profs.push({id:newId,name,ctx});
+  // 새 프로필 자동 켜짐
+  if(!D.roomProfiles)D.roomProfiles={};
+  if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=[];
+  D.roomProfiles[rid()].push(newId);
   $('p-name').value=''; $('p-ctx').value='';
   save(); renderProfiles();
 }
 function deleteProfile(id){
-  D.profiles=D.profiles.filter(x=>x.id!==id);
-  // 모든 캐릭터에서 해당 프로필 제거
-  if(D.roomProfiles)Object.keys(D.roomProfiles).forEach(rid=>{
-    D.roomProfiles[rid]=D.roomProfiles[rid].filter(x=>x!==id);
-  });
+  if(!rid())return;
+  const profs=getRoomProfiles();
+  const idx=profs.findIndex(p=>p.id===id);
+  if(idx>=0)profs.splice(idx,1);
   save(); renderProfiles();
 }
 // ─── THEME ───
@@ -2497,7 +2650,7 @@ function renderProfileBadge(){
   // 사이드바 프로필 라벨 업데이트
   const label=$('sb-profile-label');
   const badge=$('tb-profile-badge');
-  const on=cProfs().map(id=>D.profiles.find(p=>p.id===id)).filter(Boolean);
+  const on=cProfs();
   if(on.length){
     if(label)label.textContent=on.map(p=>p.name).join(', ');
     if(badge){badge.className='profile-badge';badge.style.display='inline-flex';badge.innerHTML=`<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>${on.map(p=>p.name).join(', ')}`;}
@@ -2507,7 +2660,7 @@ function renderProfileBadge(){
   }
 }
 function openProfileModal(){
-  if(!cid())return;
+  if(!cid()||!rid())return;
   const el=$('profile-modal-char');
   if(el){
     const room=cRoom();
@@ -2659,8 +2812,8 @@ function openNoteModal(){
 
 // ─── MSG CONTENT RENDER ───
 function renderMsgContent(text){
-  // XSS 방지
-  let t=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // 앞뒤 공백/줄바꿈 제거
+  let t=text.trim().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   // 코드블록 ```...``` → <pre><code>
   t=t.replace(/```([^`]*?)```/gs,(_, code)=>`<pre style="background:var(--s4);border-radius:8px;padding:10px 12px;overflow-x:auto;font-size:12px;line-height:1.6;margin:6px 0;font-family:monospace">${code.trim()}</pre>`);
   // 인라인 코드 `...`
@@ -2790,6 +2943,8 @@ function insertSummaryToChat(){
   if(!D.activeRoom)return;
   closeModal('summary-modal');
   const note={role:'summary_note',content:text,time:now()};
+  cHist().push(note);
+  save();
   appendMsg(note,true);
 }
 
@@ -2801,8 +2956,9 @@ function buildExportText(){
   const charName=c?c.name:'AI';
   const header=`=== ${charName} 대화 내보내기 ===\n날짜: ${new Date().toLocaleString('ko-KR')}\n총 ${hist.length}개 메시지\n${'='.repeat(32)}\n\n`;
   const body=hist.map(m=>{
-    const who=m.role==='user'?'나':charName;
-    return `[${who}]\n${m.content}`;
+    if(m.role==='user') return `[나]\n${m.content}`;
+    if(m.role==='summary_note') return `[📌 스토리 요약 메모]\n${m.content}`;
+    return `[${charName}]\n${m.content}`;
   }).join('\n\n');
   return header+body;
 }
@@ -2884,9 +3040,10 @@ function exportSeqDownload(){
   const fromTurn=from+1, toTurn=hist.length;
   const header=`=== ${charName} 대화 (${fromTurn}~${toTurn}턴) ===\n날짜: ${new Date().toLocaleString('ko-KR')}\n${'='.repeat(32)}\n\n`;
   const body=slice.map((m,i)=>{
-    const who=m.role==='user'?'나':charName;
     const turnNum=from+i+1;
-    return `[${who} / ${turnNum}턴]\n${m.content}`;
+    if(m.role==='user') return `[나 / ${turnNum}턴]\n${m.content}`;
+    if(m.role==='summary_note') return `[📌 스토리 요약 메모 / ${turnNum}턴]\n${m.content}`;
+    return `[${charName} / ${turnNum}턴]\n${m.content}`;
   }).join('\n\n');
   const text=header+body;
   const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
@@ -2918,7 +3075,41 @@ function clearChat(){
   if(btn) btn.onclick=()=>openCharModal(false);
 })();
 
+// ── 출력량 슬라이더 ──
+const LENGTH_PRESETS = [
+  { label:'짧게',   tokens:1000,  prompt:'1~2문단으로 짧게 응답합니다. 대사 위주, 묘사 최소화.' },
+  { label:'조금',   tokens:2000,  prompt:'2~3문단 내외로 응답합니다. 핵심 묘사와 대사 중심.' },
+  { label:'보통',   tokens:3500,  prompt:'4~5문단 내외로 응답합니다. 묘사와 대사의 균형.' },
+  { label:'길게',   tokens:5000,  prompt:'6~8문단 내외로 응답합니다. 풍부한 묘사와 감정선.' },
+  { label:'최대',   tokens:8192,  prompt:'분량 제한 없이 충분히 깊고 길게 응답합니다.' },
+];
+function updateLengthSlider(val){
+  const v=parseInt(val);
+  if(rid()){
+    if(!D.roomLength)D.roomLength={};
+    D.roomLength[rid()]=v;
+  } else {
+    D.outputLength=v;
+  }
+  save();
+  const lbl=$('length-label');
+  if(lbl) lbl.textContent=LENGTH_PRESETS[v].label;
+}
+function getRoomLength(){
+  if(rid()&&D.roomLength&&D.roomLength[rid()]!==undefined)return D.roomLength[rid()];
+  return D.outputLength??2;
+}
+function initLengthSlider(){
+  const slider=$('length-slider');
+  if(!slider)return;
+  const v=getRoomLength();
+  slider.value=v;
+  const lbl=$('length-label');
+  if(lbl) lbl.textContent=LENGTH_PRESETS[v].label;
+}
+
 init();
+initLengthSlider();
 </script>
 </body>
 </html>
