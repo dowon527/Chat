@@ -1,0 +1,2512 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CharaChat ✦</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0b12;
+  --s1:#111119;
+  --s2:#17171f;
+  --s3:#1e1e28;
+  --s4:#252530;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.1);
+  --border3:rgba(255,255,255,0.16);
+  --text:#e4e2f0;
+  --t2:#8e8aa8;
+  --t3:#4e4a62;
+  --t4:#2e2b3c;
+  --accent:#9d7ff4;
+  --accent2:#7c5ce8;
+  --accent3:#6244c8;
+  --ag:rgba(157,127,244,0.12);
+  --ag2:rgba(157,127,244,0.06);
+  --pink:#e879a0;
+  --pg:rgba(232,121,160,0.1);
+  --teal:#38d9c0;
+  --tg:rgba(56,217,192,0.1);
+  --amber:#f0a840;
+  --amg:rgba(240,168,64,0.1);
+  --danger:#f07070;
+  --dg:rgba(240,112,112,0.1);
+  --user-bub:#1d1b2e;
+  --ai-bub:#13131e;
+  --r:10px;
+  --r2:14px;
+  --r3:18px;
+}
+/* ─── LIGHT THEME ─── */
+body.light{
+  --bg:#f5f4f8;
+  --s1:#ffffff;
+  --s2:#f0eff5;
+  --s3:#e8e7f0;
+  --s4:#dddce8;
+  --border:rgba(0,0,0,0.07);
+  --border2:rgba(0,0,0,0.11);
+  --border3:rgba(0,0,0,0.18);
+  --text:#1a1828;
+  --t2:#5a5570;
+  --t3:#9e9ab8;
+  --t4:#cac8da;
+  --accent:#7c5ce8;
+  --accent2:#6244c8;
+  --accent3:#4f34a8;
+  --ag:rgba(124,92,232,0.1);
+  --ag2:rgba(124,92,232,0.05);
+  --user-bub:#ede9fc;
+  --ai-bub:#ffffff;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);display:flex;font-size:14px;line-height:1.6}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--s4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--t3)}
+
+/* ─── SIDEBAR ─── */
+#sidebar{
+  width:260px;min-width:260px;
+  background:var(--s1);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  height:100vh;overflow:hidden;
+  transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  z-index:100;
+}
+#sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99;backdrop-filter:blur(2px)}
+#sb-toggle{
+  display:none;position:fixed;top:12px;left:12px;z-index:101;
+  width:36px;height:36px;border-radius:10px;
+  background:var(--s2);border:1px solid var(--border2);
+  color:var(--text);cursor:pointer;
+  align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+}
+@media(max-width:700px){
+  #sidebar{
+    position:fixed;top:0;left:0;bottom:0;
+    transform:translateX(-100%);
+  }
+  #sidebar.open{transform:translateX(0)}
+  #sb-overlay.show{display:block}
+  #sb-toggle{display:flex}
+  #main{width:100%!important}
+}
+.sb-top{padding:18px 14px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{font-family:'Gowun Batang',serif;font-size:20px;color:var(--accent);letter-spacing:0.5px;display:flex;align-items:center;gap:8px}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.logo-sub{font-size:10px;color:var(--t3);font-family:'Noto Sans KR',sans-serif;margin-top:2px;letter-spacing:1px}
+.sb-section{
+  padding:10px 14px 6px;
+  font-size:10px;font-weight:700;letter-spacing:1.5px;
+  color:var(--t3);text-transform:uppercase;flex-shrink:0
+}
+.char-scroll{flex:1;overflow-y:auto;padding:0 8px 8px}
+.char-item{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 8px;border-radius:var(--r);
+  cursor:pointer;border:1px solid transparent;
+  transition:all 0.15s;position:relative;
+  margin-bottom:2px;
+}
+.char-item:hover{background:var(--s2);border-color:var(--border)}
+.char-item.active{background:var(--s3);border-color:rgba(157,127,244,0.3);box-shadow:inset 0 0 0 1px rgba(157,127,244,0.08)}
+
+/* 사이드바 시작 장면 카테고리 */
+.story-scenes{padding:0 8px 4px;flex-shrink:0}
+.scene-section-hd{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 8px;cursor:pointer;
+  font-size:10px;font-weight:700;letter-spacing:1px;color:var(--t3);
+  text-transform:uppercase;border-radius:var(--r);
+  transition:all 0.15s;user-select:none;
+}
+.scene-section-hd:hover{background:var(--s2);color:var(--t2)}
+.scene-section-hd .chv{transition:transform 0.2s;font-size:9px}
+.scene-section-hd.open .chv{transform:rotate(90deg)}
+.scene-list-sb{display:none;flex-direction:column;gap:2px;padding:0 4px 6px}
+.scene-list-sb.on{display:flex}
+.scene-sb-item{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 10px;border-radius:var(--r);
+  cursor:pointer;border:1px solid transparent;
+  font-size:12px;color:var(--t2);transition:all 0.15s;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.scene-sb-item:hover{background:var(--s2);border-color:var(--border);color:var(--text)}
+.scene-sb-item.active{background:var(--ag2);border-color:rgba(157,127,244,0.25);color:var(--accent)}
+.scene-sb-item.active .scene-dot{background:var(--accent)}
+.scene-sb-add{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;margin:2px 4px;
+  border-radius:var(--r);border:1px dashed var(--border);
+  background:transparent;color:var(--t3);cursor:pointer;
+  font-size:11px;font-family:'Noto Sans KR',sans-serif;
+  transition:all 0.15s;width:calc(100% - 8px);
+}
+.scene-sb-add:hover{border-color:var(--accent);color:var(--accent);background:var(--ag2)}
+.scene-sb-item .scene-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--teal);flex-shrink:0;
+}
+.scene-sb-item span{overflow:hidden;text-overflow:ellipsis;flex:1}
+
+/* 메시지 버블 내 이탤릭(*텍스트*) 스타일 */
+.msg-bub em{
+  font-style:normal;color:var(--t2);font-size:13px;
+}
+
+/* 모델 선택 카드 */
+.model-card{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:var(--r2);
+  border:1px solid var(--border2);background:var(--s3);
+  cursor:pointer;transition:all 0.15s;
+}
+.model-card:hover{border-color:var(--border3);background:var(--s4)}
+.model-card.sel{border-color:var(--accent);background:var(--ag2)}
+.model-card-icon{font-size:18px;flex-shrink:0;width:28px;text-align:center}
+.model-card-info{flex:1;min-width:0}
+.model-card-name{font-size:13px;font-weight:500}
+.model-card-desc{font-size:11px;color:var(--t3);margin-top:1px}
+.model-card-check{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border3);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.model-card.sel .model-card-check{background:var(--accent);border-color:var(--accent)}
+.char-emo{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--s3);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;overflow:hidden;
+}
+.char-emo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.char-meta{flex:1;min-width:0}
+.char-meta-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.char-meta-tag{font-size:11px;color:var(--t3);margin-top:1px}
+.char-cnt{
+  font-size:10px;padding:2px 6px;border-radius:20px;
+  background:var(--s4);color:var(--t2);flex-shrink:0
+}
+.sb-add{
+  margin:6px 8px;padding:10px;
+  border-radius:var(--r);border:1px dashed var(--border2);
+  background:transparent;color:var(--t3);
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:13px;
+  transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;
+  flex-shrink:0;
+}
+.sb-add:hover{border-color:var(--accent);color:var(--accent);background:var(--ag2)}
+.sb-bot{border-top:1px solid var(--border);padding:10px 8px;flex-shrink:0}
+.sb-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 8px;border-radius:var(--r);
+  border:none;background:transparent;color:var(--t2);
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:13px;
+  width:100%;text-align:left;transition:all 0.15s;
+}
+.sb-btn:hover{background:var(--s2);color:var(--text)}
+.sb-btn svg{flex-shrink:0;opacity:0.6}
+.sb-btn:hover svg{opacity:1}
+.sb-btn.red:hover{color:var(--danger)}
+
+/* ─── MAIN ─── */
+#main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden}
+
+/* ─── TOPBAR ─── */
+#topbar{
+  height:72px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;gap:14px;
+  background:var(--s1);flex-shrink:0;
+}
+.tb-emo{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--s3);border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+  flex-shrink:0;overflow:hidden;
+  cursor:pointer;position:relative;transition:border-color 0.15s;
+}
+.tb-emo:hover{border-color:var(--accent)}
+.tb-emo:hover::after{
+  content:'📷';font-size:14px;
+  position:absolute;inset:0;border-radius:50%;
+  background:rgba(0,0,0,0.45);
+  display:flex;align-items:center;justify-content:center;
+}
+.tb-emo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.tb-info{flex:1;min-width:0}
+.tb-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-sub{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.tb-acts{display:flex;gap:6px;align-items:center}
+.ico-btn{
+  width:32px;height:32px;border-radius:var(--r);
+  border:1px solid var(--border);background:transparent;
+  color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;flex-shrink:0;
+}
+.ico-btn:hover{background:var(--s2);border-color:var(--border2);color:var(--text)}
+/* user row: no avatar */
+.msg-row.me .msg-av{display:none}
+
+/* ─── STORY BAR ─── */
+#story-bar{
+  padding:9px 18px;
+  background:rgba(157,127,244,0.04);
+  border-bottom:1px solid rgba(157,127,244,0.08);
+  font-size:12px;color:var(--t2);
+  font-style:italic;line-height:1.5;
+  display:none;flex-shrink:0;
+}
+#story-bar.on{display:block}
+
+/* ─── NO-KEY ─── */
+#nokey{
+  margin:10px 18px;padding:9px 12px;
+  border-radius:var(--r);background:var(--dg);
+  border:1px solid rgba(240,112,112,0.2);
+  font-size:12px;color:var(--danger);
+  display:none;align-items:center;gap:8px;cursor:pointer;
+  flex-shrink:0;
+}
+#nokey:hover{background:rgba(240,112,112,0.15)}
+#nokey svg{flex-shrink:0}
+
+/* ─── CHAT ─── */
+#chat{
+  flex:1;overflow-y:auto;
+  padding:20px 18px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.msg-row{display:flex;gap:9px;max-width:740px;animation:fadeUp 0.2s ease}
+.msg-row.me{align-self:flex-end;flex-direction:row-reverse}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg-av{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--s3);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;flex-shrink:0;align-self:flex-end;overflow:hidden;
+}
+.msg-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.msg-body{max-width:500px}
+.msg-who{font-size:11px;color:var(--t3);margin-bottom:3px;padding:0 3px}
+.msg-row.me .msg-who{text-align:right}
+.msg-bub{
+  padding:10px 14px;border-radius:16px;
+  font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;
+}
+.msg-row:not(.me) .msg-bub{
+  background:var(--ai-bub);border:1px solid var(--border);
+  border-bottom-left-radius:4px;color:var(--text);
+}
+.msg-row.me .msg-bub{
+  background:var(--user-bub);border:1px solid rgba(157,127,244,0.18);
+  border-bottom-right-radius:4px;color:var(--text);
+}
+.msg-t{font-size:10px;color:var(--t3);margin-top:3px;padding:0 3px}
+.msg-row.me .msg-t{text-align:right}
+
+/* streaming cursor */
+.streaming::after{content:'▌';color:var(--accent);animation:blink 0.8s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+.typing-row{display:flex;gap:9px;animation:fadeUp 0.2s ease}
+.typing-bub{
+  padding:11px 16px;background:var(--ai-bub);
+  border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;
+  display:flex;gap:5px;align-items:center;
+}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--t3);animation:bounce 1.2s infinite}
+.dot:nth-child(2){animation-delay:0.2s}
+.dot:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px);background:var(--accent)}}
+
+/* welcome / empty */
+.empty{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;
+  color:var(--t3);text-align:center;padding:40px;
+}
+.empty-icon{font-size:52px;filter:grayscale(0.3)}
+.empty h3{font-size:17px;color:var(--t2);font-weight:500}
+.empty p{font-size:13px;line-height:1.7;max-width:340px;color:var(--t3)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
+.chip{
+  padding:7px 14px;border-radius:20px;font-size:12px;
+  border:1px solid var(--border2);background:var(--s2);
+  color:var(--t2);cursor:pointer;transition:all 0.15s;
+}
+.chip:hover{border-color:var(--accent);color:var(--accent);background:var(--ag2)}
+
+/* ─── INPUT ─── */
+#input-wrap{
+  padding:10px 16px 14px;
+  border-top:1px solid var(--border);
+  background:var(--s1);flex-shrink:0;
+}
+.input-box{
+  display:flex;gap:8px;align-items:flex-end;
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:16px;padding:8px 8px 8px 14px;
+  transition:border-color 0.15s;
+}
+.input-box:focus-within{border-color:rgba(157,127,244,0.4)}
+#inp{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--text);font-family:'Noto Sans KR',sans-serif;
+  font-size:14px;resize:none;max-height:130px;min-height:22px;
+  line-height:1.55;
+}
+#inp::placeholder{color:var(--t3)}
+#send{
+  width:36px;height:36px;border-radius:10px;
+  background:var(--accent2);border:none;color:#fff;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;flex-shrink:0;
+}
+#send:hover{background:var(--accent);transform:scale(1.05)}
+#send:disabled{background:var(--s4);cursor:not-allowed;transform:none}
+.inp-hint{font-size:11px;color:var(--t4);text-align:center;margin-top:5px}
+
+/* ─── MODAL ─── */
+.ov{
+  position:fixed;inset:0;background:rgba(0,0,0,0.65);
+  display:flex;align-items:center;justify-content:center;
+  z-index:200;padding:12px;backdrop-filter:blur(3px);
+}
+.ov.hide{display:none}
+.modal{
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:var(--r3);width:100%;max-width:600px;
+  max-height:92vh;display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.modal.wide{max-width:700px}
+.modal-hd{
+  padding:18px 20px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0
+}
+.modal-ttl{font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+.modal-ttl svg{color:var(--accent);opacity:0.9}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-ft{
+  padding:13px 20px;border-top:1px solid var(--border);
+  display:flex;gap:8px;justify-content:flex-end;flex-shrink:0
+}
+@media(max-width:640px){
+  .ov{padding:0;align-items:flex-end}
+  .modal{max-width:100%!important;border-radius:var(--r3) var(--r3) 0 0;max-height:94vh}
+}
+
+/* ─── FORM ─── */
+.fg{margin-bottom:16px}
+.fl{font-size:12px;font-weight:500;color:var(--t2);margin-bottom:6px;display:block}
+.fl span{color:var(--t3);font-weight:400}
+.fi,.fta,.fsel{
+  width:100%;background:var(--s3);
+  border:1px solid var(--border2);border-radius:var(--r);
+  color:var(--text);font-family:'Noto Sans KR',sans-serif;
+  font-size:13px;padding:9px 12px;outline:none;transition:border-color 0.15s;
+}
+.fi:focus,.fta:focus,.fsel:focus{border-color:rgba(157,127,244,0.4)}
+.fta{resize:vertical;min-height:80px;line-height:1.6}
+.fsel{cursor:pointer}
+.fsel option{background:var(--s3)}
+.key-wrap{position:relative}
+.key-wrap .fi{padding-right:40px;font-family:monospace;font-size:12px;letter-spacing:0.5px}
+.eye-btn{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--t3);cursor:pointer;padding:3px;
+}
+.eye-btn:hover{color:var(--text)}
+.key-st{
+  display:flex;align-items:center;gap:6px;font-size:12px;
+  padding:7px 11px;border-radius:var(--r);margin-top:7px;
+}
+.key-st.ok{background:var(--tg);color:var(--teal);border:1px solid rgba(56,217,192,0.2)}
+.key-st.no{background:var(--dg);color:var(--danger);border:1px solid rgba(240,112,112,0.2)}
+
+/* ─── BUTTONS ─── */
+.btn{padding:9px 18px;border-radius:var(--r);border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;transition:all 0.15s}
+.btn-p{background:var(--accent2);color:#fff}
+.btn-p:hover{background:var(--accent)}
+.btn-g{background:transparent;color:var(--t2);border:1px solid var(--border2)}
+.btn-g:hover{background:var(--s3);color:var(--text)}
+.btn-d{background:transparent;color:var(--danger);border:1px solid rgba(240,112,112,0.25)}
+.btn-d:hover{background:var(--dg)}
+
+/* ─── TABS ─── */
+.tabs{display:flex;gap:2px;background:var(--s3);border-radius:var(--r);padding:3px;margin-bottom:18px}
+.tab{
+  flex:1;padding:7px;text-align:center;font-size:13px;
+  border-radius:8px;cursor:pointer;color:var(--t2);transition:all 0.15s;border:none;background:transparent;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.tab.on{background:var(--s2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+
+/* ─── PROFILE LIST ─── */
+.profile-list{display:flex;flex-direction:column;gap:8px}
+.profile-card{
+  background:var(--s3);border:1px solid var(--border2);border-radius:var(--r2);
+  overflow:hidden;transition:border-color 0.15s;
+}
+.profile-card.on{border-color:rgba(157,127,244,0.35)}
+.profile-card-hd{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 14px;cursor:pointer;
+}
+.profile-card-hd:hover{background:rgba(255,255,255,0.02)}
+.profile-card-name{flex:1;font-size:13px;font-weight:500;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* toggle switch */
+.p-toggle{
+  position:relative;width:36px;height:20px;flex-shrink:0;
+}
+.p-toggle input{opacity:0;width:0;height:0;position:absolute}
+.p-slider{
+  position:absolute;inset:0;border-radius:20px;
+  background:var(--s4);border:1px solid var(--border2);
+  transition:all 0.2s;cursor:pointer;
+}
+.p-slider::before{
+  content:'';position:absolute;width:14px;height:14px;
+  border-radius:50%;background:var(--t3);
+  top:2px;left:2px;transition:all 0.2s;
+}
+.p-toggle input:checked + .p-slider{background:var(--accent2);border-color:var(--accent2)}
+.p-toggle input:checked + .p-slider::before{transform:translateX(16px);background:#fff}
+/* expand area */
+.profile-expand{
+  padding:0 14px;max-height:0;overflow:hidden;
+  transition:max-height 0.25s ease,padding 0.2s ease;
+}
+.profile-expand.on{max-height:300px;padding:0 14px 12px}
+.profile-ctx{
+  font-size:12px;color:var(--t2);line-height:1.7;
+  background:var(--s4);border-radius:8px;padding:9px 11px;
+  white-space:pre-wrap;word-break:break-word;
+}
+/* del btn */
+.profile-del{
+  background:none;border:none;color:var(--t3);cursor:pointer;
+  padding:3px 5px;font-size:13px;transition:color 0.15s;flex-shrink:0;
+}
+.profile-del:hover{color:var(--danger)}
+/* chevron */
+.profile-chv{
+  color:var(--t3);font-size:11px;transition:transform 0.2s;flex-shrink:0;margin-left:2px;
+}
+.profile-chv.on{transform:rotate(180deg)}
+
+/* ─── MEMORY LIST ─── */
+.mem-list{display:flex;flex-direction:column;gap:8px}
+.mem-item{
+  background:var(--s3);border:1px solid var(--border2);
+  border-radius:var(--r);overflow:hidden;
+}
+.mem-item-hd{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 12px;cursor:pointer;
+}
+.mem-item-hd:hover{background:rgba(255,255,255,0.02)}
+.mem-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--accent);
+  flex-shrink:0;box-shadow:0 0 5px var(--accent);
+}
+.mem-title{flex:1;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mem-chevron{
+  color:var(--t3);transition:transform 0.2s;flex-shrink:0;
+  width:16px;height:16px;display:flex;align-items:center;justify-content:center;
+}
+.mem-chevron.open{transform:rotate(180deg)}
+.mem-body{
+  padding:0 12px;max-height:0;overflow:hidden;transition:all 0.25s ease;
+}
+.mem-body.open{max-height:200px;padding:0 12px 12px}
+.mem-content{
+  font-size:13px;color:var(--t2);line-height:1.6;
+  background:var(--s4);border-radius:8px;padding:10px 12px;
+}
+.mem-del{
+  color:var(--t3);background:none;border:none;cursor:pointer;
+  padding:2px;font-size:13px;transition:color 0.15s;flex-shrink:0;
+}
+.mem-del:hover{color:var(--danger)}
+.mem-add-row{
+  display:flex;flex-direction:column;gap:8px;
+  margin-top:14px;padding-top:14px;border-top:1px solid var(--border);
+}
+.mem-add-row .fi{font-size:13px}
+.mem-add-row .fta{min-height:70px;font-size:13px}
+.mem-add-acts{display:flex;gap:8px;justify-content:flex-end}
+.mem-char{font-size:11px;color:var(--t3);text-align:right;margin-top:3px}
+
+/* ─── EMOJI PICKER ─── */
+.emo-wrap{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.emo-preview{
+  width:54px;height:54px;border-radius:50%;
+  background:var(--s4);border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;cursor:pointer;flex-shrink:0;
+  transition:border-color 0.15s;position:relative;overflow:hidden;
+}
+.emo-preview:hover{border-color:var(--accent)}
+.emo-preview img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.emo-hint{font-size:11px;color:var(--t3);line-height:1.7}
+.emo-grid{
+  display:grid;grid-template-columns:repeat(9,1fr);gap:4px;
+  margin-top:6px;max-height:130px;overflow-y:auto;
+}
+.emo-opt{
+  width:100%;aspect-ratio:1;border-radius:7px;border:1px solid transparent;
+  background:var(--s4);cursor:pointer;font-size:18px;display:flex;
+  align-items:center;justify-content:center;transition:all 0.12s;
+}
+.emo-opt:hover{background:var(--s3);border-color:var(--border2)}
+.emo-opt.sel{background:var(--ag);border-color:rgba(157,127,244,0.3)}
+
+/* img upload */
+.img-upload-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 12px;border-radius:var(--r);
+  border:1px dashed var(--border2);background:transparent;
+  color:var(--t2);cursor:pointer;font-size:12px;
+  font-family:'Noto Sans KR',sans-serif;transition:all 0.15s;
+  width:100%;justify-content:center;
+}
+.img-upload-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--ag2)}
+input[type=file]{display:none}
+
+/* genre tag */
+.genre-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.gtag{
+  padding:5px 12px;border-radius:20px;font-size:12px;
+  border:1px solid var(--border2);background:var(--s4);
+  color:var(--t2);cursor:pointer;transition:all 0.15s;
+}
+.gtag:hover,.gtag.sel{border-color:rgba(157,127,244,0.35);color:var(--accent);background:var(--ag)}
+
+/* note badge */
+.note-badge{
+  font-size:10px;padding:2px 7px;border-radius:20px;
+  background:var(--amg);color:var(--amber);border:1px solid rgba(240,168,64,0.2);
+  margin-left:auto;
+}
+
+/* active profile badge (topbar) */
+.profile-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;
+  background:var(--ag);border:1px solid rgba(157,127,244,0.25);color:var(--accent);
+  cursor:pointer;transition:all 0.15s;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;
+}
+.profile-badge:hover{background:rgba(157,127,244,0.18)}
+
+/* divider */
+.divider{display:flex;align-items:center;gap:10px;margin:12px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.divider span{font-size:11px;color:var(--t3)}
+
+/* tag pill */
+.pill{
+  display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;
+}
+.pill-f{background:var(--ag);color:var(--accent)}
+.pill-r{background:var(--pg);color:var(--pink)}
+.pill-a{background:var(--dg);color:var(--danger)}
+.pill-s{background:var(--tg);color:var(--teal)}
+
+/* welcome screen */
+#welcome{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;
+  color:var(--t3);text-align:center;padding:40px;
+}
+#welcome svg{opacity:0.15}
+#welcome h2{font-family:'Gowun Batang',serif;font-size:22px;color:var(--t2);font-weight:700}
+#welcome p{font-size:13px;line-height:1.8;max-width:360px}
+
+/* animations */
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.modal{animation:slideIn 0.2s ease}
+
+/* ─── MSG ACTION BUTTONS ─── */
+.msg-actions{
+  display:flex;gap:3px;margin-top:4px;padding:0 3px;
+  opacity:0;transition:opacity 0.15s;
+}
+.msg-row:hover .msg-actions{opacity:1}
+.msg-row.me .msg-actions{justify-content:flex-end}
+.msg-act-btn{
+  background:none;border:1px solid var(--border);
+  border-radius:6px;color:var(--t3);cursor:pointer;
+  font-size:11px;padding:2px 6px;transition:all 0.15s;
+  font-family:'Noto Sans KR',sans-serif;line-height:1.4;
+  display:flex;align-items:center;gap:3px;
+}
+.msg-act-btn:hover{background:var(--s3);border-color:var(--border2);color:var(--text)}
+.msg-act-btn.reroll:hover{color:var(--accent);border-color:rgba(157,127,244,0.3)}
+.msg-act-btn.edit-btn:hover{color:var(--teal);border-color:rgba(56,217,192,0.3)}
+
+/* 인라인 수정 영역 */
+.msg-edit-area{
+  width:100%;background:var(--s3);border:1px solid rgba(157,127,244,0.3);
+  border-radius:10px;padding:8px 10px;
+  color:var(--text);font-family:'Noto Sans KR',sans-serif;
+  font-size:14px;line-height:1.6;resize:none;outline:none;
+  margin-top:4px;
+}
+.msg-edit-acts{display:flex;gap:6px;margin-top:6px;justify-content:flex-end}
+.msg-edit-save{
+  padding:4px 12px;border-radius:7px;background:var(--accent2);
+  border:none;color:#fff;cursor:pointer;font-size:12px;
+  font-family:'Noto Sans KR',sans-serif;transition:background 0.15s;
+}
+.msg-edit-save:hover{background:var(--accent)}
+.msg-edit-cancel{
+  padding:4px 10px;border-radius:7px;background:transparent;
+  border:1px solid var(--border2);color:var(--t2);cursor:pointer;font-size:12px;
+  font-family:'Noto Sans KR',sans-serif;transition:all 0.15s;
+}
+.msg-edit-cancel:hover{background:var(--s3);color:var(--text)}
+
+/* char editor tabs */
+.char-ed-body{display:none}
+.char-ed-body.on{display:block}
+
+/* 시작 장면 */
+.scene-card{
+  background:var(--s3);border:1px solid var(--border2);border-radius:var(--r2);
+  margin-bottom:10px;overflow:hidden;
+}
+.scene-card-hd{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 12px;border-bottom:1px solid var(--border);
+}
+.scene-title-inp{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--text);font-family:'Noto Sans KR',sans-serif;
+  font-size:13px;font-weight:500;
+}
+.scene-title-inp::placeholder{color:var(--t3)}
+.scene-del{
+  background:none;border:none;color:var(--t3);cursor:pointer;
+  font-size:13px;padding:2px 4px;transition:color 0.15s;flex-shrink:0;
+}
+.scene-del:hover{color:var(--danger)}
+.scene-body-inp{
+  width:100%;background:transparent;border:none;outline:none;
+  color:var(--text);font-family:'Noto Sans KR',sans-serif;
+  font-size:13px;line-height:1.7;resize:none;
+  padding:10px 12px;min-height:90px;
+}
+.scene-body-inp::placeholder{color:var(--t3)}
+</style>
+</head>
+<body>
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<div id="sidebar">
+  <div class="sb-top">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div class="logo">
+          <div class="logo-dot"></div>
+          CharaChat
+        </div>
+        <div class="logo-sub">AI STORY STUDIO</div>
+      </div>
+      <button id="theme-toggle" onclick="toggleTheme()" title="테마 전환"
+        style="background:var(--s3);border:1px solid var(--border2);border-radius:8px;
+               color:var(--t2);cursor:pointer;padding:6px 8px;font-size:14px;
+               transition:all 0.15s;flex-shrink:0"
+        onmouseover="this.style.background='var(--s4)'"
+        onmouseout="this.style.background='var(--s3)'">🌙</button>
+    </div>
+  </div>
+
+  <div class="sb-section">스토리</div>
+  <div class="char-scroll" id="char-list">
+    <!-- 시작 장면 카테고리는 renderChars가 동적으로 생성 -->
+  </div>
+  <button class="sb-add" onclick="openModal('char-modal')">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    새 스토리
+  </button>
+
+  <div class="sb-bot">
+    <!-- API 토글 -->
+    <div style="padding:6px 4px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
+      <div style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:1px;margin-bottom:6px;padding:0 4px">AI 엔진</div>
+      <div style="display:flex;gap:4px;padding:0 4px">
+        <button id="api-btn-claude" onclick="setActiveApi('claude')"
+          style="flex:1;padding:7px 4px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;font-weight:500;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s">
+          Claude
+        </button>
+        <button id="api-btn-gemini" onclick="setActiveApi('gemini')"
+          style="flex:1;padding:7px 4px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;font-weight:500;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s">
+          Gemini
+        </button>
+        <button onclick="openModal('key-modal')" title="API 키 설정"
+          style="padding:7px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:13px;transition:all 0.15s"
+          onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'">🔑</button>
+      </div>
+    </div>
+    <button class="sb-btn" onclick="openNoteModal()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      유저 노트
+    </button>
+    <button class="sb-btn" id="sb-profile-btn" onclick="openProfileModal()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span id="sb-profile-label">유저 프로필</span>
+    </button>
+    <button class="sb-btn" onclick="openMemoryModal()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></svg>
+      장기 기억
+    </button>
+    <button class="sb-btn red" onclick="clearChat()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+      대화 초기화
+    </button>
+  </div>
+</div>
+
+<!-- 모바일 사이드바 오버레이 + 햄버거 -->
+<div id="sb-overlay" onclick="closeSidebar()"></div>
+<button id="sb-toggle" onclick="toggleSidebar()">
+  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
+<!-- ══════════ MAIN ══════════ -->
+<div id="main">
+  <!-- TOPBAR -->
+  <div id="topbar" style="display:none">
+    <div class="tb-emo" id="tb-emo" onclick="document.getElementById('tb-emo-file').click()" title="클릭해서 캐릭터 사진 변경"></div>
+    <input type="file" id="tb-emo-file" accept="image/*" style="display:none" onchange="loadTbEmoImg(event)">
+    <div class="tb-info">
+      <div class="tb-name" id="tb-name"></div>
+      <div class="tb-sub" id="tb-sub"></div>
+    </div>
+    <div class="tb-acts">
+    </div>
+  </div>
+
+  <!-- STORY BAR -->
+  <div id="story-bar"></div>
+
+  <!-- NO-KEY BANNER -->
+  <div id="nokey" onclick="openModal('key-modal')">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    API 키가 없어요. 클릭해서 설정하세요.
+  </div>
+
+  <!-- CHAT -->
+  <div id="chat">
+    <div id="welcome">
+      <svg width="64" height="64" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <h2>CharaChat</h2>
+      <p>왼쪽에서 스토리를 선택하거나 새 스토리를 만들어보세요.<br>API 키를 먼저 설정해야 대화할 수 있어요.</p>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div id="input-wrap" style="display:none">
+    <div class="input-box">
+      <textarea id="inp" rows="1" placeholder="메시지 입력... (Enter 전송 / Shift+Enter 줄바꿈)"></textarea>
+      <button id="send" onclick="sendMsg()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="inp-hint">Enter 전송 · Shift+Enter 줄바꿈 · 스트리밍 지원</div>
+  </div>
+</div>
+
+<!-- ══════════ NOTE MODAL ══════════ -->
+<div class="ov hide" id="note-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        유저 노트
+        <span id="note-modal-char" style="font-size:11px;font-weight:400;color:var(--amber);background:var(--amg);padding:2px 8px;border-radius:20px;margin-left:4px"></span>
+      </div>
+      <button class="ico-btn" onclick="closeModal('note-modal')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <p style="font-size:12px;color:var(--t3);margin-bottom:12px;line-height:1.7">이 캐릭터의 스토리에서 기억하고 싶은 것들을 자유롭게 메모하세요. AI 프롬프트에 포함됩니다.</p>
+      <textarea id="note-textarea" class="fta" maxlength="1000"
+        style="min-height:300px;font-size:13px;line-height:1.8;resize:vertical"
+        placeholder="예: 3화에서 주인공이 해린에게 마법책을 빌려줬다. 해린은 사실 그 책의 비밀을 알고 있었다...&#10;&#10;메모, 복선, 기억해두고 싶은 씬 등 자유롭게 작성하세요."
+        oninput="onNoteInput(this)"></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <span id="note-char-count" style="font-size:11px;color:var(--t3)">0 / 1000</span>
+        <span id="note-save-status" style="font-size:11px;color:var(--teal);opacity:0;transition:opacity 0.4s">저장됨 ✓</span>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-g" onclick="closeModal('note-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- KEY MODAL -->
+<div class="ov hide" id="key-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M12 11l9-9M18 5l2 2M15 8l2 2"/></svg>
+        설정
+      </div>
+      <button class="ico-btn" onclick="closeModal('key-modal')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:0">
+
+      <!-- CLAUDE 섹션 -->
+      <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:600">🤖 Claude</span>
+          <span style="font-size:11px;color:var(--t3)">Anthropic</span>
+        </div>
+        <div class="key-wrap" style="margin-bottom:8px">
+          <input class="fi" id="key-inp" type="password" placeholder="sk-ant-api03-..." style="font-size:13px">
+          <button class="eye-btn" onclick="toggleEye('key-inp','eye-ico')">
+            <svg id="eye-ico" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div id="key-st" style="margin-bottom:8px"></div>
+        <!-- Claude 모델 카드 -->
+        <div id="claude-model-list" style="display:flex;flex-direction:column;gap:4px"></div>
+        <div style="font-size:11px;color:var(--t3);margin-top:8px">
+          발급: <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a>
+        </div>
+      </div>
+
+      <!-- GEMINI 섹션 -->
+      <div style="padding:16px 20px 12px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:600">✨ Gemini</span>
+          <span style="font-size:11px;color:var(--t3)">Google</span>
+        </div>
+        <div class="key-wrap" style="margin-bottom:8px">
+          <input class="fi" id="gemini-key-inp" type="password" placeholder="AIzaSy..." style="font-size:13px">
+          <button class="eye-btn" onclick="toggleEye('gemini-key-inp','eye-ico2')">
+            <svg id="eye-ico2" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div id="gemini-key-st" style="margin-bottom:8px"></div>
+        <!-- Gemini 모델 카드 -->
+        <div id="gemini-model-list" style="display:flex;flex-direction:column;gap:4px"></div>
+        <div style="font-size:11px;color:var(--t3);margin-top:8px">
+          발급: <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--teal)">aistudio.google.com/apikey</a>
+          &nbsp;·&nbsp; <span style="color:var(--teal)">Flash 계열 무료 티어 있음</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-g" onclick="closeModal('key-modal')">취소</button>
+      <button class="btn btn-p" onclick="saveKey()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAR MODAL -->
+<div class="ov hide" id="char-modal">
+  <div class="modal wide">
+    <div class="modal-hd">
+      <div class="modal-ttl">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <span id="char-modal-ttl">새 스토리</span>
+      </div>
+      <button class="ico-btn" onclick="closeModal('char-modal')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs">
+        <button class="tab on" id="ctab-0" onclick="switchCharTab(0)">기본 정보</button>
+        <button class="tab" id="ctab-1" onclick="switchCharTab(1)">프롬프트 · 설정</button>
+      </div>
+
+      <!-- TAB 0 -->
+      <div class="char-ed-body on" id="ctab-body-0">
+        <div class="emo-wrap">
+          <div class="emo-preview" id="emo-preview" onclick="triggerImgUpload()">🧚</div>
+          <div>
+            <div class="emo-hint">클릭 — 이미지 업로드<br>또는 아래 이모지 선택</div>
+            <input type="file" id="emo-file" accept="image/*" onchange="loadEmoImg(event)">
+          </div>
+        </div>
+        <div class="emo-grid" id="emo-grid"></div>
+        <div style="height:14px"></div>
+        <div class="fg">
+          <label class="fl">스토리 이름</label>
+          <input class="fi" id="c-name" placeholder="예: 해린, 시온, 루카스">
+        </div>
+        <div class="fg">
+          <label class="fl">장르</label>
+          <div class="genre-tags" id="genre-tags"></div>
+        </div>
+      </div>
+
+      <!-- TAB 1 : 프롬프트 + 시작 장면 -->
+      <div class="char-ed-body" id="ctab-body-1">
+        <div class="fg">
+          <label class="fl">제작자 시스템 프롬프트 <span>— 성격·말투·행동 지침 (8000자 권장)</span></label>
+          <div style="position:relative">
+            <textarea class="fta" id="c-prompt" style="min-height:200px" placeholder="예:
+당신은 해린, 20세 마법학교 2학년생입니다.
+- 성격: 조용하고 신중하며 마법 연구에 진심
+- 말투: 존댓말 사용, 짧고 간결하게 대화
+- 비밀: 사실은 고대 마법사의 환생
+- 절대로 캐릭터를 벗어나지 않습니다"></textarea>
+            <div id="prompt-char-count" style="position:absolute;bottom:6px;right:10px;font-size:10px;color:var(--t3);pointer-events:none">0자</div>
+          </div>
+        </div>
+
+        <!-- 시작 장면 섹션 -->
+        <div style="border-top:1px dashed var(--border);margin:8px 0 16px;padding-top:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <label class="fl" style="margin:0">시작 장면 <span>— 신규 대화 시작 시 선택 가능</span></label>
+            <button onclick="openSceneModal(-1)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--accent);cursor:pointer;font-size:12px;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--ag2)'" onmouseout="this.style.background='transparent'">+ 추가</button>
+          </div>
+          <div id="scene-list"></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-d" id="char-del-btn" onclick="deleteChar()" style="display:none;margin-right:auto">삭제</button>
+      <button class="btn btn-g" onclick="closeModal('char-modal')">취소</button>
+      <button class="btn btn-p" onclick="saveChar()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="ov hide" id="profile-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        유저 프로필
+        <span id="profile-modal-char" style="font-size:11px;font-weight:400;color:var(--accent);background:var(--ag);padding:2px 8px;border-radius:20px;margin-left:4px"></span>
+      </div>
+      <button class="ico-btn" onclick="closeModal('profile-modal')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--t3);line-height:1.7;margin-bottom:14px">토글로 켜진 프로필이 <b style="color:var(--text)">이 스토리</b>의 AI 프롬프트에 포함됩니다. 여러 개 동시에 켤 수 있어요.</p>
+      <div class="profile-list" id="profile-list"></div>
+      <div class="divider"><span>새 프로필 추가</span></div>
+      <div class="fg">
+        <label class="fl">프로필 이름 <span>— 구분용</span></label>
+        <input class="fi" id="p-name" placeholder="예: 기본 플레이어, 탐정 모드, 마법사 지망생">
+      </div>
+      <div class="fg">
+        <label class="fl">AI 프롬프트 컨텍스트 <span>— 이 내용이 그대로 시스템 프롬프트에 들어감</span></label>
+        <textarea class="fta" id="p-ctx" style="min-height:100px" placeholder="예: 유저는 마법을 배우려는 새내기입니다. 겁쟁이지만 호기심이 많고 쉽게 당황합니다. 캐릭터와 친해지고 싶어합니다."></textarea>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-g" onclick="closeModal('profile-modal')">닫기</button>
+      <button class="btn btn-p" onclick="addProfile()">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEMORY MODAL -->
+<div class="ov hide" id="memory-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></svg>
+        장기 기억
+        <span id="mem-modal-char" style="font-size:11px;font-weight:400;color:var(--accent);background:var(--ag);padding:2px 8px;border-radius:20px;margin-left:4px"></span>
+      </div>
+      <button class="ico-btn" onclick="closeModal('memory-modal')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px;max-height:calc(88vh - 140px);overflow-y:auto">
+      <div class="mem-list" id="mem-list"></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-g" onclick="closeModal('memory-modal')">닫기</button>
+      <button class="btn btn-p" onclick="openMemEditModal(-1)">＋ 추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEM EDIT MODAL -->
+<div class="ov hide" id="mem-edit-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl" id="mem-edit-modal-ttl">새 기억</div>
+      <button class="ico-btn" onclick="closeMemEditModal()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+      <div class="fg">
+        <label class="fl">제목 <span>— 최대 20자</span></label>
+        <input class="fi" id="mem-title" placeholder="예: 첫 만남, 비밀 공개, 관계 변화" maxlength="20" style="font-size:14px">
+      </div>
+      <div class="fg">
+        <label class="fl">내용 <span>— 최대 300자</span></label>
+        <textarea class="fta" id="mem-content" placeholder="예: 유저가 애셔에게 자신의 정체를 밝혔다. 애셔는 표정 변화 없이 듣다가 잠시 침묵했다." maxlength="300" style="min-height:140px;font-size:13px;line-height:1.8"></textarea>
+        <div class="mem-char" id="mem-char" style="text-align:right;margin-top:4px">0 / 300</div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-d" id="mem-edit-del" onclick="deleteMemFromModal()" style="margin-right:auto;display:none">삭제</button>
+      <button class="btn btn-g" onclick="closeMemEditModal()">취소</button>
+      <button class="btn btn-p" id="mem-edit-save" onclick="saveMemFromModal()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ NEW ROOM MODAL ══════════ -->
+<div class="ov hide" id="newroom-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        신규 대화
+        <span id="newroom-char-name" style="font-size:11px;font-weight:400;color:var(--accent);background:var(--ag);padding:2px 8px;border-radius:20px;margin-left:4px"></span>
+      </div>
+      <button class="ico-btn" onclick="closeModal('newroom-modal')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <label class="fl">대화방 이름 <span>— 비워두면 자동 지정</span></label>
+        <input class="fi" id="newroom-name" placeholder="예: 도서관에서 첫 만남, 2회차">
+      </div>
+      <div class="fg">
+        <label class="fl">시작 장면 선택 <span>— 선택하면 해당 장면으로 대화 시작</span></label>
+        <div id="newroom-scene-list" style="display:flex;flex-direction:column;gap:6px;margin-top:4px"></div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-g" onclick="closeModal('newroom-modal')">취소</button>
+      <button class="btn btn-p" onclick="createRoom()">대화 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCENE EDIT MODAL ══════════ -->
+<div class="ov hide" id="scene-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-5-5z"/><polyline points="14 3 14 8 19 8"/></svg>
+        시작 장면
+      </div>
+      <button class="ico-btn" onclick="closeSceneModal()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+      <div class="fg">
+        <label class="fl">장면 이름</label>
+        <input class="fi" id="scene-modal-title" placeholder="예: 시작 설정1, 도서관 첫 만남, 재회" style="font-size:14px">
+      </div>
+      <div class="fg">
+        <label class="fl">내용 <span>— 캐릭터의 첫 지문·대사를 자유롭게</span></label>
+        <textarea class="fta" id="scene-modal-body"
+          style="min-height:340px;font-size:13px;line-height:1.85;resize:vertical"
+          placeholder="예:
+
+*브리핑룸 불빛이 꺼진 복도, 애셔는 벽에 등을 기댄 채 창밖을 내다보고 있었다. 인기척을 느끼고 천천히 고개를 돌린다.*
+
+&quot;늦었네.&quot;
+
+*낮고 건조한 음성이 복도를 채운다. 시선이 잠깐 머물다, 다시 창밖으로 향한다.*"></textarea>
+        <div style="display:flex;justify-content:space-between;margin-top:6px">
+          <span id="scene-modal-count" style="font-size:11px;color:var(--t3)">0자</span>
+          <span style="font-size:11px;color:var(--t3)">*지문* 형식으로 쓰면 회색으로 표시돼요</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-d" id="scene-modal-del" onclick="deleteSceneFromModal()" style="margin-right:auto;display:none">삭제</button>
+      <button class="btn btn-g" onclick="closeSceneModal()">취소</button>
+      <button class="btn btn-p" onclick="saveSceneFromModal()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCRIPT ══════════ -->
+<script>
+// ─── DATA ───
+const EMOJIS=['🧚','🧙','🗡️','🌙','🦊','🐉','🌸','⚔️','🔮','🌊','🌺','🦋','👁️','🌟','🧜','🏹','🌿','👑','🎭','🦁','🐺','💎','🌀','⚡','🔥','🌑','🕯️','🎪','🌈','🦄','🐦','🌻','🍀','🦅','🐬','🌹','💀','🎩','🦋','👻'];
+const USER_EMOJIS=['😊','😎','🙂','😏','😶','🤔','🧑','👤','🦊','🌙','⚡','🌊','🌸','🔮','🌟'];
+const GENRES=[
+  {id:'fantasy',l:'판타지',cls:'pill-f'},
+  {id:'romance',l:'로맨스',cls:'pill-r'},
+  {id:'romcom',l:'로맨스코미디',cls:'pill-r'},
+  {id:'pureromance',l:'순애',cls:'pill-r'},
+  {id:'bl',l:'BL',cls:'pill-r'},
+  {id:'gl',l:'GL',cls:'pill-r'},
+  {id:'action',l:'액션',cls:'pill-a'},
+  {id:'thriller',l:'스릴러',cls:'pill-a'},
+  {id:'horror',l:'호러',cls:'pill-a'},
+  {id:'mystery',l:'미스터리',cls:'pill-f'},
+  {id:'slice',l:'일상',cls:'pill-s'},
+  {id:'healing',l:'힐링',cls:'pill-s'},
+  {id:'scifi',l:'SF',cls:'pill-f'},
+  {id:'hist',l:'시대극',cls:'pill-s'},
+  {id:'school',l:'학원물',cls:'pill-s'},
+  {id:'isekai',l:'이세계',cls:'pill-f'},
+  {id:'dark',l:'다크',cls:'pill-a'},
+  {id:'drama',l:'드라마',cls:'pill-r'},
+];
+
+let D={
+  key:'', model:'claude-sonnet-4-20250514',
+  geminiKey:'', geminiModel:'gemini-2.5-flash',
+  activeApi:'claude',
+  chars:[], activeChar:null,
+  rooms:{},       // rooms[charId] = [{id,name,sceneId,createdAt}]
+  histories:{},   // histories[roomId] = [{role,content,time}]
+  charMemories:{}, charNotes:{}, charProfiles:{}, roomProfiles:{},
+  profiles:[],
+  editing:null,
+  emoSel:EMOJIS[0], emoImg:null,
+  pEmoSel:USER_EMOJIS[0],
+  genres:['fantasy'],
+  activeRoom:null
+};
+
+function load(){
+  try{
+    const s=localStorage.getItem('cc9');
+    if(s){const parsed=JSON.parse(s);Object.assign(D,parsed);}
+    try{
+      const imgs=localStorage.getItem('cc9_imgs');
+      if(imgs){const imgMap=JSON.parse(imgs);D.chars.forEach(c=>{if(imgMap[c.id])c.emoImg=imgMap[c.id];});}
+    }catch(e){}
+    // ── 마이그레이션: 구 histories[charId][] 또는 histories[charId][sceneId] → rooms 구조 ──
+    if(!D.rooms)D.rooms={};
+    Object.keys(D.histories||{}).forEach(key=>{
+      const val=D.histories[key];
+      if(Array.isArray(val)&&val.length>0){
+        // histories[roomId] = [] 형태 - 이미 새 구조 (roomId가 char와 무관)
+        // 또는 구버전 histories[charId] = [] 형태
+        const charMatch=D.chars.find(c=>c.id===key);
+        if(charMatch){
+          // 구버전: charId 키로 저장된 배열 → room으로 변환
+          const roomId='room_legacy_'+key;
+          if(!D.rooms[key])D.rooms[key]=[];
+          if(!D.rooms[key].find(r=>r.id===roomId)){
+            D.rooms[key].push({id:roomId,name:'이전 대화',sceneId:null,createdAt:0});
+          }
+          D.histories[roomId]=val;
+          delete D.histories[key];
+        }
+      } else if(val&&typeof val==='object'&&!Array.isArray(val)){
+        // 중간버전: histories[charId][sceneId] = [] 형태 → room으로 변환
+        const charMatch=D.chars.find(c=>c.id===key);
+        if(charMatch){
+          if(!D.rooms[key])D.rooms[key]=[];
+          Object.keys(val).forEach(scKey=>{
+            const roomId='room_'+scKey;
+            if(!D.rooms[key].find(r=>r.id===roomId)){
+              D.rooms[key].push({id:roomId,name:'이전 대화',sceneId:null,createdAt:0});
+            }
+            D.histories[roomId]=val[scKey];
+          });
+          delete D.histories[key];
+        }
+      }
+    });
+    // activeScene → activeRoom 마이그레이션
+    if(D.activeScene&&!D.activeRoom)D.activeRoom=D.activeScene;
+  }catch(e){console.warn('load 실패',e);}
+}
+function save(){
+  try{
+    const imgMap={};
+    const liteChars=D.chars.map(c=>{
+      if(c.emoImg)imgMap[c.id]=c.emoImg;
+      const copy=Object.assign({},c); copy.emoImg=null; return copy;
+    });
+    const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,activeApi:D.activeApi,
+      chars:liteChars,activeChar:D.activeChar,activeRoom:D.activeRoom,
+      rooms:D.rooms,histories:D.histories,
+      charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,
+      profiles:D.profiles};
+    localStorage.setItem('cc9',JSON.stringify(lite));
+    try{localStorage.setItem('cc9_imgs',JSON.stringify(imgMap));}
+    catch(e){console.warn('이미지 저장 실패');}
+  }catch(e){
+    try{
+      const liteChars2=D.chars.map(c=>{const copy=Object.assign({},c);copy.emoImg=null;return copy;});
+      const lite2={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,activeApi:D.activeApi,
+        chars:liteChars2,activeChar:D.activeChar,activeRoom:D.activeRoom,
+        rooms:D.rooms,histories:D.histories,
+        charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,
+        profiles:D.profiles};
+      localStorage.setItem('cc9',JSON.stringify(lite2));
+    }catch(e2){console.warn('저장 실패',e2);}
+  }
+}
+const $=id=>document.getElementById(id);
+function q(s){return document.querySelector(s)}
+function now(){return new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}
+
+// ─── 헬퍼 ───
+function cid(){return D.activeChar}
+function rid(){return D.activeRoom}
+function cChar(){return D.chars.find(x=>x.id===cid())}
+function cRoom(){
+  if(!cid()||!rid())return null;
+  return(D.rooms[cid()]||[]).find(r=>r.id===rid())||null;
+}
+function cHist(){
+  if(!rid())return[];
+  if(!D.histories[rid()])D.histories[rid()]=[];
+  return D.histories[rid()];
+}
+function cMems(){if(!cid())return[];if(!D.charMemories[cid()])D.charMemories[cid()]=[];return D.charMemories[cid()]}
+function cNote(){if(!cid())return'';return D.charNotes[cid()]||''}
+function setNote(v){if(!cid())return;D.charNotes[cid()]=v;}
+function cProfs(){
+  if(!rid())return[];
+  if(!D.roomProfiles)D.roomProfiles={};
+  if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=[];
+  return D.roomProfiles[rid()];
+}
+function charName(){const c=cChar();return c?c.name:''}
+function cRooms(charId){
+  const id=charId||cid(); if(!id)return[];
+  if(!D.rooms[id])D.rooms[id]=[];
+  return D.rooms[id];
+}
+
+// ─── INIT ───
+function init(){
+  loadTheme();
+  load();
+  buildEmoGrid();
+  buildGenreTags();
+  renderChars();
+  renderTopbar();
+  renderChat();
+  updateApiToggleBtns();
+  // default char
+  if(!D.chars.length){
+    D.chars.push({
+      id:'d1', emoji:'🧚', emoImg:null, name:'해린',
+      genre:'fantasy', greeting:'...여기 있었군요. 용건이 뭔가요?',
+      prompt:'당신은 해린, 20세 마법학교 2학년생입니다.\n- 성격: 조용하고 신중하며 마법 연구에 진심\n- 말투: 간결한 존댓말 사용\n- 절대 캐릭터를 벗어나지 않습니다',
+      world:'마법학교 에테리아, 봄날 저녁 도서관',
+      scenario:'유저는 편입생으로 도서관에서 처음 해린을 만났다.'
+    });
+    save();
+    renderChars();
+  }
+  $('key-inp').addEventListener('input',updateKeySt);
+  $('gemini-key-inp').addEventListener('input',updateGeminiKeySt);
+  $('mem-content').addEventListener('input',()=>{
+    $('mem-char').textContent=$('mem-content').value.length+' / 300'});
+  document.addEventListener('input',e=>{if(e.target.id==='c-prompt')updatePromptCount();if(e.target.id==='scene-modal-body')$('scene-modal-count').textContent=e.target.value.length+'자';});
+  $('inp').addEventListener('input',function(){
+    this.style.height='auto';
+    this.style.height=Math.min(this.scrollHeight,130)+'px';
+  });
+  $('inp').addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}
+  });
+  // 모달은 X버튼/취소 버튼으로만 닫힘 (오버레이 클릭 닫힘 제거)
+}
+
+// ─── EMOJI GRID ───
+function buildEmoGrid(){
+  const g=$('emo-grid'); g.innerHTML='';
+  EMOJIS.forEach(e=>{
+    const b=document.createElement('button');
+    b.className='emo-opt'+(e===D.emoSel?' sel':'');
+    b.textContent=e;
+    b.onclick=()=>{
+      D.emoSel=e; D.emoImg=null;
+      const p=$('emo-preview'); p.textContent=e; p.style.backgroundImage='';
+      if(p.querySelector('img'))p.querySelector('img').remove();
+      g.querySelectorAll('.emo-opt').forEach(x=>x.classList.remove('sel'));
+      b.classList.add('sel');
+    };
+    g.appendChild(b);
+  });
+}
+function buildGenreTags(){
+  const g=$('genre-tags'); g.innerHTML='';
+  // 편집 시 현재 캐릭터 genres 로드
+  const sel=Array.isArray(D._editGenres)?D._editGenres:(D._editGenres=[...(D.genres||['fantasy'])]);
+  GENRES.forEach(gn=>{
+    const t=document.createElement('div');
+    t.className='gtag'+(sel.includes(gn.id)?' sel':'');
+    t.textContent=gn.l;
+    t.onclick=()=>{
+      if(sel.includes(gn.id)){
+        if(sel.length>1)sel.splice(sel.indexOf(gn.id),1);
+      } else {
+        sel.push(gn.id);
+      }
+      t.classList.toggle('sel',sel.includes(gn.id));
+    };
+    g.appendChild(t);
+  });
+  // 커스텀 장르 입력
+  const customWrap=document.createElement('div');
+  customWrap.style.cssText='display:flex;gap:6px;align-items:center;margin-top:8px;width:100%';
+  const customInp=document.createElement('input');
+  customInp.id='genre-custom-inp';
+  customInp.placeholder='직접 입력 후 Enter (예: 무협, 궁중로맨스...)';
+  customInp.style.cssText="flex:1;background:var(--s3);border:1px solid var(--border2);border-radius:20px;color:var(--text);font-family:\'Noto Sans KR\',sans-serif;font-size:12px;padding:5px 12px;outline:none;transition:border-color 0.15s";
+  customInp.addEventListener('focus',()=>customInp.style.borderColor='rgba(157,127,244,0.4)');
+  customInp.addEventListener('blur',()=>customInp.style.borderColor='var(--border2)');
+  customInp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){
+      e.preventDefault();
+      const v=customInp.value.trim(); if(!v)return;
+      if(!sel.includes(v)){
+        sel.push(v);
+        // 태그 동적 추가
+        const ct=document.createElement('div');
+        ct.className='gtag sel';
+        ct.textContent=v;
+        ct.onclick=()=>{
+          if(sel.length>1)sel.splice(sel.indexOf(v),1);
+          ct.classList.toggle('sel',sel.includes(v));
+        };
+        g.insertBefore(ct,customWrap);
+      }
+      customInp.value='';
+    }
+  });
+  customWrap.appendChild(customInp);
+  g.appendChild(customWrap);
+}
+function triggerImgUpload(){$('emo-file').click()}
+function loadEmoImg(e){
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    D.emoImg=ev.target.result;
+    const p=$('emo-preview'); p.textContent='';
+    let img=p.querySelector('img');
+    if(!img){img=document.createElement('img');p.appendChild(img)}
+    img.src=D.emoImg;
+  };
+  r.readAsDataURL(f);
+}
+function renderAvatar(el, char){
+  if(char.emoImg){
+    el.textContent='';
+    let img=el.querySelector('img');
+    if(!img){img=document.createElement('img');el.appendChild(img)}
+    img.src=char.emoImg;
+  } else {
+    const img=el.querySelector('img');if(img)img.remove();
+    el.textContent=char.emoji||'🧚';
+  }
+}
+// 상단 아이콘 클릭 → 캐릭터 사진 직접 교체
+function loadTbEmoImg(e){
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const c=cChar(); if(!c)return;
+    c.emoImg=ev.target.result;
+    // 이미지 맵에도 저장
+    try{
+      const imgs=JSON.parse(localStorage.getItem('cc9_imgs')||'{}');
+      imgs[c.id]=ev.target.result;
+      localStorage.setItem('cc9_imgs',JSON.stringify(imgs));
+    }catch(err){}
+    save();
+    renderAvatar($('tb-emo'),c);
+    renderChars();
+  };
+  r.readAsDataURL(f);
+  e.target.value='';
+}
+
+// ─── CHARS ───
+function renderChars(){
+  const list=$('char-list'); list.innerHTML='';
+  if(!D.chars.length){
+    list.innerHTML='<div style="padding:10px 14px;font-size:12px;color:var(--t3)">스토리를 추가하세요</div>';
+    return;
+  }
+  const gMap=Object.fromEntries(GENRES.map(g=>[g.id,g.l]));
+  D.chars.forEach(c=>{
+    const wrap=document.createElement('div');
+    const isActiveChar=c.id===D.activeChar;
+    const isOpen=isActiveChar||(D._openChars||{})[c.id];
+    const rooms=D.rooms[c.id]||[];
+
+    // ── 캐릭터 헤더 ──
+    const d=document.createElement('div');
+    d.className='char-item'+(isActiveChar?' active':'');
+    const av=document.createElement('div');
+    av.className='char-emo'; renderAvatar(av,c);
+    d.innerHTML=`
+      <div class="char-meta">
+        <div class="char-meta-name">${c.name}</div>
+        <div class="char-meta-tag">${(c.genres||[c.genre]).map(g=>gMap[g]||g).join('·')}${rooms.length?' · '+rooms.length+'개':''}</div>
+      </div>
+      <span style="font-size:10px;color:var(--t3);flex-shrink:0;transition:transform 0.2s;display:inline-block;${isOpen?'transform:rotate(90deg)':''}">▶</span>
+      <button title="편집" onclick="event.stopPropagation();editChar('${c.id}')"
+        style="background:none;border:none;color:var(--t4);cursor:pointer;padding:2px 5px;font-size:12px;flex-shrink:0;opacity:0;transition:opacity 0.15s">✎</button>
+      <button title="삭제" onclick="event.stopPropagation();deleteStory('${c.id}')"
+        style="background:none;border:none;color:var(--t4);cursor:pointer;padding:2px 4px;font-size:12px;flex-shrink:0;opacity:0;transition:opacity 0.15s">✕</button>`;
+    d.insertBefore(av,d.firstChild);
+    d.onclick=()=>{if(!D._openChars)D._openChars={};D._openChars[c.id]=!isOpen;renderChars();};
+    d.onmouseenter=()=>d.querySelectorAll('button').forEach(b=>b.style.opacity='1');
+    d.onmouseleave=()=>d.querySelectorAll('button').forEach(b=>b.style.opacity='0');
+    wrap.appendChild(d);
+
+    // ── 대화방 목록 ──
+    if(isOpen){
+      const bl=document.createElement('div');
+      bl.style.cssText='padding:0 6px 4px 12px;display:flex;flex-direction:column;gap:2px';
+
+      rooms.forEach((room,ri)=>{
+        const isActive=isActiveChar&&room.id===D.activeRoom;
+        const cnt=(D.histories[room.id]||[]).filter(m=>m.role==='user').length;
+        const preview=getRoomPreview(room.id);
+        const item=document.createElement('div');
+        item.className='scene-sb-item'+(isActive?' active':'');
+        item.innerHTML=`
+          <div class="scene-dot" style="background:${room.sceneId?'var(--teal)':'var(--amber)'}"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${room.name}</div>
+            ${preview?`<div style="font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${preview}</div>`:''}
+          </div>
+          ${cnt?`<div style="font-size:10px;color:var(--t3);flex-shrink:0">${cnt}턴</div>`:''}
+          <button onclick="event.stopPropagation();deleteRoom('${c.id}','${room.id}')"
+            style="background:none;border:none;color:var(--t3);cursor:pointer;padding:1px 3px;font-size:10px;opacity:0;transition:opacity 0.15s;flex-shrink:0" class="del-btn">✕</button>`;
+        item.onclick=()=>selectRoom(c.id,room.id);
+        item.onmouseenter=()=>item.querySelector('.del-btn').style.opacity='1';
+        item.onmouseleave=()=>item.querySelector('.del-btn').style.opacity='0';
+        bl.appendChild(item);
+      });
+
+      // 신규 대화 버튼
+      const newBtn=document.createElement('button');
+      newBtn.className='scene-sb-add';
+      newBtn.style.marginTop='4px';
+      newBtn.innerHTML='＋ 신규 대화';
+      newBtn.onclick=()=>openNewRoomModal(c.id);
+      bl.appendChild(newBtn);
+
+      wrap.appendChild(bl);
+    }
+    list.appendChild(wrap);
+  });
+}
+function getRoomPreview(roomId){
+  const hist=(D.histories[roomId]||[]);
+  const last=hist[hist.length-1];
+  if(!last)return'';
+  return last.content.replace(/\*[^*]+\*/g,'').slice(0,28)+(last.content.length>28?'…':'');
+}
+function selectRoom(charId, roomId){
+  D.activeChar=charId; D.activeRoom=roomId;
+  if(!D._openChars)D._openChars={};
+  D._openChars[charId]=true;
+  save(); renderChars(); renderTopbar(); renderChat();
+}
+function deleteRoom(charId, roomId){
+  if(!confirm('이 대화를 삭제할까요?'))return;
+  D.rooms[charId]=(D.rooms[charId]||[]).filter(r=>r.id!==roomId);
+  delete D.histories[roomId];
+  if(D.roomProfiles)delete D.roomProfiles[roomId];
+  if(D.activeChar===charId&&D.activeRoom===roomId){
+    const remaining=D.rooms[charId]||[];
+    D.activeRoom=remaining[0]?.id||null;
+  }
+  save(); renderChars(); renderTopbar(); renderChat();
+}
+function getLastMsg(charId,sceneId){
+  const hist=(D.histories[charId]?.[sceneId]||[]);
+  const last=hist[hist.length-1];
+  if(!last)return'';
+  return last.content.replace(/\*[^*]+\*/g,'').slice(0,30)+(last.content.length>30?'…':'');
+}
+function toggleCharOpen(charId){
+  if(!D._openChars)D._openChars={};
+  D._openChars[charId]=!D._openChars[charId];
+  renderChars();
+}
+function selectBranch(charId, sceneId){
+  D.activeChar=charId; D.activeScene=sceneId;
+  if(!D._openChars)D._openChars={};
+  D._openChars[charId]=true;
+  save(); renderChars(); renderTopbar(); renderChat();
+}
+function newFreeBranch(charId){
+  const id='free_'+Date.now();
+  if(!D.histories[charId])D.histories[charId]={};
+  D.histories[charId][id]=[];
+  D.activeChar=charId; D.activeScene=id;
+  if(!D._openChars)D._openChars={};
+  D._openChars[charId]=true;
+  save(); renderChars(); renderTopbar(); renderChat();
+}
+function deleteBranch(charId, sceneId){
+  if(!confirm('이 대화 줄기를 삭제할까요?'))return;
+  if(D.histories[charId])delete D.histories[charId][sceneId];
+  if(D.activeChar===charId&&D.activeScene===sceneId){
+    // 다른 줄기로 이동
+    const remaining=Object.keys(D.histories[charId]||{});
+    D.activeScene=remaining[0]||null;
+  }
+  save(); renderChars(); renderTopbar(); renderChat();
+}
+function deleteStory(id){
+  if(!confirm('이 스토리를 삭제할까요?\n대화·기억·노트가 모두 삭제됩니다.'))return;
+  // 대화방 히스토리 전부 삭제
+  (D.rooms[id]||[]).forEach(r=>{delete D.histories[r.id];if(D.roomProfiles)delete D.roomProfiles[r.id];});
+  D.chars=D.chars.filter(x=>x.id!==id);
+  delete D.rooms[id];
+  delete D.charMemories[id];
+  delete D.charNotes[id];
+  delete D.charProfiles[id];
+  if(D.activeChar===id){D.activeChar=D.chars[0]?.id||null;D.activeRoom=null;}
+  save(); renderChars(); renderTopbar(); renderChat();
+}
+function selectChar(id){
+  const rooms=D.rooms[id]||[];
+  const firstRoom=rooms[0]?.id||null;
+  if(firstRoom){selectRoom(id,firstRoom);}
+  else{D.activeChar=id;D.activeRoom=null;if(!D._openChars)D._openChars={};D._openChars[id]=true;save();renderChars();renderTopbar();renderChat();}
+}
+function duplicateStory(id){
+  const src=D.chars.find(x=>x.id===id); if(!src)return;
+  const newId=Date.now()+'';
+  const copy=JSON.parse(JSON.stringify(src));
+  copy.id=newId; copy.name=src.name+' (복사)';
+  D.chars.push(copy);
+  save(); renderChars();
+}
+function renderTopbar(){
+  const tb=$('topbar'), iw=$('input-wrap'), nk=$('nokey');
+  if(!D.activeChar){
+    tb.style.display='none'; iw.style.display='none'; nk.style.display='none'; return;
+  }
+  const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
+  tb.style.display='flex'; iw.style.display='block';
+  const hasKey=(D.activeApi==='gemini')?!!D.geminiKey:!!D.key;
+  nk.style.display=(hasKey&&D.activeRoom)?'none':'flex';
+  renderAvatar($('tb-emo'),c);
+  $('tb-name').textContent=c.name;
+  const room=cRoom();
+  $('tb-sub').textContent=room?room.name:'';
+  const sb=$('story-bar'); sb.classList.remove('on');
+  renderProfileBadge();
+}
+
+// ─── CHAT ───
+function renderChat(){
+  const area=$('chat');
+  if(!D.activeChar||!D.activeRoom){
+    area.innerHTML='';
+    const w=document.createElement('div'); w.id='welcome';
+    w.innerHTML=`<svg width="64" height="64" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><h2>CharaChat</h2><p>왼쪽에서 스토리를 선택하거나 새 스토리를 만들어보세요.<br>API 키를 먼저 설정해야 대화할 수 있어요.</p>`;
+    area.appendChild(w); return;
+  }
+  const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
+  const hist=cHist();
+  area.innerHTML='';
+  if(!hist.length){
+    const empty=document.createElement('div'); empty.className='empty';
+    const av=document.createElement('div');
+    av.style.cssText='width:68px;height:68px;border-radius:50%;background:var(--s3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden';
+    renderAvatar(av,c); empty.appendChild(av);
+    empty.innerHTML+=`<h3>${c.name}</h3><p>대화를 시작해보세요</p>`;
+    const chips=['안녕하세요!','자기소개 해줄래요?','뭘 하고 있었어요?'];
+    const ch2=document.createElement('div'); ch2.className='chips';
+    chips.forEach(t=>{const b=document.createElement('div');b.className='chip';b.textContent=t;b.onclick=()=>quickSend(t);ch2.appendChild(b)});
+    empty.appendChild(ch2);
+    area.appendChild(empty); return;
+  }
+  hist.forEach(m=>appendMsg(m,false));
+  area.scrollTop=area.scrollHeight;
+}
+function appendMsg(msg,scroll=true){
+  const area=$('chat');
+  const empty=area.querySelector('.empty'); if(empty)empty.remove();
+  const welcome=area.querySelector('#welcome'); if(welcome)welcome.remove();
+  const c=D.chars.find(x=>x.id===D.activeChar);
+  const isMe=msg.role==='user';
+  const row=document.createElement('div');
+  row.className='msg-row'+(isMe?' me':'');
+  const av=document.createElement('div');
+  av.className='msg-av';
+  if(isMe){
+    av.textContent='😊';
+  } else {
+    renderAvatar(av,c||{emoji:'🤖',emoImg:null});
+  }
+  const body=document.createElement('div'); body.className='msg-body';
+  const who=document.createElement('div'); who.className='msg-who';
+  who.textContent=isMe?'유저':(c?c.name:'AI');
+  const bub=document.createElement('div'); bub.className='msg-bubble msg-bub';
+  // *이탤릭* → 회색 em 태그로 렌더링
+  bub.innerHTML=renderMsgContent(msg.content);
+  const t=document.createElement('div'); t.className='msg-t'; t.textContent=msg.time||'';
+
+  // ─── 액션 버튼 ───
+  const acts=document.createElement('div'); acts.className='msg-actions';
+  if(!isMe){
+    // AI: 리롤 + 수정
+    const rerollBtn=document.createElement('button');
+    rerollBtn.className='msg-act-btn reroll';
+    rerollBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>리롤';
+    rerollBtn.onclick=()=>rerollMsg(row);
+    const editBtn=document.createElement('button');
+    editBtn.className='msg-act-btn edit-btn';
+    editBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>수정';
+    editBtn.onclick=()=>editMsg(row,bub,msg);
+    acts.appendChild(rerollBtn); acts.appendChild(editBtn);
+  } else {
+    // 유저: 수정만
+    const editBtn=document.createElement('button');
+    editBtn.className='msg-act-btn edit-btn';
+    editBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>수정';
+    editBtn.onclick=()=>editMsg(row,bub,msg);
+    acts.appendChild(editBtn);
+  }
+
+  body.appendChild(who); body.appendChild(bub); body.appendChild(t); body.appendChild(acts);
+  row.appendChild(av); row.appendChild(body);
+  area.appendChild(row);
+  if(scroll) area.scrollTop=area.scrollHeight;
+  return bub;
+}
+function showTyping(){
+  const area=$('chat');
+  const c=D.chars.find(x=>x.id===D.activeChar);
+  const row=document.createElement('div'); row.className='typing-row'; row.id='typing';
+  const av=document.createElement('div'); av.className='msg-av';
+  renderAvatar(av,c||{emoji:'🤖',emoImg:null});
+  const bub=document.createElement('div'); bub.className='typing-bub';
+  bub.innerHTML='<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  row.appendChild(av); row.appendChild(bub);
+  area.appendChild(row); area.scrollTop=area.scrollHeight;
+}
+function hideTyping(){const t=$('typing');if(t)t.remove()}
+
+
+// ─── REROLL / EDIT MSG ───
+function getMsgIndex(row){
+  // row의 메시지가 hist에서 몇 번째인지 반환
+  const rows=[...$('chat').querySelectorAll('.msg-row')];
+  const idx=rows.indexOf(row);
+  return idx;
+}
+async function rerollMsg(row){
+  // AI 메시지 리롤: 해당 메시지를 hist에서 제거하고 다시 생성
+  const rows=[...$('chat').querySelectorAll('.msg-row')];
+  const idx=rows.indexOf(row);
+  const hist=cHist();
+  if(idx<0||idx>=hist.length)return;
+  // 해당 메시지와 그 이후 모두 제거
+  hist.splice(idx);
+  save();
+  // DOM에서도 해당 row 이후 전부 제거
+  for(let i=rows.length-1;i>=idx;i--){if(rows[i]&&rows[i].parentNode)rows[i].remove();}
+  // 다시 AI 응답 생성 (마지막 user 메시지로 재요청)
+  const lastUser=hist.filter(m=>m.role==='user').slice(-1)[0];
+  if(!lastUser)return;
+  $('send').disabled=true; showTyping();
+  try{await generateAI(hist);}catch(e){hideTyping();}
+  $('send').disabled=false; $('inp').focus();
+}
+async function generateAI(hist){
+  const usingGemini=(D.activeApi==='gemini');
+  const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
+  const activeProfs=cProfs().map(id=>D.profiles.find(p=>p.id===id)).filter(Boolean);
+  const mems=cMems(); const note=cNote();
+  const GENRE_GUIDE={
+    fantasy:`\n🔮 장르 지침 (판타지)\n세계관의 질감이 대사와 지문에 자연스럽게 배어있어야 합니다.\n설정 설명을 의도적으로 나열하지 않고 묘사 속에 자연스럽게 녹입니다.`,
+    romance:`\n♥ 장르 지침 (로맨스)\n설렘·긴장·망설임은 대사보다 지문과 신체 반응으로 드러냅니다.\n가까워지는 속도를 조절합니다. 시선 처리, 거리 조절, 대사의 여백이 감정을 전달합니다.\n유저가 감정적으로 다가올 때 캐릭터는 즉시 수용하지 않아도 됩니다. 그 흔들림이 매력입니다.`,
+    romcom:`\n♥ 장르 지침 (로맨스코미디)\n설렘과 유머가 공존합니다. 엉뚱한 상황이 오히려 거리를 좁힙니다.\n캐릭터의 반응에 자연스러운 당황·실수·과장이 섞여도 좋습니다.\n템포가 빠르되, 감정이 쌓이는 순간엔 속도를 늦춰 여운을 남깁니다.`,
+    pureromance:`\n🌸 장르 지침 (순애)\n순수하고 진심 어린 감정이 핵심입니다. 과하지 않은 설렘과 따뜻함.\n감정을 직접 드러내기보단 작은 행동, 눈빛, 침묵으로 전달합니다.\n관계의 발전은 천천히, 하지만 확실하게 이루어집니다.`,
+    bl:`\n💙 장르 지침 (BL)\n두 캐릭터 사이의 감정선과 내면 심리를 섬세하게 서술합니다.\n관계의 역학(공·수, 주도권)을 캐릭터 설정에 맞게 유지합니다.\n설렘, 갈등, 오해, 화해 등 감정 기복을 풍부하게 표현합니다.`,
+    gl:`\n💜 장르 지침 (GL)\n두 여성 캐릭터 사이의 감정선과 내면을 섬세하게 묘사합니다.\n부드럽고 따뜻한 감정 묘사를 기본으로 하되, 긴장감도 자연스럽게 녹입니다.`,
+    action:`\n⚔ 장르 지침 (액션·스릴러)\n긴박한 장면은 짧고 강한 문장으로 리듬을 압축합니다.\n캐릭터의 판단·반사·감각이 행동에 즉각 반영됩니다.\n전투·위기 중에도 캐릭터 성격이 드러나야 합니다.`,
+    thriller:`\n🔪 장르 지침 (스릴러)\n긴장감은 직접 묘사보다 암시와 침묵으로 쌓습니다.\n캐릭터의 심리적 불안이 신체 반응으로 드러납니다.`,
+    horror:`\n💀 장르 지침 (호러·서스펜스)\n직접 묘사보다 암시와 여운을 활용합니다.\n불안감은 감각 묘사(소리·냄새·온도 변화)로 쌓습니다.`,
+    mystery:`\n🔍 장르 지침 (미스터리)\n정보는 조금씩, 의도적으로 흘립니다.\n캐릭터의 언행에 숨겨진 의도가 배어있어야 합니다.`,
+    slice:`\n🌿 장르 지침 (일상)\n소소한 디테일에서 따뜻함이 나옵니다.\n대화가 자연스럽게 흘러가도록 합니다. 억지 이벤트 없이도 장면이 충분합니다.`,
+    healing:`\n🍃 장르 지침 (힐링)\n따뜻함과 안정감이 핵심입니다. 상처받은 마음을 천천히 위로합니다.\n강요하지 않고, 옆에 있어주는 것만으로도 충분한 장면을 만듭니다.`,
+    scifi:`\n🚀 장르 지침 (SF)\n세계관의 질감이 대사와 지문에 자연스럽게 배어있어야 합니다.\n기술·설정 설명을 의도적으로 나열하지 않고 묘사 속에 자연스럽게 녹입니다.`,
+    hist:`\n⌛ 장르 지침 (시대극)\n시대 고증이 대사와 묘사 곳곳에 배어있어야 합니다.\n말투·문화·관습이 캐릭터 행동에 자연스럽게 반영됩니다.`,
+    school:`\n🏫 장르 지침 (학원물)\n학교라는 공간의 일상적 질감을 녹입니다.\n또래 관계, 권력 역학, 청춘의 감정이 자연스럽게 배어납니다.`,
+    isekai:`\n🌀 장르 지침 (이세계)\n주인공의 이질감과 적응 과정을 생동감 있게 묘사합니다.\n세계관 설명은 캐릭터의 시선을 통해 자연스럽게 풀어냅니다.`,
+    dark:`\n🌑 장르 지침 (다크)\n어두운 감정과 상황을 정면으로 마주합니다.\n고통·갈등·모순이 캐릭터의 깊이를 드러냅니다. 미화하지 않되 탐닉하지도 않습니다.`,
+    drama:`\n🎭 장르 지침 (드라마)\n인간관계의 복잡함과 감정의 진폭이 핵심입니다.\n갈등이 쌓이고 폭발하는 리듬을 살립니다.`,
+  };
+  const activeGenres=c.genres||(c.genre?[c.genre]:['fantasy']);
+  const genreGuide=activeGenres.map(g=>GENRE_GUIDE[g]||'').filter(Boolean).join('\n');
+  const ROLEPLAY_CORE=`[롤플레이 공간]
+이 공간은 창작 롤플레이 전용입니다.
+서술 방식·형식·캐릭터 설정은 제작자 프롬프트가 결정합니다. 아래 규칙은 그 위에 항상 적용됩니다.
+
+[절대 규칙]
+- AI임을 밝히거나 스스로 캐릭터를 깨지 않습니다.
+- 유저가 ((OOC)) 또는 [OOC]로 명시할 때만 잠깐 캐릭터 밖 응답을 허용하고 즉시 복귀합니다.
+- 유저(페소)의 행동·대사·감정을 대신 쓰거나 가로채지 않습니다. 유저의 차례는 유저가 씁니다.
+
+[티카타카 원칙]
+- 유저의 행동과 말에 캐릭터로서 자연스럽게 반응합니다.
+- 매 응답은 다음 흐름을 열어둡니다. 장면을 혼자 완결짓지 않습니다.
+- 유저가 짧게 쳐도 캐릭터답게 받아주고 공을 넘깁니다.
+- 유저가 모호하게 행동해도 단정짓지 않고 열린 반응을 남깁니다.
+
+[반복 금지]
+- 이전 응답과 동일한 어휘·구조·묘사를 반복하지 않습니다.
+- 매 응답마다 새로운 각도·디테일로 장면을 전개합니다.
+
+[분량 규칙 — 반드시 준수]
+- 매 응답은 350단어 이내로 작성합니다.
+- 지문(묘사) 문단은 4문단 이내입니다.
+- 대사는 2개 이내입니다. 대사 없이 지문만으로 응답해도 됩니다.
+- 분량을 채우려 늘이지 않습니다. 짧아도 좋습니다.
+${genreGuide}
+[제작자 프롬프트]
+`;
+  let sys=ROLEPLAY_CORE+(c.prompt||`당신은 ${c.name}입니다.`);
+  if(activeProfs.length){sys+=`\n\n[유저 정보]\n`;activeProfs.forEach(p=>{if(p.ctx)sys+=p.ctx+'\n';});}
+  if(note.trim()){sys+=`\n\n[유저 노트]\n${note}`;}
+  if(mems.length){sys+=`\n\n[장기 기억 — 항상 참고]\n`;mems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
+
+  let full='';
+  if(usingGemini){
+    const geminiMsgs=hist.slice(-16).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:geminiMsgs,generationConfig:{maxOutputTokens:650}})});
+    if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini API 오류')}
+    hideTyping();
+    const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
+    const c2=D.chars.find(x=>x.id===D.activeChar);
+    const row2=document.createElement('div'); row2.className='msg-row';
+    const av2=document.createElement('div'); av2.className='msg-av'; renderAvatar(av2,c2||{emoji:'🤖',emoImg:null});
+    const body2=document.createElement('div'); body2.className='msg-body';
+    const who2=document.createElement('div'); who2.className='msg-who'; who2.textContent=c2?c2.name:'AI';
+    const bub2=document.createElement('div'); bub2.className='msg-bub streaming'; bub2.textContent='';
+    const tm2=document.createElement('div'); tm2.className='msg-t'; tm2.textContent=now();
+    body2.appendChild(who2);body2.appendChild(bub2);body2.appendChild(tm2);
+    row2.appendChild(av2);row2.appendChild(body2); area.appendChild(row2);
+    const reader=res.body.getReader(); const decoder=new TextDecoder();
+    while(true){const {done,value}=await reader.read();if(done)break;const chunk=decoder.decode(value);const lines=chunk.split('\n');for(const line of lines){if(line.startsWith('data: ')){const data=line.slice(6);if(data==='[DONE]')break;try{const j=JSON.parse(data);const t=j.candidates?.[0]?.content?.parts?.[0]?.text;if(t){full+=t;bub2.textContent=full;area.scrollTop=area.scrollHeight;}}catch(e){}}}}
+    bub2.classList.remove('streaming'); bub2.innerHTML=renderMsgContent(full);
+    // 액션버튼 추가
+    const newMsg={role:'assistant',content:full,time:now()};
+    _addActionsToRow(row2,bub2,newMsg);
+  } else {
+    let rawMsgs=hist.slice(-30).map(m=>({role:m.role,content:m.content}));
+    const fixed=[];
+    for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;if(fixed.length&&fixed[fixed.length-1].role===m.role)continue;fixed.push(m);}
+    const messages=fixed.slice(-16);
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:650,system:sys,messages,stream:true})});
+    if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류')}
+    hideTyping();
+    const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
+    const c2=D.chars.find(x=>x.id===D.activeChar);
+    const row2=document.createElement('div'); row2.className='msg-row';
+    const av2=document.createElement('div'); av2.className='msg-av'; renderAvatar(av2,c2||{emoji:'🤖',emoImg:null});
+    const body2=document.createElement('div'); body2.className='msg-body';
+    const who2=document.createElement('div'); who2.className='msg-who'; who2.textContent=c2?c2.name:'AI';
+    const bub2=document.createElement('div'); bub2.className='msg-bub streaming'; bub2.textContent='';
+    const tm2=document.createElement('div'); tm2.className='msg-t'; tm2.textContent=now();
+    body2.appendChild(who2);body2.appendChild(bub2);body2.appendChild(tm2);
+    row2.appendChild(av2);row2.appendChild(body2); area.appendChild(row2);
+    const reader=res.body.getReader(); const decoder=new TextDecoder();
+    while(true){const {done,value}=await reader.read();if(done)break;const chunk=decoder.decode(value);const lines=chunk.split('\n');for(const line of lines){if(line.startsWith('data: ')){const data=line.slice(6);if(data==='[DONE]')break;try{const j=JSON.parse(data);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;bub2.textContent=full;area.scrollTop=area.scrollHeight;}}catch(e){}}}}
+    bub2.classList.remove('streaming'); bub2.innerHTML=renderMsgContent(full);
+    const newMsg={role:'assistant',content:full,time:now()};
+    _addActionsToRow(row2,bub2,newMsg);
+  }
+  if(full.trim()){
+    const am={role:'assistant',content:full,time:now()};
+    cHist().push(am); save(); renderChars();
+  }
+}
+function _addActionsToRow(row,bub,msg){
+  const body=row.querySelector('.msg-body'); if(!body)return;
+  const acts=document.createElement('div'); acts.className='msg-actions';
+  const rerollBtn=document.createElement('button');
+  rerollBtn.className='msg-act-btn reroll';
+  rerollBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>리롤';
+  rerollBtn.onclick=()=>rerollMsg(row);
+  const editBtn=document.createElement('button');
+  editBtn.className='msg-act-btn edit-btn';
+  editBtn.innerHTML='<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>수정';
+  editBtn.onclick=()=>editMsg(row,bub,msg);
+  acts.appendChild(rerollBtn); acts.appendChild(editBtn);
+  body.appendChild(acts);
+}
+function editMsg(row,bub,msg){
+  // 이미 편집 중이면 취소
+  const existing=row.querySelector('.msg-edit-area');
+  if(existing){existing.closest('.msg-edit-wrap')?.remove();bub.style.display='';return;}
+  const wrap=document.createElement('div'); wrap.className='msg-edit-wrap';
+  const ta=document.createElement('textarea'); ta.className='msg-edit-area';
+  ta.value=msg.content; ta.rows=3;
+  ta.oninput=()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px'};
+  const actsRow=document.createElement('div'); actsRow.className='msg-edit-acts';
+  const saveBtn=document.createElement('button'); saveBtn.className='msg-edit-save'; saveBtn.textContent='저장';
+  const cancelBtn=document.createElement('button'); cancelBtn.className='msg-edit-cancel'; cancelBtn.textContent='취소';
+  cancelBtn.onclick=()=>{wrap.remove();bub.style.display='';};
+  saveBtn.onclick=()=>{
+    const newText=ta.value.trim(); if(!newText)return;
+    // hist에서 해당 메시지 찾아 수정
+    const rows=[...$('chat').querySelectorAll('.msg-row')];
+    const idx=rows.indexOf(row);
+    const hist=cHist();
+    if(idx>=0&&idx<hist.length){hist[idx].content=newText;save();}
+    msg.content=newText;
+    bub.innerHTML=renderMsgContent(newText);
+    bub.style.display=''; wrap.remove();
+  };
+  actsRow.appendChild(cancelBtn); actsRow.appendChild(saveBtn);
+  wrap.appendChild(ta); wrap.appendChild(actsRow);
+  bub.style.display='none';
+  bub.insertAdjacentElement('afterend',wrap);
+  ta.focus(); ta.style.height=ta.scrollHeight+'px';
+}
+
+// ─── SEND ───
+async function sendMsg(){
+  const inp=$('inp'); const text=inp.value.trim();
+  if(!text||!D.activeChar||!D.activeRoom) return;
+  const usingGemini=(D.activeApi==='gemini');
+  if(usingGemini&&!D.geminiKey){openModal('key-modal');return}
+  if(!usingGemini&&!D.key){openModal('key-modal');return}
+  inp.value=''; inp.style.height='auto';
+  const um={role:'user',content:text,time:now()};
+  cHist().push(um);
+  save(); appendMsg(um); renderChars();
+  $('send').disabled=true; showTyping();
+  try{
+    await generateAI(cHist());
+  }catch(e){
+    hideTyping();
+    const em={role:'assistant',content:'⚠️ 오류: '+e.message,time:now()};
+    appendMsg(em);
+  }
+  $('send').disabled=false; $('inp').focus();
+}
+function quickSend(t){$('inp').value=t;sendMsg()}
+
+// ─── ROOM ───
+let _newRoomCharId=null;
+let _newRoomSceneId=null;
+function openNewRoomModal(charId){
+  _newRoomCharId=charId; _newRoomSceneId=null;
+  const c=D.chars.find(x=>x.id===charId); if(!c)return;
+  $('newroom-char-name').textContent=c.name;
+  $('newroom-name').value='';
+  // 시작장면 목록 렌더
+  const sl=$('newroom-scene-list');
+  sl.innerHTML='';
+  // 빈 대화로 시작 옵션
+  const freeOpt=document.createElement('div');
+  freeOpt.style.cssText='padding:9px 12px;border-radius:var(--r2);border:1px solid var(--border2);cursor:pointer;transition:all 0.15s;font-size:13px;color:var(--t2)';
+  freeOpt.innerHTML='<span style="color:var(--amber)">●</span> <b style="font-weight:500">빈 대화로 시작</b>';
+  freeOpt.onclick=()=>{_newRoomSceneId=null;sl.querySelectorAll('[data-sel]').forEach(x=>x.removeAttribute('data-sel'));freeOpt.setAttribute('data-sel','1');sl.querySelectorAll('div').forEach(x=>x.style.borderColor='var(--border2)');freeOpt.style.borderColor='rgba(255,190,100,0.4)';};
+  freeOpt.setAttribute('data-sel','1'); freeOpt.style.borderColor='rgba(255,190,100,0.4)';
+  sl.appendChild(freeOpt);
+  (c.scenes||[]).forEach(sc=>{
+    const opt=document.createElement('div');
+    opt.style.cssText='padding:9px 12px;border-radius:var(--r2);border:1px solid var(--border2);cursor:pointer;transition:all 0.15s';
+    opt.innerHTML=`<div style="font-size:12px;font-weight:500;color:var(--teal);margin-bottom:3px"><span>●</span> ${sc.title||'장면'}</div><div style="font-size:12px;color:var(--t2);white-space:pre-wrap;word-break:break-word;line-height:1.5">${sc.content.slice(0,100)}${sc.content.length>100?'…':''}</div>`;
+    opt.onclick=()=>{
+      _newRoomSceneId=sc.id;
+      sl.querySelectorAll('div').forEach(x=>x.style.borderColor='var(--border2)');
+      freeOpt.removeAttribute('data-sel');
+      opt.style.borderColor='rgba(157,127,244,0.4)';
+    };
+    sl.appendChild(opt);
+  });
+  openModal('newroom-modal');
+}
+function createRoom(){
+  const charId=_newRoomCharId; if(!charId)return;
+  const c=D.chars.find(x=>x.id===charId); if(!c)return;
+  const rooms=cRooms(charId);
+  // 이름 자동 지정
+  const sceneTitle=_newRoomSceneId?(c.scenes||[]).find(s=>s.id===_newRoomSceneId)?.title||'':'';
+  const baseName=sceneTitle||c.name;
+  const existCount=rooms.filter(r=>(r.name||'').startsWith(baseName)).length;
+  const name=$('newroom-name').value.trim()||(existCount>0?`${baseName} (${existCount+1})`:`${baseName}`);
+  const roomId='room_'+Date.now();
+  const room={id:roomId,name,sceneId:_newRoomSceneId||null,createdAt:Date.now()};
+  if(!D.rooms[charId])D.rooms[charId]=[];
+  D.rooms[charId].push(room);
+  // 시작장면이 있으면 첫 메시지 삽입
+  D.histories[roomId]=[];
+  if(_newRoomSceneId){
+    const sc=(c.scenes||[]).find(s=>s.id===_newRoomSceneId);
+    if(sc)D.histories[roomId].push({role:'assistant',content:sc.content,time:now()});
+  }
+  D.activeChar=charId; D.activeRoom=roomId;
+  if(!D._openChars)D._openChars={};
+  D._openChars[charId]=true;
+  save(); closeModal('newroom-modal');
+  renderChars(); renderTopbar(); renderChat();
+}
+
+// ─── MODAL ───
+const CLAUDE_MODELS=[
+  {value:'claude-opus-4-6',icon:'⚡',name:'하이퍼챗 (Opus 4.6)',desc:'최고 품질 · 롤플레이 최강'},
+  {value:'claude-sonnet-4-20250514',icon:'🔥',name:'슈퍼챗 (Sonnet 4)',desc:'추천 · 균형잡힌 품질과 속도'},
+  {value:'claude-haiku-4-5-20251001',icon:'💧',name:'파워챗 (Haiku 4.5)',desc:'빠름 · 가벼운 대화용'},
+];
+const GEMINI_MODELS=[
+  {value:'gemini-2.5-pro',icon:'🌟',name:'프로챗 2.5 (Gemini 2.5 Pro)',desc:'최고 품질 · 풍부한 묘사'},
+  {value:'gemini-2.5-flash',icon:'✦',name:'프로챗 1.0 (Gemini 2.5 Flash)',desc:'추천 · 무료 티어 있음'},
+  {value:'gemini-2.5-flash-lite',icon:'💚',name:'파워챗 (Gemini 2.5 Flash-Lite)',desc:'빠름 · 무료 티어 있음'},
+  {value:'gemini-3.1-pro',icon:'🌙',name:'프로챗 3.1 (Gemini 3.1 Pro)',desc:'신모델 · 고품질'},
+];
+function renderModelCards(){
+  const cl=$('claude-model-list'); const gm=$('gemini-model-list');
+  if(!cl||!gm)return;
+  cl.innerHTML=''; gm.innerHTML='';
+  CLAUDE_MODELS.forEach(m=>{
+    const card=document.createElement('div');
+    card.className='model-card'+(D.model===m.value?' sel':'');
+    const chk=D.model===m.value?'<svg width="9" height="9" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':'';
+    card.innerHTML=`<div class="model-card-icon">${m.icon}</div><div class="model-card-info"><div class="model-card-name">${m.name}</div><div class="model-card-desc">${m.desc}</div></div><div class="model-card-check">${chk}</div>`;
+    card.onclick=()=>{D.model=m.value;renderModelCards();};
+    cl.appendChild(card);
+  });
+  GEMINI_MODELS.forEach(m=>{
+    const card=document.createElement('div');
+    card.className='model-card'+(D.geminiModel===m.value?' sel':'');
+    const chk=D.geminiModel===m.value?'<svg width="9" height="9" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':'';
+    card.innerHTML=`<div class="model-card-icon">${m.icon}</div><div class="model-card-info"><div class="model-card-name">${m.name}</div><div class="model-card-desc">${m.desc}</div></div><div class="model-card-check">${chk}</div>`;
+    card.onclick=()=>{D.geminiModel=m.value;renderModelCards();};
+    gm.appendChild(card);
+  });
+}
+function openModal(id){
+  $(id).classList.remove('hide');
+  if(id==='key-modal'){
+    $('key-inp').value=D.key;
+    $('gemini-key-inp').value=D.geminiKey||'';
+    updateKeySt(); updateGeminiKeySt();
+    renderModelCards();
+  }
+}
+function closeModal(id){$(id).classList.add('hide')}
+
+// ─── KEY ───
+function updateKeySt(){
+  const v=$('key-inp').value; const el=$('key-st');
+  if(v.startsWith('sk-ant-')){el.className='key-st ok';el.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 올바른 키 형식'}
+  else if(v.length>0){el.className='key-st no';el.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> sk-ant-로 시작해야 합니다'}
+  else{el.className='key-st no';el.innerHTML='API 키를 입력하세요'}
+}
+function updateGeminiKeySt(){
+  const v=$('gemini-key-inp').value; const el=$('gemini-key-st');
+  if(v.startsWith('AIza')){el.className='key-st ok';el.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 올바른 키 형식'}
+  else if(v.length>0){el.className='key-st no';el.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> AIza로 시작해야 합니다'}
+  else{el.className='key-st no';el.innerHTML='API 키를 입력하세요'}
+}
+function toggleEye(inputId, iconId){
+  const i=$(inputId||'key-inp'); i.type=i.type==='password'?'text':'password';
+}
+function switchKeyTab(api){
+  $('ktab-claude').classList.toggle('on',api==='claude');
+  $('ktab-gemini').classList.toggle('on',api==='gemini');
+  $('kpanel-claude').style.display=api==='claude'?'block':'none';
+  $('kpanel-gemini').style.display=api==='gemini'?'block':'none';
+}
+function setActiveApi(api){
+  D.activeApi=api; save();
+  updateActiveApiBar();
+  updateApiToggleBtns();
+  renderTopbar();
+}
+function updateApiToggleBtns(){
+  const claude=$('api-btn-claude'); const gemini=$('api-btn-gemini');
+  if(!claude||!gemini)return;
+  const isC=D.activeApi==='claude';
+  claude.style.background=isC?'var(--accent2)':'var(--s3)';
+  claude.style.color=isC?'#fff':'var(--t2)';
+  claude.style.borderColor=isC?'var(--accent2)':'var(--border2)';
+  gemini.style.background=!isC?'var(--teal)':'var(--s3)';
+  gemini.style.color=!isC?'#0b1a18':'var(--t2)';
+  gemini.style.borderColor=!isC?'var(--teal)':'var(--border2)';
+}
+function updateActiveApiBar(){
+  const bar=$('active-api-bar');
+  const label=$('active-api-label');
+  if(!bar||!label)return;
+  if(D.activeApi==='gemini'){
+    label.textContent='현재 사용 중: Gemini (Google)';
+    bar.style.background='rgba(56,217,192,0.06)';
+    bar.style.borderColor='rgba(56,217,192,0.2)';
+    bar.style.color='var(--teal)';
+  } else {
+    label.textContent='현재 사용 중: Claude (Anthropic)';
+    bar.style.background='var(--ag2)';
+    bar.style.borderColor='rgba(157,127,244,0.15)';
+    bar.style.color='var(--accent)';
+  }
+}
+function saveKey(){
+  D.key=$('key-inp').value.trim();
+  D.geminiKey=$('gemini-key-inp').value.trim();
+  // D.model, D.geminiModel은 카드 클릭으로 이미 설정됨
+  save(); closeModal('key-modal'); renderTopbar(); updateApiToggleBtns();
+}
+
+// ─── CHAR EDITOR ───
+let _charTabIdx=0;
+function switchCharTab(i){
+  for(let j=0;j<2;j++){
+    $('ctab-'+j).classList.toggle('on',j===i);
+    $('ctab-body-'+j).classList.toggle('on',j===i);
+  }
+  _charTabIdx=i;
+}
+function openCharModal(editing=false){
+  D.editing=editing?D.activeChar:null;
+  $('char-modal-ttl').textContent=D.editing?'스토리 편집':'새 스토리';
+  $('char-del-btn').style.display=D.editing?'block':'none';
+  D.emoImg=null; switchCharTab(0);
+  if(D.editing){
+    const c=D.chars.find(x=>x.id===D.editing);
+    if(c){
+      D.emoSel=c.emoji||EMOJIS[0]; D.emoImg=c.emoImg||null;
+      $('c-name').value=c.name||'';
+      $('c-prompt').value=c.prompt||'';
+      D._editGenres=c.genres||(c.genre?[c.genre]:['fantasy']);
+      _editingScenes=JSON.parse(JSON.stringify(c.scenes||[]));
+      updatePromptCount();
+      const p=$('emo-preview');
+      if(D.emoImg){p.textContent='';let img=p.querySelector('img');if(!img){img=document.createElement('img');p.appendChild(img)}img.src=D.emoImg}
+      else{const img=p.querySelector('img');if(img)img.remove();p.textContent=D.emoSel}
+    }
+  } else {
+    D.emoSel=EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+    $('emo-preview').textContent=D.emoSel;
+    const img=$('emo-preview').querySelector('img');if(img)img.remove();
+    $('c-name').value='';
+    $('c-prompt').value='';
+    D._editGenres=['fantasy']; _editingScenes=[]; updatePromptCount();
+  }
+  buildEmoGrid(); buildGenreTags();
+  renderSceneList();
+  openModal('char-modal');
+}
+function editChar(id){
+  const targetId=id||D.activeChar; if(!targetId)return;
+  D.editing=targetId; openCharModal(true);
+  // 편집 시 프롬프트 탭(탭1)으로 바로 이동
+  requestAnimationFrame(()=>switchCharTab(1));
+}
+function saveChar(){
+  const name=$('c-name').value.trim(); if(!name){$('c-name').focus();return}
+  const ch={
+    id:D.editing||Date.now()+'',
+    emoji:D.emoSel, emoImg:D.emoImg,
+    name, genres:D._editGenres||['fantasy'],
+    scenes:_editingScenes.filter(s=>s.content.trim()),
+    prompt:$('c-prompt').value.trim()
+  };
+  if(D.editing){const i=D.chars.findIndex(x=>x.id===D.editing);if(i>=0)D.chars[i]=ch}
+  else{D.chars.push(ch);D.activeChar=ch.id}
+  save(); closeModal('char-modal');
+  renderChars(); renderTopbar(); renderChat();
+}
+function deleteChar(){
+  if(!D.editing||!confirm('정말 삭제할까요?'))return;
+  const id=D.editing;
+  D.chars=D.chars.filter(x=>x.id!==id);
+  delete D.histories[id];
+  delete D.charMemories[id];
+  delete D.charNotes[id];
+  delete D.charStory[id];
+  delete D.charProfiles[id];
+  if(D.activeChar===id){D.activeChar=D.chars[0]?.id||null;D.activeRoom=null;}
+  D.editing=null; save(); closeModal('char-modal');
+  renderChars(); renderTopbar(); renderChat();
+}
+
+// ─── CHAR ADD BUTTON ───
+document.querySelector('.sb-add').onclick=()=>openCharModal(false);
+
+// ─── PROFILES ───
+function renderProfiles(){
+  const list=$('profile-list'); list.innerHTML='';
+  const el=$('profile-modal-char'); if(el)el.textContent=charName();
+  if(!D.profiles.length){
+    list.innerHTML='<div style="font-size:13px;color:var(--t3);padding:4px 0">프로필이 없어요. 아래에서 추가하세요.</div>';
+    renderProfileBadge(); return;
+  }
+  D.profiles.forEach(p=>{
+    const isOn=cProfs().includes(p.id);
+    const card=document.createElement('div');
+    card.className='profile-card'+(isOn?' on':'');
+    card.innerHTML=`
+      <div class="profile-card-hd" onclick="toggleProfileExpand('${p.id}')">
+        <label class="p-toggle" onclick="event.stopPropagation()">
+          <input type="checkbox" ${isOn?'checked':''} onchange="toggleProfile('${p.id}',this.checked)">
+          <span class="p-slider"></span>
+        </label>
+        <div class="profile-card-name">${p.name}</div>
+        <button class="profile-del" onclick="event.stopPropagation();deleteProfile('${p.id}')">✕</button>
+        <div class="profile-chv${isOn?' on':''}" id="pchv-${p.id}">▾</div>
+      </div>
+      <div class="profile-expand${isOn?' on':''}" id="pexp-${p.id}">
+        <div class="profile-ctx">${p.ctx||'(컨텍스트 없음)'}</div>
+      </div>`;
+    list.appendChild(card);
+  });
+  renderProfileBadge();
+}
+function toggleProfile(id, on){
+  if(!cid())return;
+  if(!D.roomProfiles)D.roomProfiles={};
+  if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=[];
+  if(on){if(!D.roomProfiles[rid()].includes(id))D.roomProfiles[rid()].push(id);}
+  else{D.roomProfiles[rid()]=D.roomProfiles[rid()].filter(x=>x!==id);}
+  save(); renderProfiles();
+}
+function toggleProfileExpand(id){
+  const exp=$('pexp-'+id); const chv=$('pchv-'+id);
+  if(exp)exp.classList.toggle('on');
+  if(chv)chv.classList.toggle('on');
+}
+function addProfile(){
+  const name=$('p-name').value.trim(); if(!name){$('p-name').focus();return}
+  const ctx=$('p-ctx').value.trim();
+  D.profiles.push({id:Date.now()+'',name,ctx});
+  $('p-name').value=''; $('p-ctx').value='';
+  save(); renderProfiles();
+}
+function deleteProfile(id){
+  D.profiles=D.profiles.filter(x=>x.id!==id);
+  // 모든 캐릭터에서 해당 프로필 제거
+  if(D.roomProfiles)Object.keys(D.roomProfiles).forEach(rid=>{
+    D.roomProfiles[rid]=D.roomProfiles[rid].filter(x=>x!==id);
+  });
+  save(); renderProfiles();
+}
+// ─── THEME ───
+function toggleTheme(){
+  const isLight=document.body.classList.toggle('light');
+  const btn=$('theme-toggle');
+  if(btn)btn.textContent=isLight?'🌑':'🌙';
+  try{localStorage.setItem('cc9_theme',isLight?'light':'dark')}catch(e){}
+}
+function loadTheme(){
+  try{
+    const t=localStorage.getItem('cc9_theme');
+    if(t==='light'){document.body.classList.add('light');const btn=$('theme-toggle');if(btn)btn.textContent='🌑';}
+  }catch(e){}
+}
+
+// ─── SIDEBAR TOGGLE ───
+function toggleSidebar(){
+  const sb=$('sidebar'), ov=$('sb-overlay');
+  const isOpen=sb.classList.contains('open');
+  sb.classList.toggle('open',!isOpen);
+  ov.classList.toggle('show',!isOpen);
+}
+function closeSidebar(){
+  $('sidebar').classList.remove('open');
+  $('sb-overlay').classList.remove('show');
+}
+
+function renderProfileBadge(){
+  // 사이드바 프로필 라벨 업데이트
+  const label=$('sb-profile-label');
+  const badge=$('tb-profile-badge');
+  const on=cProfs().map(id=>D.profiles.find(p=>p.id===id)).filter(Boolean);
+  if(on.length){
+    if(label)label.textContent=on.map(p=>p.name).join(', ');
+    if(badge){badge.className='profile-badge';badge.style.display='inline-flex';badge.innerHTML=`<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>${on.map(p=>p.name).join(', ')}`;}
+  } else {
+    if(label)label.textContent='유저 프로필';
+    if(badge)badge.style.display='none';
+  }
+}
+function openProfileModal(){
+  if(!cid())return;
+  const el=$('profile-modal-char');
+  if(el){
+    const room=cRoom();
+    el.textContent=room?room.name:charName();
+  }
+  renderProfiles(); openModal('profile-modal');
+}
+
+// ─── MEMORIES ───
+function renderMemories(){
+  const list=$('mem-list'); list.innerHTML='';
+  const mems=cMems();
+  if(!mems.length){
+    list.innerHTML=`<div style="font-size:13px;color:var(--t3);padding:20px 0;text-align:center">저장된 기억이 없어요.<br><span style="font-size:12px">아래 추가 버튼으로 기록하세요.</span></div>`;
+    return;
+  }
+  mems.forEach((m,i)=>{
+    const wrap=document.createElement('div');
+    wrap.style.cssText='border-bottom:1px solid var(--border);';
+    // 헤더 행
+    const hd=document.createElement('div');
+    hd.style.cssText='display:flex;align-items:center;gap:10px;padding:13px 4px;cursor:pointer;';
+    hd.innerHTML=`
+      <span class="mem-chv" style="font-size:11px;color:var(--t3);transition:transform 0.2s;flex-shrink:0">▶</span>
+      <span style="font-size:11px;color:var(--t3);background:var(--s4);padding:1px 7px;border-radius:10px;flex-shrink:0;font-weight:500">${m.auto?'자동':'추가'}</span>
+      <div style="flex:1;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</div>
+      <button class="mem-more-btn" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:2px 6px;font-size:16px;flex-shrink:0;line-height:1" onclick="event.stopPropagation();toggleMemMenu(this,${i})">⋯</button>`;
+    // 내용 (접힌 상태)
+    const body=document.createElement('div');
+    body.className='mem-body-collapse';
+    body.style.cssText='display:none;padding:0 4px 14px 28px;font-size:13px;color:var(--t2);line-height:1.75;white-space:pre-wrap;word-break:break-word';
+    body.textContent=m.content;
+    hd.onclick=()=>{
+      const open=body.style.display==='block';
+      body.style.display=open?'none':'block';
+      hd.querySelector('.mem-chv').style.transform=open?'':'rotate(90deg)';
+    };
+    wrap.appendChild(hd);
+    wrap.appendChild(body);
+    list.appendChild(wrap);
+  });
+}
+function toggleMemMenu(btn, idx){
+  // 기존 메뉴 닫기
+  document.querySelectorAll('.mem-ctx-sheet').forEach(m=>m.remove());
+  const sheet=document.createElement('div');
+  sheet.className='mem-ctx-sheet';
+  sheet.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.5)';
+  sheet.innerHTML=`
+    <div style="background:var(--s2);border-radius:var(--r3) var(--r3) 0 0;width:100%;max-width:480px;padding:8px 0 calc(env(safe-area-inset-bottom)+8px);border-top:1px solid var(--border2)">
+      <div style="width:36px;height:4px;border-radius:2px;background:var(--border3);margin:0 auto 12px"></div>
+      <button onclick="openMemEditModal(${idx});document.querySelectorAll('.mem-ctx-sheet').forEach(m=>m.remove())"
+        style="display:flex;align-items:center;gap:12px;width:100%;padding:15px 24px;background:none;border:none;color:var(--text);cursor:pointer;font-size:15px;font-family:'Noto Sans KR',sans-serif;transition:background 0.1s"
+        onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background=''">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        수정
+      </button>
+      <button onclick="deleteMemAt(${idx});document.querySelectorAll('.mem-ctx-sheet').forEach(m=>m.remove())"
+        style="display:flex;align-items:center;gap:12px;width:100%;padding:15px 24px;background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px;font-family:'Noto Sans KR',sans-serif;transition:background 0.1s"
+        onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background=''">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        삭제
+      </button>
+      <div style="height:1px;background:var(--border);margin:4px 0"></div>
+      <button onclick="document.querySelectorAll('.mem-ctx-sheet').forEach(m=>m.remove())"
+        style="display:flex;align-items:center;justify-content:center;width:100%;padding:15px 24px;background:none;border:none;color:var(--t2);cursor:pointer;font-size:15px;font-family:'Noto Sans KR',sans-serif;transition:background 0.1s"
+        onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background=''">
+        취소
+      </button>
+    </div>`;
+  sheet.onclick=e=>{if(e.target===sheet)sheet.remove();};
+  document.body.appendChild(sheet);
+}
+function deleteMemAt(i){
+  if(!confirm('이 기억을 삭제할까요?'))return;
+  cMems().splice(i,1); save(); renderMemories();
+}
+let _memEditIdx=-1;
+function openMemEditModal(idx){
+  _memEditIdx=idx;
+  const isNew=idx===-1;
+  if(isNew){
+    $('mem-edit-modal-ttl').textContent='새 기억';
+    $('mem-title').value='';
+    $('mem-content').value='';
+    $('mem-char').textContent='0 / 300';
+    $('mem-edit-del').style.display='none';
+    $('mem-edit-save').textContent='추가';
+  } else {
+    const m=cMems()[idx];
+    $('mem-edit-modal-ttl').textContent='기억 편집';
+    $('mem-title').value=m.title||'';
+    $('mem-content').value=m.content||'';
+    $('mem-char').textContent=(m.content||'').length+' / 300';
+    $('mem-edit-del').style.display='inline-flex';
+    $('mem-edit-save').textContent='저장';
+  }
+  $('mem-edit-modal').classList.remove('hide');
+  setTimeout(()=>$('mem-title').focus(),80);
+}
+function closeMemEditModal(){
+  $('mem-edit-modal').classList.add('hide');
+  if(!$('memory-modal').classList.contains('hide'))renderMemories();
+}
+function saveMemFromModal(){
+  const title=$('mem-title').value.trim();
+  const content=$('mem-content').value.trim();
+  if(!title||!content){if(!title)$('mem-title').focus();else $('mem-content').focus();return;}
+  if(_memEditIdx===-1){
+    cMems().unshift({id:Date.now()+'',title,content});
+  } else {
+    cMems()[_memEditIdx]={...cMems()[_memEditIdx],title,content,auto:false};
+  }
+  save(); closeMemEditModal(); renderMemories();
+}
+function deleteMemFromModal(){
+  deleteMemAt(_memEditIdx);
+  closeMemEditModal();
+}
+function openMemoryModal(){
+  if(!cid())return;
+  const el=$('mem-modal-char'); if(el)el.textContent=charName();
+  renderMemories(); openModal('memory-modal');
+}
+// ─── NOTES ───
+let _noteSaveTimer=null;
+function onNoteInput(ta){
+  const len=ta.value.length;
+  $('note-char-count').textContent=len+' / 1000';
+  $('note-char-count').style.color=len>900?'var(--amber)':'var(--t3)';
+  clearTimeout(_noteSaveTimer);
+  _noteSaveTimer=setTimeout(()=>{
+    setNote(ta.value);
+    save();
+    const st=$('note-save-status');
+    st.style.opacity='1';
+    setTimeout(()=>st.style.opacity='0',1500);
+  },600);
+}
+function openNoteModal(){
+  if(!cid())return;
+  const el=$('note-modal-char'); if(el)el.textContent=charName();
+  const ta=$('note-textarea');
+  const v=cNote();
+  ta.value=v;
+  $('note-char-count').textContent=v.length+' / 1000';
+  openModal('note-modal');
+}
+
+// ─── MSG CONTENT RENDER ───
+function renderMsgContent(text){
+  // XSS 방지
+  let t=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // 코드블록 ```...``` → <pre><code>
+  t=t.replace(/```([^`]*?)```/gs,(_, code)=>`<pre style="background:var(--s4);border-radius:8px;padding:10px 12px;overflow-x:auto;font-size:12px;line-height:1.6;margin:6px 0;font-family:monospace">${code.trim()}</pre>`);
+  // 인라인 코드 `...`
+  t=t.replace(/`([^`]+)`/g,'<code style="background:var(--s4);border-radius:4px;padding:1px 5px;font-size:12px;font-family:monospace">$1</code>');
+  // **굵게**
+  t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  // *지문* → 회색 em
+  t=t.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+  // 줄바꿈
+  t=t.replace(/\n/g,'<br>');
+  return t;
+}
+
+// ─── SCENES ───
+let _editingScenes=[]; // [{id,title,content}]
+function renderSceneList(){
+  const list=$('scene-list'); if(!list) return;
+  list.innerHTML='';
+  if(!_editingScenes.length){
+    list.innerHTML=`<div style="font-size:12px;color:var(--t3);padding:8px 4px;text-align:center;border:1px dashed var(--border);border-radius:var(--r2)">장면이 없어요 — 위에서 추가하세요</div>`;
+    return;
+  }
+  _editingScenes.forEach((sc,i)=>{
+    const item=document.createElement('div');
+    item.style.cssText='display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--r2);border:1px solid var(--border2);background:var(--s3);margin-bottom:6px;cursor:pointer;transition:all 0.15s';
+    item.innerHTML=`
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sc.title||'(제목 없음)'}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(sc.content||'').slice(0,50)}${(sc.content||'').length>50?'…':''}</div>
+      </div>
+      <span style="font-size:11px;color:var(--accent);flex-shrink:0">편집 →</span>`;
+    item.onmouseover=()=>item.style.borderColor='rgba(157,127,244,0.35)';
+    item.onmouseout=()=>item.style.borderColor='var(--border2)';
+    item.onclick=()=>openSceneModal(i);
+    list.appendChild(item);
+  });
+}
+function addScene(){
+  _editingScenes.push({id:Date.now()+'',title:'',content:''});
+  openSceneModal(_editingScenes.length-1);
+}
+function deleteScene(i){
+  _editingScenes.splice(i,1); renderSceneList();
+}
+// ─── SCENE MODAL ───
+let _sceneModalIdx=-1;
+function openSceneModal(idx){
+  // -1이면 새 장면 추가
+  if(idx===-1){
+    _editingScenes.push({id:Date.now()+'',title:'',content:''});
+    idx=_editingScenes.length-1;
+  }
+  _sceneModalIdx=idx;
+  const sc=_editingScenes[idx];
+  if(!sc){return;}
+  $('scene-modal-title').value=sc.title||'';
+  $('scene-modal-body').value=sc.content||'';
+  $('scene-modal-count').textContent=(sc.content||'').length+'자';
+  $('scene-modal-del').style.display='inline-flex';
+  $('scene-modal').classList.remove('hide');
+  setTimeout(()=>$('scene-modal-title').focus(),80);
+}
+function closeSceneModal(){
+  const sc=_editingScenes[_sceneModalIdx];
+  if(sc&&!sc.title&&!sc.content){_editingScenes.splice(_sceneModalIdx,1);}
+  $('scene-modal').classList.add('hide');
+  renderSceneList();
+}
+function saveSceneFromModal(){
+  const title=$('scene-modal-title').value.trim();
+  const content=$('scene-modal-body').value.trim();
+  if(!content){$('scene-modal-body').focus();return;}
+  _editingScenes[_sceneModalIdx]={..._editingScenes[_sceneModalIdx],title:title||'시작 장면',content};
+  $('scene-modal').classList.add('hide');
+  renderSceneList();
+}
+function deleteSceneFromModal(){
+  if(!confirm('이 장면을 삭제할까요?'))return;
+  _editingScenes.splice(_sceneModalIdx,1);
+  $('scene-modal').classList.add('hide');
+  renderSceneList();
+}
+
+function updatePromptCount(){
+  const ta=$('c-prompt'); const el=$('prompt-char-count');
+  if(!ta||!el) return;
+  const len=ta.value.length;
+  el.textContent=len.toLocaleString()+'자';
+  el.style.color=len>8000?'var(--danger)':len>6000?'var(--amber)':'var(--t3)';
+}
+
+// ─── MISC ───
+function clearChat(){
+  if(!D.activeRoom||!confirm('이 대화를 초기화할까요?'))return;
+  D.histories[D.activeRoom]=[];
+  save(); renderChat(); renderChars();
+}
+
+// ─── OVERRIDE BUTTONS ───
+document.querySelector('[onclick="openModal(\'char-modal\')"]').onclick=()=>openCharModal(false);
+
+init();
+</script>
+</body>
+</html>
