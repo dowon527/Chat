@@ -2412,7 +2412,7 @@ function deleteChar(){
 }
 
 // ─── CHAR ADD BUTTON ───
-document.querySelector('.sb-add').onclick=()=>openCharModal(false);
+(function(){const btn=document.querySelector('.sb-add');if(btn)btn.onclick=()=>openCharModal(false);})();
 
 // ─── PROFILES ───
 function renderProfiles(){
@@ -2918,7 +2918,10 @@ function clearChat(){
 }
 
 // ─── OVERRIDE BUTTONS ───
-document.querySelector('[onclick="openModal(\'char-modal\')"]').onclick=()=>openCharModal(false);
+(function(){
+  const btn=document.querySelector('[onclick="openModal(\'char-modal\')"]');
+  if(btn) btn.onclick=()=>openCharModal(false);
+})();
 
 init();
 </script>
