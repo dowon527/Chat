@@ -3547,27 +3547,6 @@ function logTurnCost(roomId, content, model){
   D.costLog[roomId].push({model,krw,time:now()});
   save();
 }
-  const KRW=1380;
-  const inTok=3000; // 평균 입력 토큰 추정
-  let costUSD=0;
-  if(model==='gemini-2.5-pro'){
-    // 입력 $1.25/1M, 출력 $10/1M, thinking $3.5/1M (출력의 약 50%)
-    costUSD=(inTok/1e6)*1.25+(outputTokens/1e6)*10+(outputTokens*0.5/1e6)*3.5;
-  } else if(model==='gemini-2.5-flash'){
-    // 입력 $0.075/1M, 출력 $0.30/1M
-    costUSD=(inTok/1e6)*0.075+(outputTokens/1e6)*0.30;
-  } else if(model==='gemini-2.5-flash-lite'){
-    // 입력 $0.01/1M, 출력 $0.04/1M
-    costUSD=(inTok/1e6)*0.01+(outputTokens/1e6)*0.04;
-  } else {
-    // Claude Sonnet 기준 $3/$15
-    costUSD=(inTok/1e6)*3+(outputTokens/1e6)*15;
-  }
-  const krw=costUSD*KRW;
-  if(krw<1) return '< 1원';
-  if(krw<10) return `약 ${krw.toFixed(1)}원`;
-  return `약 ${Math.round(krw)}원`;
-}
 function updateCostHint(){
   const el=$('cost-label'); if(!el)return;
   const v=getRoomLength();
