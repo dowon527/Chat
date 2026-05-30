@@ -120,6 +120,30 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 }
 .char-scroll{flex:1;overflow-y:auto;padding:0 6px 8px}
 
+
+/* ── 키워드 카드 ── */
+.kw-card{
+  background:var(--s3);border:1px solid var(--border2);border-radius:var(--r);
+  margin-bottom:6px;overflow:hidden;transition:border-color 0.15s;
+}
+.kw-card.on{border-color:rgba(220,100,40,0.35)}
+.kw-card-hd{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;cursor:pointer;
+}
+.kw-card-hd:hover{background:rgba(255,255,255,0.02)}
+.kw-name{flex:1;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kw-chv{font-size:11px;color:var(--t3);transition:transform 0.15s;flex-shrink:0}
+.kw-chv.on{transform:rotate(180deg)}
+.kw-body{
+  max-height:0;overflow:hidden;transition:max-height 0.2s ease;
+  font-size:12px;color:var(--t2);line-height:1.7;
+}
+.kw-body.on{max-height:200px}
+.kw-body-inner{padding:0 12px 10px 38px;white-space:pre-wrap;word-break:break-word}
+.kw-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:2px 4px;transition:color 0.15s;flex-shrink:0}
+.kw-del:hover{color:var(--danger)}
+
 /* ── 캐릭터 헤더 행 ── */
 .char-item{
   display:flex;align-items:center;gap:10px;
@@ -1223,6 +1247,21 @@ input[type=file]{display:none}
           </div>
         </div>
 
+        <!-- 키워드 섹션 -->
+        <div style="border-top:1px dashed var(--border);margin:8px 0 0;padding-top:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <label class="fl" style="margin:0">키워드 <span>— 체크된 항목만 프롬프트 최하단에 자동 삽입</span></label>
+            <button onclick="openKwAddModal()" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--amber);cursor:pointer;font-size:12px;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--amg)'" onmouseout="this.style.background='transparent'">+ 키워드 생성</button>
+          </div>
+          <div id="kw-list"></div>
+        </div>
+
+        <!-- 수정 이력 -->
+        <div id="prompt-log-wrap" style="display:none;margin-bottom:12px">
+          <div style="font-size:11px;color:var(--t3);margin-bottom:6px;letter-spacing:0.5px">수정 이력</div>
+          <div id="prompt-log-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+
         <!-- 시작 장면 섹션 -->
         <div style="border-top:1px dashed var(--border);margin:8px 0 16px;padding-top:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -1238,6 +1277,40 @@ input[type=file]{display:none}
       <button class="btn btn-d" id="char-del-btn" onclick="deleteChar()" style="display:none;margin-right:auto">삭제</button>
       <button class="btn btn-g" onclick="closeModal('char-modal')">취소</button>
       <button class="btn btn-p" onclick="saveChar()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- KEYWORD ADD MODAL -->
+<div class="ov hide" id="kw-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        <span id="kw-modal-ttl">키워드 생성</span>
+      </div>
+      <button class="ico-btn" onclick="closeKwModal()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <input type="hidden" id="kw-edit-id">
+      <div class="fg">
+        <label class="fl">키워드 이름 <span>— 출력 트리거가 되는 상황/행동</span></label>
+        <input class="fi" id="kw-name-inp" placeholder="예: 손을 잡는다, 눈물을 흘린다, 화가 난다">
+      </div>
+      <div class="fg">
+        <label class="fl">내용 <span>— 이 키워드가 해당할 때 AI가 참고할 묘사 지침</span></label>
+        <textarea class="fta" id="kw-ctx-inp" style="min-height:160px"
+          placeholder="예: 손이 맞닿는 순간 심장이 내려앉는 느낌. 숨을 참고 손을 꼭 쥐며 시선을 피한다."
+          oninput="$('kw-ctx-count').textContent=this.value.length+' / 500'" maxlength="500"></textarea>
+        <div style="text-align:right;margin-top:4px;font-size:11px;color:var(--t3)" id="kw-ctx-count">0 / 500</div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-d" id="kw-del-btn" onclick="deleteKwFromModal()" style="margin-right:auto;display:none">삭제</button>
+      <button class="btn btn-g" onclick="closeKwModal()">취소</button>
+      <button class="btn btn-p" onclick="saveKw()" style="background:var(--amber);border-color:var(--amber)">저장</button>
     </div>
   </div>
 </div>
@@ -2290,6 +2363,7 @@ This is a dedicated creative roleplay space.
   if(activeProfs.length){sys+=`\n\n[유저 정보]\n`;activeProfs.forEach(p=>{if(p.ctx)sys+=p.ctx+'\n';});}
   if(note.trim()){sys+=`\n\n[유저 노트]\n${note}`;}
   if(mems.length){sys+=`\n\n[장기 기억]\n`;mems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
+  sys+=buildKwPrompt(c);
 
   let full='';
   if(usingGemini){
@@ -2401,6 +2475,7 @@ ${genreGuide}
   if(activeProfs.length){sys+='\n\n[유저 정보]\n';activeProfs.forEach(p=>{if(p.ctx)sys+=p.ctx+'\n';});}
   if(note.trim()){sys+='\n\n[유저 노트]\n'+note;}
   if(mems.length){sys+='\n\n[장기 기억 — 항상 참고]\n';mems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
+  sys+=buildKwPrompt(c);
 
   // 말풍선 먼저 생성
   const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
@@ -2809,6 +2884,10 @@ function openCharModal(editing=false){
   }
   buildEmoGrid(); buildGenreTags();
   renderSceneList();
+  renderPromptLog();
+  // 편집 시 키워드 불러오기
+  if(D.editing){const ch=D.chars.find(x=>x.id===D.editing);if(ch&&ch.keywords)D._editKws=JSON.parse(JSON.stringify(ch.keywords));else D._editKws=[];}else{D._editKws=[];}
+  renderKwList();
   openModal('char-modal');
 }
 function editChar(id){
@@ -2827,23 +2906,24 @@ function saveChar(){
     id:D.editing||Date.now()+'',
     emoji:D.emoSel, emoImg:D.emoImg,
     name, genres:D._editGenres||[],
+    keywords:D._editKws||[],
     scenes:_editingScenes.filter(s=>s.content.trim()),
     prompt:newPrompt
   };
   if(D.editing){
     const i=D.chars.findIndex(x=>x.id===D.editing);
-    if(i>=0)D.chars[i]=ch;
-    // 프롬프트 수정 시 모든 room에 변경 이력 기록
+    // 프롬프트 수정 이력 저장 (편집 모달 내 표시용)
     if(promptChanged){
       const vNum=(prevChar._promptVer||1)+1;
       ch._promptVer=vNum;
-      const note=`[제작자 프롬프트 수정 v${vNum}] ${now()}`;
-      // 현재 activeRoom에만 노트 삽입
-      if(D.activeRoom){
-        if(!D.histories[D.activeRoom])D.histories[D.activeRoom]=[];
-        D.histories[D.activeRoom].push({role:'summary_note',content:note,time:now()});
-      }
+      if(!ch._promptLog)ch._promptLog=prevChar._promptLog||[];
+      ch._promptLog.push({v:vNum,time:now()});
+      if(ch._promptLog.length>10)ch._promptLog=ch._promptLog.slice(-10);
+    } else {
+      ch._promptVer=prevChar._promptVer||1;
+      ch._promptLog=prevChar._promptLog||[];
     }
+    if(i>=0)D.chars[i]=ch;
   } else {
     D.chars.push(ch);
     // 기본 방 자동 생성
@@ -3296,6 +3376,128 @@ function renderMsgContent(text){
 
 // ─── SCENES ───
 let _editingScenes=[]; // [{id,title,content}]
+
+// ─── KEYWORDS ───
+function getEditingKws(){
+  const ch=D.editing?D.chars.find(x=>x.id===D.editing):null;
+  if(!ch){if(!D._editKws)D._editKws=[];return D._editKws;}
+  if(!ch.keywords)ch.keywords=[];
+  return ch.keywords;
+}
+function renderKwList(){
+  const list=$('kw-list'); if(!list)return;
+  const kws=getEditingKws();
+  list.innerHTML='';
+  if(!kws.length){
+    list.innerHTML='<div style="font-size:12px;color:var(--t3);padding:2px 0 8px">키워드가 없어요. 위 버튼으로 추가하세요.</div>';
+    return;
+  }
+  kws.forEach((kw,i)=>{
+    const card=document.createElement('div');
+    card.className='kw-card'+(kw.on!==false?' on':'');
+    card.innerHTML=`
+      <div class="kw-card-hd" onclick="toggleKwExpand(${i})">
+        <label class="p-toggle" onclick="event.stopPropagation()">
+          <input type="checkbox" ${kw.on!==false?'checked':''} onchange="toggleKwOn(${i},this.checked)">
+          <span class="p-slider"></span>
+        </label>
+        <div class="kw-name">${kw.name}</div>
+        <button class="kw-del" onclick="event.stopPropagation();openKwEditModal(${i})" title="수정">✎</button>
+        <button class="kw-del" onclick="event.stopPropagation();deleteKw(${i})" title="삭제">✕</button>
+        <div class="kw-chv" id="kwchv-${i}">▾</div>
+      </div>
+      <div class="kw-body" id="kwbody-${i}">
+        <div class="kw-body-inner">${kw.ctx||'(내용 없음)'}</div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+function toggleKwExpand(i){
+  const body=$('kwbody-'+i); const chv=$('kwchv-'+i);
+  if(body)body.classList.toggle('on');
+  if(chv)chv.classList.toggle('on');
+}
+function toggleKwOn(i,on){
+  const kws=getEditingKws();
+  if(kws[i])kws[i].on=on;
+  renderKwList();
+}
+function openKwAddModal(){
+  $('kw-edit-id').value='';
+  $('kw-name-inp').value='';
+  $('kw-ctx-inp').value='';
+  $('kw-ctx-count').textContent='0 / 500';
+  $('kw-modal-ttl').textContent='키워드 생성';
+  $('kw-del-btn').style.display='none';
+  $('kw-modal').classList.remove('hide');
+  setTimeout(()=>$('kw-name-inp').focus(),80);
+}
+function openKwEditModal(i){
+  const kws=getEditingKws();
+  const kw=kws[i]; if(!kw)return;
+  $('kw-edit-id').value=String(i);
+  $('kw-name-inp').value=kw.name||'';
+  $('kw-ctx-inp').value=kw.ctx||'';
+  $('kw-ctx-count').textContent=(kw.ctx||'').length+' / 500';
+  $('kw-modal-ttl').textContent='키워드 수정';
+  $('kw-del-btn').style.display='inline-flex';
+  $('kw-modal').classList.remove('hide');
+  setTimeout(()=>$('kw-name-inp').focus(),80);
+}
+function closeKwModal(){
+  $('kw-modal').classList.add('hide');
+}
+function saveKw(){
+  const name=$('kw-name-inp').value.trim(); if(!name){$('kw-name-inp').focus();return;}
+  const ctx=$('kw-ctx-inp').value.trim();
+  const idxStr=$('kw-edit-id').value;
+  const kws=getEditingKws();
+  if(idxStr!==''){
+    const i=parseInt(idxStr);
+    kws[i]={...kws[i],name,ctx};
+  } else {
+    kws.push({id:Date.now()+'',name,ctx,on:true});
+  }
+  closeKwModal(); renderKwList();
+}
+function deleteKw(i){
+  const kws=getEditingKws();
+  kws.splice(i,1);
+  renderKwList();
+}
+function deleteKwFromModal(){
+  const idxStr=$('kw-edit-id').value; if(idxStr==='')return;
+  deleteKw(parseInt(idxStr));
+  closeKwModal();
+}
+function buildKwPrompt(char){
+  const kws=(char&&char.keywords)||[];
+  const active=kws.filter(k=>k.on!==false);
+  if(!active.length)return'';
+  let block='\n\n## keyword output\nThe keywords below are printed only in situations that fit each description.\n\nkeywords list:\n';
+  active.forEach(k=>{
+    block+=`- ${k.name}: ${k.ctx}\n`;
+  });
+  block+='- ⚠여기에서부터下記모든내용은[상세프롬프트로만활용+답변內출력절대금지]';
+  return block;
+}
+
+function renderPromptLog(){
+  const wrap=$('prompt-log-wrap');
+  const list=$('prompt-log-list');
+  if(!wrap||!list)return;
+  const c=D.editing?D.chars.find(x=>x.id===D.editing):null;
+  const log=(c&&c._promptLog)||[];
+  if(!log.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  list.innerHTML='';
+  log.forEach(entry=>{
+    const tag=document.createElement('div');
+    tag.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;background:var(--amg);border:1px solid rgba(240,168,64,0.25);color:var(--amber)';
+    tag.textContent=`수정됨 v${entry.v} · ${entry.time}`;
+    list.appendChild(tag);
+  });
+}
 function renderSceneList(){
   const list=$('scene-list'); if(!list) return;
   list.innerHTML='';
