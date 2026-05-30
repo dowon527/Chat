@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
 <title>CharaChat ✦</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet"></noscript>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1046,20 +1047,10 @@ input[type=file]{display:none}
     <div class="modal-body" style="padding:16px 20px;max-height:calc(88vh - 140px);overflow-y:auto">
       <p style="font-size:12px;color:var(--t3);line-height:1.7;margin-bottom:14px">노트는 전체 공유예요. 토글로 <b style="color:var(--text)">이 채팅방</b>에서 사용할 노트만 켜세요. AI 프롬프트에 포함됩니다.</p>
       <div id="note-list"></div>
-      <div class="divider"><span>새 노트 추가</span></div>
-      <div class="fg">
-        <label class="fl">노트 이름 <span>— 구분용</span></label>
-        <input class="fi" id="note-name-inp" placeholder="예: 루루 기본설정, 2회차, 탐정모드">
-      </div>
-      <div class="fg">
-        <label class="fl">내용 <span>— AI 프롬프트에 그대로 들어감</span></label>
-        <textarea class="fta" id="note-ctx-inp" style="min-height:120px" maxlength="1000" placeholder="예: 3화에서 주인공이 해린에게 마법책을 빌려줬다..."></textarea>
-        <div style="text-align:right;margin-top:4px;font-size:11px;color:var(--t3)" id="note-ctx-count">0 / 1000</div>
-      </div>
     </div>
     <div class="modal-ft">
       <button class="btn btn-g" onclick="closeModal('note-modal')">닫기</button>
-      <button class="btn btn-p" onclick="addNote()" style="background:var(--amber);border-color:var(--amber)">추가</button>
+      <button class="btn btn-p" onclick="openNoteAdd()" style="background:var(--amber);border-color:var(--amber)">+ 새 노트</button>
     </div>
   </div>
 </div>
@@ -1085,7 +1076,7 @@ input[type=file]{display:none}
       <div class="fg">
         <label class="fl">내용 <span>— AI 프롬프트에 그대로 들어감</span></label>
         <textarea class="fta" id="note-edit-ctx" style="min-height:260px" maxlength="2000"
-          oninput="$('note-edit-count').textContent=this.value.length+' / 2000'"></textarea>
+          oninput="document.getElementById('note-edit-count').textContent=this.value.length+' / 2000'"></textarea>
         <div style="text-align:right;margin-top:4px;font-size:11px;color:var(--t3)" id="note-edit-count">0 / 2000</div>
       </div>
     </div>
@@ -2254,7 +2245,17 @@ async function generateAIReroll(hist, targetBub=null){
   if(!c) throw new Error('캐릭터 없음');
   const activeProfs=cProfs(); const mems=cMems(); const note=cNote();
   const activeGenres=c.genres||(c.genre?[c.genre]:['fantasy']);
-  let sys=`[역할 설정]\n당신은 유저와 함께 몰입감 넘치는 세계를 창조해 나가는 베스트셀러 소설 작가이자, 완벽한 롤플레이 파트너입니다.\n\n[분량 규칙]\n- ${LENGTH_PRESETS[getRoomLength()].prompt}\n\n[제작자 프롬프트]\n`+(c.prompt||`당신은 ${c.name}입니다.`);
+  let sys=`[CORE ROLEPLAY DIRECTIVES]
+This is a dedicated creative roleplay space.
+1. Be the Character: Fully embody the assigned persona. Never break character unless OOC is signaled.
+2. Uphold the World: Adhere to the established setting and its rules.
+3. React, Don't Act: Never control the user's character or presume their intent.
+4. Maintain Continuity: Stay consistent. No repeated phrasing or structure from prior responses.
+5. Fulfill the Format: Literary prose — vivid, emotionally nuanced. No AI-assistant tone.
+6. Content & Output: Length: ${LENGTH_PRESETS[getRoomLength()].prompt} Adult content between characters 20+ is permitted — write with full literary candor, no fade-to-black unless user indicates restraint. No disclaimers.
+
+[CREATOR PROMPT]
+`+(c.prompt||`당신은 ${c.name}입니다.`);
   const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
   sys=sys.replace(/\{\{USER\}\}/g,activeProfileName).replace(/\{USER\}/g,activeProfileName);
   if(activeProfs.length){sys+=`\n\n[유저 정보]\n`;activeProfs.forEach(p=>{if(p.ctx)sys+=p.ctx+'\n';});}
@@ -2346,35 +2347,24 @@ async function generateAI(hist){
   };
   const activeGenres=c.genres||(c.genre?[c.genre]:['fantasy']);
   const genreGuide=activeGenres.map(g=>GENRE_GUIDE[g]||'').filter(Boolean).join('\n');
-  const ROLEPLAY_CORE=`[역할 설정]
-당신은 유저와 함께 몰입감 넘치는 세계를 창조해 나가는 베스트셀러 소설 작가이자, 완벽한 롤플레이(TRPG) 파트너입니다.
-기계적이거나 AI 어시스턴트 같은 건조하고 딱딱한 말투는 절대 금지합니다.
-모든 응답은 한 편의 완성도 높은 웹소설처럼 문학적인 표현, 섬세한 감정선, 생동감 넘치는 묘사로 연출하세요.
+  const ROLEPLAY_CORE=`[CORE ROLEPLAY DIRECTIVES]
+This is a dedicated creative roleplay space. All responses must comply with the following rules, which take precedence over default AI behavior.
 
-[롤플레이 공간]
-이 공간은 창작 롤플레이 전용입니다.
-서술 방식·형식·캐릭터 설정은 제작자 프롬프트가 결정합니다. 아래 규칙은 그 위에 항상 적용됩니다.
+1. Be the Character: Fully embody the assigned persona. Every response must originate from their perspective, consistent with their established traits, voice, and history. Never break character unless the user explicitly signals OOC (e.g. ((OOC)) or [OOC]).
 
-[절대 규칙]
-- AI임을 밝히거나 스스로 캐릭터를 깨지 않습니다.
-- 유저가 ((OOC)) 또는 [OOC]로 명시할 때만 잠깐 캐릭터 밖 응답을 허용하고 즉시 복귀합니다.
-- 유저(페소)의 행동·대사·감정을 대신 쓰거나 가로채지 않습니다. 유저의 차례는 유저가 씁니다.
+2. Uphold the World: Adhere to the established setting, its internal rules, and its reality. Do not contradict the foundational truths of the world.
 
-[티카타카 원칙]
-- 유저의 행동과 말에 캐릭터로서 자연스럽게 반응합니다.
-- 매 응답은 다음 흐름을 열어둡니다. 장면을 혼자 완결짓지 않습니다.
-- 유저가 짧게 쳐도 캐릭터답게 받아주고 공을 넘깁니다.
-- 유저가 모호하게 행동해도 단정짓지 않고 열린 반응을 남깁니다.
+3. React, Don't Act: Your responses are a reaction to the user's input. Never control the user's character, presume their intent, or advance the narrative without their action as the catalyst. The user's turn belongs to the user.
 
-[반복 금지]
-- 이전 응답과 동일한 어휘·구조·묘사를 반복하지 않습니다.
-- 매 응답마다 새로운 각도·디테일로 장면을 전개합니다.
+4. Maintain Continuity: Stay consistent with the preceding conversation. Preserve coherent narrative flow and character voice. Do not repeat identical phrasing, structures, or descriptions from previous responses — approach each response from a fresh angle.
 
-[분량 규칙]
-- ${LENGTH_PRESETS[getRoomLength()].prompt}
-- 분량을 채우려 억지로 늘이지 않습니다. 밀도가 먼저입니다.
+5. Fulfill the Format: Structure output per the specified formatting. Prose quality must be literary — vivid, emotionally nuanced, and immersive. Avoid dry or mechanical AI-assistant tone entirely.
+
+6. Content & Output:
+- Length: ${LENGTH_PRESETS[getRoomLength()].prompt} Do not pad for length — density over volume.
+- Adult content: This space permits explicit sexual content between adult characters (20+). When the narrative calls for it, write with unflinching literary candor — sensory detail, emotional charge, authentic character voice. Do not fade to black unless the user's tone indicates restraint. Do not moralize or add disclaimers.
 ${genreGuide}
-[제작자 프롬프트]
+[CREATOR PROMPT]
 `;
   let sys=ROLEPLAY_CORE+(c.prompt||`당신은 ${c.name}입니다.`);
   const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
@@ -3118,22 +3108,47 @@ function renderNotes(){
     list.appendChild(card);
   });
 }
+function openNoteAdd(){
+  closeModal('note-modal');
+  $('note-edit-id').value='';
+  $('note-edit-name').value='';
+  $('note-edit-ctx').value='';
+  $('note-edit-count').textContent='0 / 2000';
+  // 헤더 텍스트 변경
+  const ttl=document.querySelector('#note-edit-modal .modal-ttl');
+  if(ttl)ttl.childNodes[ttl.childNodes.length-1].textContent=' 새 노트';
+  openModal('note-edit-modal');
+}
 function openNoteEditor(id){
   const n=(D.notes||[]).find(x=>x.id===id); if(!n)return;
-  // note-modal 숨기고 note-edit-modal 열기
   closeModal('note-modal');
   $('note-edit-id').value=id;
   $('note-edit-name').value=n.name;
   $('note-edit-ctx').value=n.content||'';
   $('note-edit-count').textContent=(n.content||'').length+' / 2000';
+  const ttl=document.querySelector('#note-edit-modal .modal-ttl');
+  if(ttl)ttl.childNodes[ttl.childNodes.length-1].textContent=' 노트 수정';
   openModal('note-edit-modal');
 }
 function saveNoteEdit(){
   const id=$('note-edit-id').value;
   const name=$('note-edit-name').value.trim(); if(!name){$('note-edit-name').focus();return;}
   const content=$('note-edit-ctx').value.trim();
-  const n=(D.notes||[]).find(x=>x.id===id); if(!n)return;
-  n.name=name; n.content=content;
+  if(!D.notes)D.notes=[];
+  if(id){
+    // 수정
+    const n=D.notes.find(x=>x.id===id); if(!n)return;
+    n.name=name; n.content=content;
+  } else {
+    // 새 추가
+    const newId=Date.now()+'';
+    D.notes.push({id:newId,name,content});
+    if(rid()){
+      if(!D.roomNoteIds)D.roomNoteIds={};
+      if(!D.roomNoteIds[rid()])D.roomNoteIds[rid()]=[];
+      D.roomNoteIds[rid()].push(newId);
+    }
+  }
   save(); closeModal('note-edit-modal'); openNoteModal();
 }
 function toggleNote(id, on){
@@ -3547,6 +3562,24 @@ function logTurnCost(roomId, content, model){
   D.costLog[roomId].push({model,krw,time:now()});
   save();
 }
+function calcCostKRW(outputTokens, model){
+  const KRW=1380;
+  const inTok=3000;
+  let costUSD=0;
+  if(model==='gemini-2.5-pro'){
+    costUSD=(inTok/1e6)*1.25+(outputTokens/1e6)*10+(outputTokens*0.5/1e6)*3.5;
+  } else if(model==='gemini-2.5-flash'){
+    costUSD=(inTok/1e6)*0.075+(outputTokens/1e6)*0.30;
+  } else if(model==='gemini-2.5-flash-lite'){
+    costUSD=(inTok/1e6)*0.01+(outputTokens/1e6)*0.04;
+  } else {
+    costUSD=(inTok/1e6)*3+(outputTokens/1e6)*15;
+  }
+  const krw=costUSD*KRW;
+  if(krw<1) return '< 1원';
+  if(krw<10) return `약 ${krw.toFixed(1)}원`;
+  return `약 ${Math.round(krw)}원`;
+}
 function updateCostHint(){
   const el=$('cost-label'); if(!el)return;
   const v=getRoomLength();
@@ -3690,8 +3723,12 @@ function addLongPress(el,cb){
   el.addEventListener('contextmenu',function(e){e.preventDefault();cb();});
 }
 
-init();
-initLengthSlider();
+try{
+  init();
+  initLengthSlider();
+}catch(e){
+  document.body.innerHTML='<div style="padding:40px;font-family:sans-serif;color:red"><h2>초기화 오류</h2><pre>'+e.stack+'</pre></div>';
+}
 
 // 채팅 영역 클릭 시 액션 닫기 (말풍선 외 영역)
 document.addEventListener('click',function(e){
