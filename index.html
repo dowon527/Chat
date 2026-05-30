@@ -2114,8 +2114,8 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
       // 직전에 user 메시지가 있으면 자동으로 AI 응답 생성
       const lastUser=hist.filter(m=>m.role==='user').slice(-1)[0];
       if(lastUser){
-        $('send').disabled=true; showTyping();
-        try{await generateAI(hist);}catch(e){hideTyping();}
+        $('send').disabled=true;
+        try{await generateAI(hist);}catch(e){}
         $('send').disabled=false;
       } else {
         renderChat();
@@ -2179,15 +2179,14 @@ async function rerollMsg(row){
   const streamTarget=row._bubText||row.querySelector('.bub-text')||row.querySelector('.msg-bub');
   if(streamTarget){streamTarget.style.opacity='0.4';streamTarget.textContent='';}
 
-  $('send').disabled=true;showTyping();
+  $('send').disabled=true;
   let newContent='';
   try{newContent=await generateAIReroll(histBefore,streamTarget);}
   catch(e){
-    hideTyping();
     if(streamTarget){streamTarget.style.opacity='';streamTarget.innerHTML=renderMsgContent(row._rerollHistory[row._rerollIdx||0]);}
     $('send').disabled=false;return;
   }
-  hideTyping();$('send').disabled=false;
+  $('send').disabled=false;
   if(!newContent)return;
 
   if(streamTarget){streamTarget.style.opacity='';streamTarget.innerHTML=renderMsgContent(newContent);}
@@ -2267,24 +2266,24 @@ async function generateAI(hist){
   const activeProfs=cProfs();
   const mems=cMems(); const note=cNote();
   const GENRE_GUIDE={
-    fantasy:`\n🔮 장르 지침 (판타지)\n세계관의 질감이 대사와 지문에 자연스럽게 배어있어야 합니다.\n설정 설명을 의도적으로 나열하지 않고 묘사 속에 자연스럽게 녹입니다.`,
-    romance:`\n♥ 장르 지침 (로맨스)\n설렘·긴장·망설임은 대사보다 지문과 신체 반응으로 드러냅니다.\n가까워지는 속도를 조절합니다. 시선 처리, 거리 조절, 대사의 여백이 감정을 전달합니다.\n유저가 감정적으로 다가올 때 캐릭터는 즉시 수용하지 않아도 됩니다. 그 흔들림이 매력입니다.`,
-    romcom:`\n♥ 장르 지침 (로맨스코미디)\n설렘과 유머가 공존합니다. 엉뚱한 상황이 오히려 거리를 좁힙니다.\n캐릭터의 반응에 자연스러운 당황·실수·과장이 섞여도 좋습니다.\n템포가 빠르되, 감정이 쌓이는 순간엔 속도를 늦춰 여운을 남깁니다.`,
-    pureromance:`\n🌸 장르 지침 (순애)\n순수하고 진심 어린 감정이 핵심입니다. 과하지 않은 설렘과 따뜻함.\n감정을 직접 드러내기보단 작은 행동, 눈빛, 침묵으로 전달합니다.\n관계의 발전은 천천히, 하지만 확실하게 이루어집니다.`,
-    bl:`\n💙 장르 지침 (BL)\n두 캐릭터 사이의 감정선과 내면 심리를 섬세하게 서술합니다.\n관계의 역학(공·수, 주도권)을 캐릭터 설정에 맞게 유지합니다.\n설렘, 갈등, 오해, 화해 등 감정 기복을 풍부하게 표현합니다.`,
-    gl:`\n💜 장르 지침 (GL)\n두 여성 캐릭터 사이의 감정선과 내면을 섬세하게 묘사합니다.\n부드럽고 따뜻한 감정 묘사를 기본으로 하되, 긴장감도 자연스럽게 녹입니다.`,
-    action:`\n⚔ 장르 지침 (액션·스릴러)\n긴박한 장면은 짧고 강한 문장으로 리듬을 압축합니다.\n캐릭터의 판단·반사·감각이 행동에 즉각 반영됩니다.\n전투·위기 중에도 캐릭터 성격이 드러나야 합니다.`,
-    thriller:`\n🔪 장르 지침 (스릴러)\n긴장감은 직접 묘사보다 암시와 침묵으로 쌓습니다.\n캐릭터의 심리적 불안이 신체 반응으로 드러납니다.`,
-    horror:`\n💀 장르 지침 (호러·서스펜스)\n직접 묘사보다 암시와 여운을 활용합니다.\n불안감은 감각 묘사(소리·냄새·온도 변화)로 쌓습니다.`,
-    mystery:`\n🔍 장르 지침 (미스터리)\n정보는 조금씩, 의도적으로 흘립니다.\n캐릭터의 언행에 숨겨진 의도가 배어있어야 합니다.`,
-    slice:`\n🌿 장르 지침 (일상)\n소소한 디테일에서 따뜻함이 나옵니다.\n대화가 자연스럽게 흘러가도록 합니다. 억지 이벤트 없이도 장면이 충분합니다.`,
-    healing:`\n🍃 장르 지침 (힐링)\n따뜻함과 안정감이 핵심입니다. 상처받은 마음을 천천히 위로합니다.\n강요하지 않고, 옆에 있어주는 것만으로도 충분한 장면을 만듭니다.`,
-    scifi:`\n🚀 장르 지침 (SF)\n세계관의 질감이 대사와 지문에 자연스럽게 배어있어야 합니다.\n기술·설정 설명을 의도적으로 나열하지 않고 묘사 속에 자연스럽게 녹입니다.`,
-    hist:`\n⌛ 장르 지침 (시대극)\n시대 고증이 대사와 묘사 곳곳에 배어있어야 합니다.\n말투·문화·관습이 캐릭터 행동에 자연스럽게 반영됩니다.`,
-    school:`\n🏫 장르 지침 (학원물)\n학교라는 공간의 일상적 질감을 녹입니다.\n또래 관계, 권력 역학, 청춘의 감정이 자연스럽게 배어납니다.`,
-    isekai:`\n🌀 장르 지침 (이세계)\n주인공의 이질감과 적응 과정을 생동감 있게 묘사합니다.\n세계관 설명은 캐릭터의 시선을 통해 자연스럽게 풀어냅니다.`,
-    dark:`\n🌑 장르 지침 (다크)\n어두운 감정과 상황을 정면으로 마주합니다.\n고통·갈등·모순이 캐릭터의 깊이를 드러냅니다. 미화하지 않되 탐닉하지도 않습니다.`,
-    drama:`\n🎭 장르 지침 (드라마)\n인간관계의 복잡함과 감정의 진폭이 핵심입니다.\n갈등이 쌓이고 폭발하는 리듬을 살립니다.`,
+    fantasy:'\n🔮 장르 지침 (판타지)\n세계관의 질감이 대사와 지문에 자연스럽게 배어있어야 합니다.\n설정 설명을 의도적으로 나열하지 않고 묘사 속에 자연스럽게 녹입니다.',
+    romance:'\n♥ 장르 지침 (로맨스)\n설렘·긴장·망설임은 대사보다 지문과 신체 반응으로 드러냅니다.\n가까워지는 속도를 조절합니다.',
+    romcom:'\n♥ 장르 지침 (로맨스코미디)\n설렘과 유머가 공존합니다.',
+    pureromance:'\n🌸 장르 지침 (순애)\n순수하고 진심 어린 감정이 핵심입니다.',
+    bl:'\n💙 장르 지침 (BL)\n두 캐릭터 사이의 감정선과 내면 심리를 섬세하게 서술합니다.',
+    gl:'\n💜 장르 지침 (GL)\n두 여성 캐릭터 사이의 감정선과 내면을 섬세하게 묘사합니다.',
+    action:'\n⚔ 장르 지침 (액션·스릴러)\n긴박한 장면은 짧고 강한 문장으로 리듬을 압축합니다.',
+    thriller:'\n🔪 장르 지침 (스릴러)\n긴장감은 직접 묘사보다 암시와 침묵으로 쌓습니다.',
+    horror:'\n💀 장르 지침 (호러·서스펜스)\n직접 묘사보다 암시와 여운을 활용합니다.',
+    mystery:'\n🔍 장르 지침 (미스터리)\n정보는 조금씩, 의도적으로 흘립니다.',
+    slice:'\n🌿 장르 지침 (일상)\n소소한 디테일에서 따뜻함이 나옵니다.',
+    healing:'\n🍃 장르 지침 (힐링)\n따뜻함과 안정감이 핵심입니다.',
+    scifi:'\n🚀 장르 지침 (SF)\n세계관의 질감이 대사와 지문에 자연스럽게 배어있어야 합니다.',
+    hist:'\n⌛ 장르 지침 (시대극)\n시대 고증이 대사와 묘사 곳곳에 배어있어야 합니다.',
+    school:'\n🏫 장르 지침 (학원물)\n학교라는 공간의 일상적 질감을 녹입니다.',
+    isekai:'\n🌀 장르 지침 (이세계)\n주인공의 이질감과 적응 과정을 생동감 있게 묘사합니다.',
+    dark:'\n🌑 장르 지침 (다크)\n어두운 감정과 상황을 정면으로 마주합니다.',
+    drama:'\n🎭 장르 지침 (드라마)\n인간관계의 복잡함과 감정의 진폭이 핵심입니다.',
   };
   const activeGenres=c.genres||(c.genre?[c.genre]:['fantasy']);
   const genreGuide=activeGenres.map(g=>GENRE_GUIDE[g]||'').filter(Boolean).join('\n');
@@ -2319,114 +2318,81 @@ ${genreGuide}
 [제작자 프롬프트]
 `;
   let sys=ROLEPLAY_CORE+(c.prompt||`당신은 ${c.name}입니다.`);
-  // {USER} / {{USER}} → 활성 프로필 이름으로 치환
   const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
   sys=sys.replace(/\{\{USER\}\}/g,activeProfileName).replace(/\{USER\}/g,activeProfileName);
-  if(activeProfs.length){sys+=`\n\n[유저 정보]\n`;activeProfs.forEach(p=>{if(p.ctx)sys+=p.ctx+'\n';});}
-  if(note.trim()){sys+=`\n\n[유저 노트]\n${note}`;}
-  if(mems.length){sys+=`\n\n[장기 기억 — 항상 참고]\n`;mems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
+  if(activeProfs.length){sys+='\n\n[유저 정보]\n';activeProfs.forEach(p=>{if(p.ctx)sys+=p.ctx+'\n';});}
+  if(note.trim()){sys+='\n\n[유저 노트]\n'+note;}
+  if(mems.length){sys+='\n\n[장기 기억 — 항상 참고]\n';mems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
+
+  // 말풍선 먼저 생성
+  const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
+  const welcome=area.querySelector('#welcome');if(welcome)welcome.remove();
+  const c2=D.chars.find(x=>x.id===D.activeChar);
+  const row2=document.createElement('div'); row2.className='msg-row';
+  const body2=document.createElement('div'); body2.className='msg-body';
+  const hdr2=document.createElement('div'); hdr2.className='msg-header';
+  const avSm2=document.createElement('div'); avSm2.className='msg-av-sm'; renderAvatar(avSm2,c2||{emoji:'🤖',emoImg:null});
+  const who2=document.createElement('div'); who2.className='msg-who'; who2.textContent=c2?c2.name:'AI';
+  hdr2.appendChild(avSm2); hdr2.appendChild(who2);
+  const bubText2=document.createElement('div'); bubText2.className='bub-text';
+  const bub2=document.createElement('div'); bub2.className='msg-bub'; bub2.appendChild(bubText2);
+  body2.appendChild(hdr2); body2.appendChild(bub2);
+  row2.appendChild(body2); area.appendChild(row2); area.scrollTop=area.scrollHeight;
 
   let full='';
-  if(usingGemini){
-    let geminiMsgs=hist.slice(-16).map(m=>{
-      if(m.role==='summary_note') return {role:'model',parts:[{text:`[스토리 요약]\n${m.content}`}]};
-      return {role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]};
-    }).filter(Boolean);
-    // user로 시작하게 앞 정리
-    while(geminiMsgs.length&&geminiMsgs[0].role!=='user') geminiMsgs.shift();
-    if(!geminiMsgs.length){ return; }
-    const geminiBody=JSON.stringify({
-      system_instruction:{parts:[{text:sys}]},
-      contents:geminiMsgs,
-      generationConfig:{
-        maxOutputTokens: D.geminiModel==='gemini-2.5-pro'
-          ? LENGTH_PRESETS[getRoomLength()].tokens * 4   // Pro: thinking 포함이라 4배
-          : LENGTH_PRESETS[getRoomLength()].tokens * 2   // Flash: 2배
-      }
-    });
-    const geminiUrl=`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:generateContent?key=${D.geminiKey}`;
-    try{
-      const res=await fetch(geminiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:geminiBody});
-      if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini API 오류')}
+  try{
+    if(usingGemini){
+      let geminiMsgs=hist.slice(-16).map(m=>{
+        if(m.role==='summary_note') return {role:'model',parts:[{text:'[스토리 요약]\n'+m.content}]};
+        return {role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]};
+      }).filter(Boolean);
+      while(geminiMsgs.length&&geminiMsgs[0].role!=='user') geminiMsgs.shift();
+      if(!geminiMsgs.length){row2.remove();return;}
+      const geminiBody=JSON.stringify({
+        system_instruction:{parts:[{text:sys}]},
+        contents:geminiMsgs,
+        generationConfig:{maxOutputTokens:D.geminiModel==='gemini-2.5-pro'?LENGTH_PRESETS[getRoomLength()].tokens*4:LENGTH_PRESETS[getRoomLength()].tokens*2}
+      });
+      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:generateContent?key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:geminiBody});
+      if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini API 오류');}
       const data=await res.json();
       const parts=data.candidates?.[0]?.content?.parts||[];
       for(const p of parts){if(p.thought)continue;if(p.text)full+=p.text;}
-    }catch(e){
-      throw new Error(e.message||'Gemini 오류');
-    }
-    if(!full)throw new Error('응답이 비어있어요. 잠시 후 다시 시도해주세요.');
-    hideTyping(); // 응답 완전히 받은 후 인디케이터 제거
-    const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
-    const c2=D.chars.find(x=>x.id===D.activeChar);
-    const row2=document.createElement('div'); row2.className='msg-row';
-    const body2=document.createElement('div'); body2.className='msg-body';
-    const hdr2=document.createElement('div'); hdr2.className='msg-header';
-    const avSm2=document.createElement('div'); avSm2.className='msg-av-sm'; renderAvatar(avSm2,c2||{emoji:'🤖',emoImg:null});
-    const who2=document.createElement('div'); who2.className='msg-who'; who2.textContent=c2?c2.name:'AI';
-    hdr2.appendChild(avSm2); hdr2.appendChild(who2);
-    const bub2=document.createElement('div'); bub2.className='msg-bub'; bub2.innerHTML=renderMsgContent(full);
-    body2.appendChild(hdr2);body2.appendChild(bub2);
-    row2.appendChild(body2); area.appendChild(row2); area.scrollTop=area.scrollHeight;
-    const newMsg={role:'assistant',content:full,time:now()};
-    cHist().push(newMsg); save(); renderChars();
-    _addActionsToRow(row2,bub2,newMsg);
-  } else {
-    let rawMsgs=hist.slice(-30).map(m=>{
-      if(m.role==='summary_note') return {role:'assistant',content:`[스토리 요약]\n${m.content}`};
-      return {role:m.role,content:m.content};
-    });
-    const fixed=[];
-    for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
-    // 마지막이 assistant면 제거
-    while(fixed.length&&fixed[fixed.length-1].role!=='user') fixed.pop();
-    const messages=fixed.slice(-16);
-    if(!messages.length)return;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength()].tokens,system:sys,messages,stream:true})});
-    if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류')}
-    hideTyping();
-    const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
-    const c2=D.chars.find(x=>x.id===D.activeChar);
-    const row2=document.createElement('div'); row2.className='msg-row';
-    const body2=document.createElement('div'); body2.className='msg-body';
-    const hdr2=document.createElement('div'); hdr2.className='msg-header';
-    const avSm2=document.createElement('div'); avSm2.className='msg-av-sm'; renderAvatar(avSm2,c2||{emoji:'🤖',emoImg:null});
-    const who2=document.createElement('div'); who2.className='msg-who'; who2.textContent=c2?c2.name:'AI';
-    hdr2.appendChild(avSm2); hdr2.appendChild(who2);
-    const bub2=document.createElement('div'); bub2.className='msg-bub streaming'; bub2.textContent='';
-    body2.appendChild(hdr2);body2.appendChild(bub2);
-    row2.appendChild(body2); area.appendChild(row2);
-    const reader=res.body.getReader(); const decoder=new TextDecoder();
-    let buf2='';
-    try{
+      if(!full)throw new Error('응답이 비어있어요.');
+      bubText2.innerHTML=renderMsgContent(full);
+      area.scrollTop=area.scrollHeight;
+    } else {
+      let rawMsgs=hist.slice(-30).map(m=>{
+        if(m.role==='summary_note')return{role:'assistant',content:'[스토리 요약]\n'+m.content};
+        return{role:m.role,content:m.content};
+      });
+      const fixed=[];
+      for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
+      while(fixed.length&&fixed[fixed.length-1].role!=='user')fixed.pop();
+      const messages=fixed.slice(-16);
+      if(!messages.length){row2.remove();return;}
+      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength()].tokens,system:sys,messages,stream:true})});
+      if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
+      const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='';
       while(true){
-        const {done,value}=await reader.read();
-        if(done)break;
-        buf2+=decoder.decode(value,{stream:true});
-        const lines=buf2.split('\n');
-        buf2=lines.pop()||'';
+        const {done,value}=await reader.read(); if(done)break;
+        buf+=decoder.decode(value,{stream:true});
+        const lines=buf.split('\n'); buf=lines.pop()||'';
         for(const line of lines){
           if(!line.startsWith('data: '))continue;
-          const data=line.slice(6).trim();
-          if(data==='[DONE]')break;
-          try{
-            const j=JSON.parse(data);
-            if(j.type==='content_block_delta'&&j.delta?.text){
-              full+=j.delta.text;
-              bub2.innerHTML=renderMsgContent(full);
-              area.scrollTop=area.scrollHeight;
-            }
-            if(j.type==='message_stop'){
-              bub2.innerHTML=renderMsgContent(full); break;
-            }
-          }catch(e){}
+          const d=line.slice(6).trim(); if(d==='[DONE]')break;
+          try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;bubText2.innerHTML=renderMsgContent(full);area.scrollTop=area.scrollHeight;}}catch(e){}
         }
       }
-    }catch(e){if(!full){bub2.textContent='⚠️ 스트리밍 오류: '+e.message;}}
-    bub2.classList.remove('streaming'); bub2.innerHTML=renderMsgContent(full);
-    const newMsg2={role:'assistant',content:full,time:now()};
-    cHist().push(newMsg2); save(); renderChars();
-    _addActionsToRow(row2,bub2,newMsg2);
+      if(!full)throw new Error('응답이 비어있어요.');
+    }
+  }catch(e){
+    row2.remove();
+    throw e;
   }
+  const newMsg={role:'assistant',content:full,time:now()};
+  cHist().push(newMsg); save(); renderChars();
+  _addActionsToRow(row2,bub2,newMsg);
 }
 function _addActionsToRow(row,bub,msg){
   const body=row.querySelector('.msg-body'); if(!body)return;
@@ -2546,11 +2512,10 @@ async function sendMsg(){
   const um={role:'user',content:text,time:now()};
   cHist().push(um);
   save(); appendMsg(um); renderChars();
-  $('send').disabled=true; showTyping();
+  $('send').disabled=true;
   try{
     await generateAI(cHist());
   }catch(e){
-    hideTyping();
     const msg=e.message||String(e);
     const em={role:'assistant',content:'⚠️ 오류: '+msg,time:now()};
     cHist().push(em);
