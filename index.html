@@ -2050,7 +2050,12 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
       row.remove(); renderChars();
     };
     acts.appendChild(rerollBtn); acts.appendChild(editBtn); acts.appendChild(aiDelBtn);
-    // nav 추가
+    // nav는 말풍선 안 하단에 넣기 위해 bub 재구성
+    const bubText=document.createElement('div');
+    bubText.className='bub-text';
+    bubText.innerHTML=bub.innerHTML;
+    bub.innerHTML='';
+    bub.appendChild(bubText);
     const nav=document.createElement('div'); nav.className='reroll-nav'; nav.style.display='none';
     const prevBtn=document.createElement('button'); prevBtn.className='reroll-nav-btn'; prevBtn.textContent='◀';
     const counter=document.createElement('span'); counter.className='reroll-nav-counter';
@@ -2060,7 +2065,7 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
       const rh=row._rerollHistory||[]; const cur=row._rerollIdx||0;
       if(cur<=0)return;
       row._rerollIdx=cur-1;
-      bub.innerHTML=renderMsgContent(rh[row._rerollIdx]);
+      bubText.innerHTML=renderMsgContent(rh[row._rerollIdx]);
       const hi=parseInt(row.dataset.histIdx??'-1');
       if(hi>=0&&cHist()[hi])cHist()[hi].content=rh[row._rerollIdx];
       save(); _updateRerollNav(row,nav,counter,prevBtn,nextBtn);
@@ -2070,15 +2075,17 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
       const rh=row._rerollHistory||[]; const cur=row._rerollIdx||0;
       if(cur>=rh.length-1)return;
       row._rerollIdx=cur+1;
-      bub.innerHTML=renderMsgContent(rh[row._rerollIdx]);
+      bubText.innerHTML=renderMsgContent(rh[row._rerollIdx]);
       const hi=parseInt(row.dataset.histIdx??'-1');
       if(hi>=0&&cHist()[hi])cHist()[hi].content=rh[row._rerollIdx];
       save(); _updateRerollNav(row,nav,counter,prevBtn,nextBtn);
     };
     nav.appendChild(prevBtn); nav.appendChild(counter); nav.appendChild(nextBtn);
+    bub.appendChild(nav);
     row._navEl=nav; row._navCounter=counter; row._prevBtn=prevBtn; row._nextBtn=nextBtn;
+    row._bubText=bubText; // 스트리밍 타겟
     row._rerollHistory=[msg.content]; row._rerollIdx=0;
-    body.appendChild(acts); body.appendChild(nav);
+    body.appendChild(acts);
   } else {
     // 유저: 수정 + 삭제
     const editBtn=document.createElement('button');
@@ -2147,10 +2154,10 @@ async function rerollMsg(row){
   const hist=cHist();
   if(!hist.length)return;
 
-  // histIdx로 찾기, fallback
   let idx=parseInt(row.dataset.histIdx??'-1');
   if(isNaN(idx)||idx<0||idx>=hist.length||hist[idx]?.role!=='assistant'){
-    const bubText=(row.querySelector('.msg-bub')?.textContent||'').trim().slice(0,40);
+    const bt=(row._bubText||row.querySelector('.bub-text')||row.querySelector('.msg-bub'));
+    const bubText=(bt?.textContent||'').trim().slice(0,40);
     idx=hist.findIndex(m=>m.role==='assistant'&&(m.content||'').trim().startsWith(bubText.slice(0,20)));
   }
   if(idx<0||idx>=hist.length){
@@ -2158,64 +2165,42 @@ async function rerollMsg(row){
   }
   if(idx<0)return;
 
-  // _rerollHistory 초기화
-  if(!row._rerollHistory){
-    row._rerollHistory=[hist[idx].content];
-    row._rerollIdx=0;
-  }
+  if(!row._rerollHistory){row._rerollHistory=[hist[idx].content];row._rerollIdx=0;}
 
-  // hist에서 이 메시지까지 잘라서 직전 user까지만 남김
   const histBefore=hist.slice(0,idx);
-  const lastUserIdx=histBefore.map(m=>m.role).lastIndexOf('user');
-  if(lastUserIdx<0){return;} // user 메시지 없으면 불가
-
-  if(D.activeRoom) D.histories[D.activeRoom]=histBefore;
+  if(histBefore.findIndex(m=>m.role==='user')<0)return;
+  if(D.activeRoom)D.histories[D.activeRoom]=histBefore;
   save();
 
-  // DOM에서 이 row 다음 row들 제거
   const allRows=[...$('chat').querySelectorAll('.msg-row')];
   const domIdx=allRows.indexOf(row);
   for(let i=allRows.length-1;i>domIdx;i--){if(allRows[i]?.parentNode)allRows[i].remove();}
 
-  // 기존 말풍선 흐리게
-  const bub=row.querySelector('.msg-bub');
-  if(bub) bub.style.opacity='0.35';
+  const streamTarget=row._bubText||row.querySelector('.bub-text')||row.querySelector('.msg-bub');
+  if(streamTarget){streamTarget.style.opacity='0.4';streamTarget.textContent='';}
 
-  $('send').disabled=true; showTyping();
+  $('send').disabled=true;showTyping();
   let newContent='';
-  try{
-    newContent=await generateAIReroll(histBefore, null);
-  }catch(e){
+  try{newContent=await generateAIReroll(histBefore,streamTarget);}
+  catch(e){
     hideTyping();
-    if(bub) bub.style.opacity='';
-    $('send').disabled=false;
-    return;
+    if(streamTarget){streamTarget.style.opacity='';streamTarget.innerHTML=renderMsgContent(row._rerollHistory[row._rerollIdx||0]);}
+    $('send').disabled=false;return;
   }
-  hideTyping();
-  $('send').disabled=false;
-  if(!bub||!newContent) return;
+  hideTyping();$('send').disabled=false;
+  if(!newContent)return;
 
-  bub.style.opacity='';
-
-  // rerollHistory에 추가
+  if(streamTarget){streamTarget.style.opacity='';streamTarget.innerHTML=renderMsgContent(newContent);}
   row._rerollHistory.push(newContent);
   row._rerollIdx=row._rerollHistory.length-1;
-
-  // 말풍선 내용 교체
-  bub.innerHTML=renderMsgContent(newContent);
-
-  // hist에 push & histIdx 업데이트
   const newMsg={role:'assistant',content:newContent,time:now()};
-  cHist().push(newMsg); save(); renderChars();
+  cHist().push(newMsg);save();renderChars();
   row.dataset.histIdx=String(cHist().length-1);
-
-  // 네비게이터 업데이트
   if(row._navEl&&row._navCounter&&row._prevBtn&&row._nextBtn){
     _updateRerollNav(row,row._navEl,row._navCounter,row._prevBtn,row._nextBtn);
   }
   $('chat').scrollTop=$('chat').scrollHeight;
 }
-// generateAI와 같지만 결과를 반환 (row 재사용용)
 async function generateAIReroll(hist, targetBub=null){
   const usingGemini=(getRoomApi()==='gemini');
   const c=D.chars.find(x=>x.id===D.activeChar);
@@ -2268,7 +2253,7 @@ async function generateAIReroll(hist, targetBub=null){
         for(const line of lines){
           if(!line.startsWith('data: '))continue;
           const d=line.slice(6).trim(); if(d==='[DONE]')break;
-          try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;if(targetBub)targetBub.textContent=full;}}catch(e){}
+          try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;if(targetBub){targetBub.innerHTML=renderMsgContent(full);const area=$('chat');area.scrollTop=area.scrollHeight;}}}catch(e){}
         }
       }
     }catch(e){if(!full)throw new Error('스트리밍 오류: '+e.message);}
