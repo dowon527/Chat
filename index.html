@@ -68,7 +68,7 @@ body.light{
   --teal:#1aab94;
   --tg:rgba(26,171,148,0.08);
 }
-html,body{height:100%;overflow:hidden}
+html{height:100%;height:-webkit-fill-available}body{height:100%;height:-webkit-fill-available;overflow:hidden}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:var(--text);display:flex;font-size:14px;line-height:1.6}
 
 /* ─── SCROLLBAR ─── */
@@ -83,7 +83,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   background:var(--s1);
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
-  height:100vh;overflow:hidden;
+  height:100vh;height:-webkit-fill-available;overflow:hidden;
   transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
   z-index:100;
 }
@@ -231,7 +231,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 .sb-btn.red:hover{color:var(--danger)}
 
 /* ─── MAIN ─── */
-#main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden;background:var(--bg)}
+#main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;height:-webkit-fill-available;overflow:hidden;background:var(--bg)}
 
 /* ─── TOPBAR ─── */
 #topbar{
@@ -367,38 +367,32 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 
 /* ─── INPUT ─── */
 #input-wrap{
-  padding:6px 10px 12px;
-  padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+  padding:8px 10px;
+  padding-bottom:calc(10px + env(safe-area-inset-bottom, 20px));
   border-top:1px solid var(--border);
   background:var(--s1);flex-shrink:0;
 }
 .input-box{
   background:var(--s2);border:1px solid var(--border2);
-  border-radius:14px;padding:10px 14px 8px;
+  border-radius:18px;padding:10px 10px 10px 16px;
   transition:border-color 0.15s;
 }
-.input-box:focus-within{border-color:rgba(157,127,244,0.25)}
+.input-box:focus-within{border-color:rgba(157,127,244,0.3)}
 #inp{
-  width:100%;background:transparent;border:none;outline:none;
+  background:transparent;border:none;outline:none;
   color:var(--text);font-family:'Noto Sans KR',sans-serif;
   font-size:15px;resize:none;max-height:120px;min-height:22px;
-  line-height:1.6;padding:0;display:block;
+  line-height:1.6;padding:0;display:block;width:100%;
 }
 #inp::placeholder{color:var(--t3)}
-.inp-bottom-bar{
-  display:flex;align-items:center;gap:6px;
-  margin-top:5px;padding:0 2px;
-}
 #send{
-  width:34px;height:34px;border-radius:50%;
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
   background:var(--accent2);border:none;color:#fff;
   cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:16px;transition:all 0.15s;flex-shrink:0;
-  line-height:1;
+  transition:all 0.15s;align-self:flex-end;
 }
 #send:hover{background:var(--accent);transform:scale(1.08)}
 #send:disabled{background:var(--s4);cursor:not-allowed;transform:none;color:var(--t3)}
-.inp-hint{font-size:11px;color:var(--t4);text-align:center;margin-top:4px}
 
 /* ─── CHAT ACTION BAR ─── */
 #chat-action-bar{
@@ -839,6 +833,11 @@ input[type=file]{display:none}
         style="flex:1;accent-color:var(--accent);height:3px;cursor:pointer;min-width:0">
       <span id="length-label" style="font-size:10px;color:var(--accent);font-weight:600;min-width:28px;text-align:right">보통</span>
     </div>
+    <!-- 1턴 예상 금액 -->
+    <div id="cost-hint" style="margin:2px 8px 4px;padding:5px 10px;border-radius:8px;background:var(--s3);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:10px;color:var(--t3)">1턴 예상</span>
+      <span id="cost-label" style="font-size:10px;color:var(--t2);font-weight:500"></span>
+    </div>
     <button class="sb-btn" onclick="openNoteModal()">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
       유저 노트
@@ -912,17 +911,36 @@ input[type=file]{display:none}
 
   <!-- INPUT -->
   <div id="input-wrap" style="display:none">
-    <div class="input-box">
-      <textarea id="inp" rows="1" placeholder="메시지 입력..."></textarea>
+    <!-- 요약/저장 버튼 -->
+    <div id="chat-action-bar" style="display:none;gap:4px;align-items:center;padding:4px 10px 0">
+      <button class="cab-btn" id="summary-btn" onclick="openSummaryModal()" title="이전 스토리 요약">📌 요약</button>
+      <button class="cab-btn" onclick="openExportModal()" title="대화 내보내기">💾 저장</button>
+      <button class="cab-btn" onclick="openStatsModal()" title="사용량 통계" style="margin-left:2px">ℹ️</button>
     </div>
-    <!-- 하단 버튼 바 -->
-    <div class="inp-bottom-bar">
-      <div id="chat-action-bar" style="display:none;gap:4px;align-items:center">
-        <button class="cab-btn" id="summary-btn" onclick="openSummaryModal()" title="이전 스토리 요약">📌 요약</button>
-        <button class="cab-btn" onclick="openExportModal()" title="대화 내보내기">💾 저장</button>
+    <!-- 입력창 + 전송 버튼 한 박스 -->
+    <div class="input-box">
+      <div style="display:flex;align-items:flex-end;gap:8px">
+        <textarea id="inp" rows="1" placeholder="메시지 입력..." style="flex:1"></textarea>
+        <button id="send" onclick="sendMsg()" title="전송">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </button>
       </div>
-      <div style="flex:1"></div>
-      <button id="send" onclick="sendMsg()" title="전송">▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ STATS MODAL ══════════ -->
+<div class="ov hide" id="stats-modal">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-hd">
+      <div class="modal-ttl">ℹ️ 사용량 통계</div>
+      <button class="ico-btn" onclick="closeModal('stats-modal')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px" id="stats-body"></div>
+    <div class="modal-ft">
+      <button class="btn btn-g" onclick="closeModal('stats-modal')">닫기</button>
     </div>
   </div>
 </div>
@@ -2199,7 +2217,7 @@ async function generateAIReroll(hist, targetBub=null){
     let gMsgs=hist.slice(-16).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
     while(gMsgs.length&&gMsgs[0].role!=='user')gMsgs.shift();
     if(!gMsgs.length) throw new Error('메시지 없음');
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:generateContent?key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength()].tokens}})});
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:generateContent?key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:D.geminiModel==='gemini-2.5-pro'?LENGTH_PRESETS[getRoomLength()].tokens*4:LENGTH_PRESETS[getRoomLength()].tokens*2}})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini 오류');}
     const data=await res.json();
     const parts=data.candidates?.[0]?.content?.parts||[];
@@ -2315,7 +2333,11 @@ ${genreGuide}
     const geminiBody=JSON.stringify({
       system_instruction:{parts:[{text:sys}]},
       contents:geminiMsgs,
-      generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength()].tokens}
+      generationConfig:{
+        maxOutputTokens: D.geminiModel==='gemini-2.5-pro'
+          ? LENGTH_PRESETS[getRoomLength()].tokens * 4   // Pro: thinking 포함이라 4배
+          : LENGTH_PRESETS[getRoomLength()].tokens * 2   // Flash: 2배
+      }
     });
     const geminiUrl=`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:generateContent?key=${D.geminiKey}`;
     try{
@@ -2385,7 +2407,7 @@ ${genreGuide}
             const j=JSON.parse(data);
             if(j.type==='content_block_delta'&&j.delta?.text){
               full+=j.delta.text;
-              bub2.textContent=full;
+              bub2.innerHTML=renderMsgContent(full);
               area.scrollTop=area.scrollHeight;
             }
             if(j.type==='message_stop'){
@@ -2666,7 +2688,7 @@ function setActiveApi(api){
   } else {
     D.activeApi=api;
   }
-  save(); updateApiToggleBtns(); renderTopbar();
+  save(); updateApiToggleBtns(); renderTopbar(); updateCostHint();
 }
 function getRoomApi(){
   if(rid()&&D.roomApi&&D.roomApi[rid()])return D.roomApi[rid()];
@@ -3345,6 +3367,72 @@ function exportSeqDownload(){
   setSeqIdx(hist.length);
   updateSeqInfo();
 }
+function openStatsModal(){
+  if(!D.activeChar)return;
+  const c=D.chars.find(x=>x.id===D.activeChar);
+  const rooms=D.rooms[D.activeChar]||[];
+  const KRW=1380;
+
+  // 전체 대화 수집
+  let totalMsgs=0, totalChars=0;
+  const roomStats=rooms.map(room=>{
+    const hist=(D.histories[room.id]||[]);
+    const msgs=hist.filter(m=>m.role!=='summary_note');
+    const chars=msgs.reduce((s,m)=>s+(m.content||'').length,0);
+    totalMsgs+=msgs.length;
+    totalChars+=chars;
+    return {name:room.name, turns:Math.floor(msgs.length/2), chars};
+  });
+
+  // 토큰 추정 (한국어 1자 ≈ 1.5토큰)
+  const estTokens=Math.round(totalChars*1.5);
+
+  // 모델별 금액 계산
+  const model=getRoomApi()==='gemini'?D.geminiModel:'claude';
+  let inPrice,outPrice,modelName;
+  if(model==='gemini-2.5-pro'){inPrice=1.25;outPrice=10;modelName='Gemini 2.5 Pro';}
+  else if(model==='gemini-2.5-flash'){inPrice=0.075;outPrice=0.30;modelName='Gemini 2.5 Flash';}
+  else if(model==='gemini-2.5-flash-lite'){inPrice=0.01;outPrice=0.04;modelName='Flash Lite';}
+  else{inPrice=3;outPrice=15;modelName='Claude Sonnet';}
+
+  const inTok=estTokens*0.4, outTok=estTokens*0.6;
+  const costUSD=(inTok/1e6)*inPrice+(outTok/1e6)*outPrice;
+  const costKRW=Math.round(costUSD*KRW);
+
+  const body=$('stats-body');
+  let roomsHtml='';
+  if(roomStats.length>1){
+    const rows=roomStats.map(r=>
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--s3);border-radius:8px">'+
+      '<span style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:8px">'+r.name+'</span>'+
+      '<span style="font-size:11px;color:var(--t3);flex-shrink:0">'+r.turns+'턴</span></div>'
+    ).join('');
+    roomsHtml='<div style="font-size:11px;color:var(--t3);margin-bottom:6px;font-weight:600;letter-spacing:0.5px">대화방별</div>'+
+      '<div style="display:flex;flex-direction:column;gap:4px">'+rows+'</div>';
+  }
+  body.innerHTML=
+    '<div style="margin-bottom:14px">'+
+      '<div style="font-size:12px;color:var(--t3);margin-bottom:6px">📖 '+(c?c.name:'스토리')+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+        '<div style="background:var(--s3);border-radius:10px;padding:10px 12px">'+
+          '<div style="font-size:10px;color:var(--t3);margin-bottom:3px">총 턴수</div>'+
+          '<div style="font-size:18px;font-weight:700;color:var(--text)">'+Math.floor(totalMsgs/2)+'<span style="font-size:11px;font-weight:400;color:var(--t3)"> 턴</span></div>'+
+        '</div>'+
+        '<div style="background:var(--s3);border-radius:10px;padding:10px 12px">'+
+          '<div style="font-size:10px;color:var(--t3);margin-bottom:3px">추정 토큰</div>'+
+          '<div style="font-size:18px;font-weight:700;color:var(--text)">'+(estTokens/1000).toFixed(1)+'<span style="font-size:11px;font-weight:400;color:var(--t3)">K</span></div>'+
+        '</div>'+
+        '<div style="background:var(--ag2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;grid-column:span 2">'+
+          '<div style="font-size:10px;color:var(--t3);margin-bottom:3px">누적 예상 비용 · '+modelName+'</div>'+
+          '<div style="font-size:20px;font-weight:700;color:var(--accent)">약 '+(costKRW<1?'< 1':costKRW.toLocaleString())+'원</div>'+
+          '<div style="font-size:10px;color:var(--t3);margin-top:2px">≈ $'+costUSD.toFixed(4)+'</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    roomsHtml+
+    '<div style="font-size:10px;color:var(--t4);margin-top:12px;line-height:1.6">※ 토큰·비용은 추정값이에요. 실제와 다를 수 있어요.</div>';
+  openModal('stats-modal');
+}
 function exportSeqReset(){
   showConfirm('저장 위치를 초기화할까요?\n(다음 이어서 저장이 1턴부터 시작돼요)',function(){
     setSeqIdx(0); updateSeqInfo();
@@ -3369,12 +3457,42 @@ function clearChat(){
 
 // ── 출력량 슬라이더 ──
 const LENGTH_PRESETS = [
-  { label:'짧게',   tokens:1000,  prompt:'1~2문단으로 짧게 응답합니다. 대사 위주, 묘사 최소화.' },
-  { label:'조금',   tokens:2000,  prompt:'2~3문단 내외로 응답합니다. 핵심 묘사와 대사 중심.' },
-  { label:'보통',   tokens:3500,  prompt:'4~5문단 내외로 응답합니다. 묘사와 대사의 균형.' },
-  { label:'길게',   tokens:5000,  prompt:'6~8문단 내외로 응답합니다. 풍부한 묘사와 감정선.' },
-  { label:'최대',   tokens:8192,  prompt:'분량 제한 없이 충분히 깊고 길게 응답합니다.' },
+  { label:'짧게',   tokens:1024,  prompt:'1~2문단으로 짧게 응답합니다. 대사 위주, 묘사 최소화.' },
+  { label:'조금',   tokens:2048,  prompt:'2~3문단 내외로 응답합니다. 핵심 묘사와 대사 중심.' },
+  { label:'보통',   tokens:4096,  prompt:'4~5문단 내외로 응답합니다. 묘사와 대사의 균형.' },
+  { label:'길게',   tokens:8192,  prompt:'6~8문단 내외로 응답합니다. 풍부한 묘사와 감정선.' },
+  { label:'최대',   tokens:16000, prompt:'분량 제한 없이 충분히 깊고 길게 응답합니다.' },
 ];
+// 1턴 예상 비용 계산 (한화, 환율 1380원)
+function calcCostKRW(outputTokens, model){
+  const KRW=1380;
+  const inTok=3000; // 평균 입력 토큰 추정
+  let costUSD=0;
+  if(model==='gemini-2.5-pro'){
+    // 입력 $1.25/1M, 출력 $10/1M, thinking $3.5/1M (출력의 약 50%)
+    costUSD=(inTok/1e6)*1.25+(outputTokens/1e6)*10+(outputTokens*0.5/1e6)*3.5;
+  } else if(model==='gemini-2.5-flash'){
+    // 입력 $0.075/1M, 출력 $0.30/1M
+    costUSD=(inTok/1e6)*0.075+(outputTokens/1e6)*0.30;
+  } else if(model==='gemini-2.5-flash-lite'){
+    // 입력 $0.01/1M, 출력 $0.04/1M
+    costUSD=(inTok/1e6)*0.01+(outputTokens/1e6)*0.04;
+  } else {
+    // Claude Sonnet 기준 $3/$15
+    costUSD=(inTok/1e6)*3+(outputTokens/1e6)*15;
+  }
+  const krw=costUSD*KRW;
+  if(krw<1) return '< 1원';
+  if(krw<10) return `약 ${krw.toFixed(1)}원`;
+  return `약 ${Math.round(krw)}원`;
+}
+function updateCostHint(){
+  const el=$('cost-label'); if(!el)return;
+  const v=getRoomLength();
+  const tokens=LENGTH_PRESETS[v].tokens;
+  const model=getRoomApi()==='gemini'?D.geminiModel:(D.model||'claude');
+  el.textContent=calcCostKRW(tokens,model);
+}
 function updateLengthSlider(val){
   const v=parseInt(val);
   if(rid()){
@@ -3386,6 +3504,7 @@ function updateLengthSlider(val){
   save();
   const lbl=$('length-label');
   if(lbl) lbl.textContent=LENGTH_PRESETS[v].label;
+  updateCostHint();
 }
 function getRoomLength(){
   if(rid()&&D.roomLength&&D.roomLength[rid()]!==undefined)return D.roomLength[rid()];
@@ -3398,6 +3517,7 @@ function initLengthSlider(){
   slider.value=v;
   const lbl=$('length-label');
   if(lbl) lbl.textContent=LENGTH_PRESETS[v].label;
+  updateCostHint();
 }
 
 
