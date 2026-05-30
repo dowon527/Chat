@@ -235,31 +235,16 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 
 /* ─── TOPBAR ─── */
 #topbar{
-  height:72px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 16px;gap:14px;
+  height:56px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 14px;gap:10px;
   background:var(--s1);flex-shrink:0;
 }
 @media(max-width:700px){
-  #topbar{padding-left:12px}
+  #topbar{padding-left:10px}
 }
-.tb-emo{
-  width:52px;height:52px;border-radius:50%;
-  background:var(--s3);border:2px solid var(--border2);
-  display:flex;align-items:center;justify-content:center;font-size:26px;
-  flex-shrink:0;overflow:hidden;
-  cursor:pointer;position:relative;transition:border-color 0.15s;
-}
-.tb-emo:hover{border-color:var(--accent)}
-.tb-emo:hover::after{
-  content:'📷';font-size:14px;
-  position:absolute;inset:0;border-radius:50%;
-  background:rgba(0,0,0,0.45);
-  display:flex;align-items:center;justify-content:center;
-}
-.tb-emo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .tb-info{flex:1;min-width:0}
-.tb-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tb-sub{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.tb-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.tb-sub{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .tb-acts{display:flex;gap:6px;align-items:center}
 .ico-btn{
   width:32px;height:32px;border-radius:var(--r);
@@ -383,6 +368,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 /* ─── INPUT ─── */
 #input-wrap{
   padding:6px 10px 12px;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
   border-top:1px solid var(--border);
   background:var(--s1);flex-shrink:0;
 }
@@ -720,18 +706,19 @@ input[type=file]{display:none}
 
 /* 이전 답변 네비게이터 */
 .reroll-nav{
-  display:flex;align-items:center;gap:4px;
-  margin-top:4px;padding:0 2px;
+  display:flex;align-items:center;gap:6px;
+  margin-top:6px;padding:0 2px;
+  justify-content:flex-end;
 }
 .reroll-nav-btn{
   background:transparent;border:1px solid var(--border2);
   border-radius:20px;color:var(--t3);cursor:pointer;
-  font-size:11px;padding:1px 7px;transition:all 0.12s;
+  font-size:11px;padding:2px 8px;transition:all 0.12s;
   font-family:'Noto Sans KR',sans-serif;line-height:1.6;
 }
 .reroll-nav-btn:hover{background:var(--s2);border-color:var(--border3);color:var(--text)}
 .reroll-nav-btn:disabled{opacity:0.3;cursor:default}
-.reroll-nav-counter{font-size:11px;color:var(--t3);min-width:30px;text-align:center}
+.reroll-nav-counter{font-size:11px;color:var(--t2);min-width:60px;text-align:center}
 
 /* 인라인 수정 영역 */
 .msg-edit-area{
@@ -878,18 +865,15 @@ input[type=file]{display:none}
 <div id="main">
   <!-- TOPBAR -->
   <div id="topbar" style="display:none">
-    <!-- 모바일 햄버거 (오른쪽 topbar) -->
     <button id="sb-toggle" onclick="toggleSidebar()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <div class="tb-emo" id="tb-emo" onclick="document.getElementById('tb-emo-file').click()" title="클릭해서 캐릭터 사진 변경"></div>
     <input type="file" id="tb-emo-file" accept="image/*" style="display:none" onchange="loadTbEmoImg(event)">
     <div class="tb-info">
-      <div class="tb-name" id="tb-name"></div>
-      <div class="tb-sub" id="tb-sub"></div>
+      <div class="tb-name" id="tb-name" style="color:var(--text)"></div>
+      <div class="tb-sub" id="tb-sub" style="color:var(--t3)"></div>
     </div>
     <div class="tb-acts">
-      <!-- AI 엔진 토글 (topbar) -->
       <div style="display:flex;gap:3px;align-items:center">
         <button id="api-btn-claude" onclick="setActiveApi('claude')" title="Claude"
           style="padding:4px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;font-weight:500;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s">
@@ -1903,7 +1887,6 @@ function renderTopbar(){
   if(cab)cab.style.display=D.activeRoom?'flex':'none';
   const hasKey=(getRoomApi()==='gemini')?!!D.geminiKey:!!D.key;
   nk.style.display=(hasKey&&D.activeRoom)?'none':'flex';
-  renderAvatar($('tb-emo'),c);
   $('tb-name').textContent=c.name;
   const room=cRoom();
   $('tb-sub').textContent=room?room.name:'';
@@ -2125,64 +2108,77 @@ async function rerollMsg(row){
   const hist=cHist();
   if(!hist.length)return;
 
-  // histIdx로 먼저 찾고, 없으면 말풍선 텍스트로 fallback
+  // histIdx로 먼저 찾고, fallback
   let idx=parseInt(row.dataset.histIdx??'-1');
   if(isNaN(idx)||idx<0||idx>=hist.length||hist[idx]?.role!=='assistant'){
     const bubText=(row.querySelector('.msg-bub')?.textContent||'').trim().slice(0,40);
     idx=hist.findIndex(m=>m.role==='assistant'&&(m.content||'').trim().startsWith(bubText.slice(0,20)));
   }
-  // 그래도 못 찾으면 마지막 assistant 메시지로
   if(idx<0||idx>=hist.length){
     for(let i=hist.length-1;i>=0;i--){if(hist[i].role==='assistant'){idx=i;break;}}
   }
   if(idx<0)return;
 
-  // 이전 답변 히스토리 초기화(첫 리롤 시)
+  // _rerollHistory 초기화
   if(!row._rerollHistory){
     row._rerollHistory=[hist[idx].content];
     row._rerollIdx=0;
   }
 
-  // 히스토리에서 이 메시지 이후 제거 (but DOM row는 유지)
+  // hist에서 이 메시지 이후 제거
   const histBefore=hist.slice(0,idx);
-  // 원래 histories 교체
-  if(D.activeRoom){D.histories[D.activeRoom]=histBefore;}
+  if(D.activeRoom) D.histories[D.activeRoom]=histBefore;
   save();
 
-  // DOM에서 이 row 다음 row들만 제거
+  // DOM에서 이 row 다음 row들 제거
   const allRows=[...$('chat').querySelectorAll('.msg-row')];
   const domIdx=allRows.indexOf(row);
   for(let i=allRows.length-1;i>domIdx;i--){if(allRows[i]?.parentNode)allRows[i].remove();}
 
-  // 리롤 중 row를 로딩 상태로
+  // 기존 말풍선 흐리게
   const bub=row.querySelector('.msg-bub');
-  if(bub){bub.style.opacity='0.4';}
+  if(bub) bub.style.opacity='0.35';
 
-  // 다시 AI 응답 생성
   const lastUser=histBefore.filter(m=>m.role==='user').slice(-1)[0];
   if(!lastUser){if(bub)bub.style.opacity='';return;}
+
   $('send').disabled=true; showTyping();
   let newContent='';
   try{
-    newContent=await generateAIReroll(histBefore, bub);
-  }catch(e){hideTyping();if(bub)bub.style.opacity='';}
-  $('send').disabled=false; $('inp').focus();
+    newContent=await generateAIReroll(histBefore, null);
+  }catch(e){
+    hideTyping();
+    if(bub) bub.style.opacity='';
+    $('send').disabled=false;
+    return;
+  }
+  $('send').disabled=false;
+  if(!bub) return;
 
-  if(!newContent)return;
-  // 새 응답을 리롤 히스토리에 추가
+  // 기존 말풍선 원래대로
+  bub.style.opacity='';
+
+  if(!newContent) return;
+
+  // rerollHistory에 추가
   row._rerollHistory.push(newContent);
   row._rerollIdx=row._rerollHistory.length-1;
-  // 현재 말풍선 내용 교체
-  if(bub){bub.style.opacity='';bub.innerHTML=renderMsgContent(newContent);}
-  // hist에 새 메시지 추가 & histIdx 업데이트
+
+  // 말풍선 내용을 새 응답으로 교체
+  bub.innerHTML=renderMsgContent(newContent);
+
+  // hist에 새 메시지 push & histIdx 업데이트
   const newMsg={role:'assistant',content:newContent,time:now()};
   cHist().push(newMsg); save(); renderChars();
-  const newHi=cHist().lastIndexOf(newMsg);
-  if(newHi>=0) row.dataset.histIdx=newHi;
-  // 네비게이터 업데이트
+  const newHi=cHist().length-1;
+  row.dataset.histIdx=newHi;
+
+  // 네비게이터 표시/업데이트
   if(row._navEl&&row._navCounter&&row._prevBtn&&row._nextBtn){
     _updateRerollNav(row,row._navEl,row._navCounter,row._prevBtn,row._nextBtn);
   }
+
+  $('chat').scrollTop=$('chat').scrollHeight;
 }
 // generateAI와 같지만 결과를 반환 (row 재사용용)
 async function generateAIReroll(hist, targetBub=null){
@@ -2475,7 +2471,7 @@ function _addActionsToRow(row,bub,msg){
 function _updateRerollNav(row,nav,counter,prevBtn,nextBtn){
   const hist=row._rerollHistory||[];
   const cur=row._rerollIdx||0;
-  counter.textContent=`${cur+1}/${hist.length}`;
+  counter.textContent=`답변 비교 ${cur+1}/${hist.length}`;
   prevBtn.disabled=cur<=0;
   nextBtn.disabled=cur>=hist.length-1;
   nav.style.display=hist.length>1?'flex':'none';
