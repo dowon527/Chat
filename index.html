@@ -1659,6 +1659,7 @@ let D={
   roomMemories:{}, roomNotes:{}, roomProfileDefs:{}, roomApi:{}, roomLength:{}, notes:[],
   profiles:[],
   costLog:{}, // costLog[roomId] = [{turn, model, krw, time}]
+  customFonts:[],
   editing:null,
   emoSel:EMOJIS[0], emoImg:null,
   pEmoSel:'👤',
@@ -3136,9 +3137,8 @@ function saveKey(){
 const FONT_OPTIONS=[
   {id:'noto',label:'Noto Sans KR',sub:'기본 — 깔끔한 고딕체',css:"'Noto Sans KR',sans-serif"},
   {id:'gowun',label:'Gowun Batang',sub:'고운 바탕 — 소설 느낌',css:"'Gowun Batang',serif"},
-  {id:'garamond',label:'IM Fell English',sub:'빈티지 serif — 서양 판타지',css:"'IM Fell English',serif"},
   {id:'mono',label:'Nanum Myeongjo',sub:'나눔 명조 — 고전적 명조체',css:"'Nanum Myeongjo',serif"},
-  {id:'gothic',label:'Nanum Gothic',sub:'나눔 고딕 — 부드러운 고딕',css:"'Nanum Gothic',sans-serif"},
+  {id:'sys-applegothic',label:'Apple SD Gothic Neo',sub:'🍎 아이폰 한글 기본체',css:"'Apple SD Gothic Neo',sans-serif",system:true},
 ];
 const FONT_LINKS={
   gowun:'https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap',
@@ -3147,9 +3147,19 @@ const FONT_LINKS={
   gothic:'https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap',
 };
 function applyFont(fontId){
+  // 커스텀 폰트인지 먼저 확인
+  const customs=D.customFonts||[];
+  const custom=customs.find(x=>x.id===fontId);
+  if(custom){
+    const style=document.getElementById('font-override')||document.createElement('style');
+    style.id='font-override';
+    style.textContent=`.msg-bub,#inp{font-family:${custom.css}!important}`;
+    if(!style.parentNode) document.head.appendChild(style);
+    D.chatFont=fontId; save(); return;
+  }
   const f=FONT_OPTIONS.find(x=>x.id===fontId)||FONT_OPTIONS[0];
-  // 폰트 로드
-  if(FONT_LINKS[fontId]&&!document.querySelector('link[data-font="'+fontId+'"]')){
+  // 웹폰트 로드 (시스템 폰트는 불필요)
+  if(!f.system && FONT_LINKS[fontId]&&!document.querySelector('link[data-font="'+fontId+'"]')){
     const lk=document.createElement('link');
     lk.rel='stylesheet'; lk.href=FONT_LINKS[fontId];
     lk.setAttribute('data-font',fontId);
@@ -3165,21 +3175,106 @@ function applyFont(fontId){
 function renderFontList(){
   const el=$('font-list'); if(!el)return;
   const cur=D.chatFont||'noto';
-  el.innerHTML=FONT_OPTIONS.map(f=>`
-    <div onclick="selectFont('${f.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r);border:1px solid ${cur===f.id?'var(--accent2)':'var(--border2)'};background:${cur===f.id?'var(--ag2)':'transparent'};cursor:pointer;transition:all 0.15s">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-family:${f.css};font-weight:500">${f.label}</div>
-        <div style="font-size:11px;color:var(--t3);margin-top:1px">${f.sub}</div>
-        <div style="font-size:12px;font-family:${f.css};color:var(--t2);margin-top:3px">안녕하세요. 오늘 날씨가 좋네요.</div>
+  const customs=D.customFonts||[];
+  const allFonts=[...FONT_OPTIONS,...customs.map(c=>({...c,isCustom:true}))];
+
+  // 그룹 구분선 렌더
+  let html='';
+  html+='<div style="font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--t3);text-transform:uppercase;margin-bottom:4px;padding:0 2px">웹 폰트</div>';
+  FONT_OPTIONS.filter(f=>!f.system).forEach(f=>{html+=fontCard(f,cur);});
+  html+='<div style="font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--t3);text-transform:uppercase;margin:10px 0 4px;padding:0 2px">🍎 시스템 폰트</div>';
+  FONT_OPTIONS.filter(f=>f.system).forEach(f=>{html+=fontCard(f,cur);});
+  if(customs.length){
+    html+='<div style="font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--t3);text-transform:uppercase;margin:10px 0 4px;padding:0 2px">✦ 직접 추가한 폰트</div>';
+    customs.forEach(f=>{html+=fontCard(f,cur,true);});
+  }
+  // 추가 버튼
+  html+=`<button onclick="openCustomFontModal()" style="margin-top:10px;width:100%;padding:9px;border-radius:var(--r);border:1px dashed var(--border2);background:transparent;color:var(--t3);cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:12px;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--t3)'">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    커스텀 폰트 추가
+  </button>`;
+  el.innerHTML=html;
+}
+function fontCard(f,cur,isCustom=false){
+  const sel=cur===f.id;
+  return `<div onclick="selectFont('${f.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r);border:1px solid ${sel?'var(--accent2)':'var(--border2)'};background:${sel?'var(--ag2)':'transparent'};cursor:pointer;transition:all 0.15s;margin-bottom:3px">
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:13px;font-family:${f.css};font-weight:500">${f.label}</span>
+        ${isCustom?`<button onclick="event.stopPropagation();deleteCustomFont('${f.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0 2px;line-height:1" title="삭제">✕</button>`:''}
       </div>
-      <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid ${cur===f.id?'var(--accent2)':'var(--border3)'};background:${cur===f.id?'var(--accent2)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
-        ${cur===f.id?'<svg width="8" height="8" viewBox="0 0 10 10"><polyline points="1,5 4,8 9,2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':''}
-      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:1px">${f.sub||''}</div>
+      <div style="font-size:12px;font-family:${f.css};color:var(--t2);margin-top:3px">안녕하세요. 오늘 날씨가 좋네요.</div>
     </div>
-  `).join('');
+    <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid ${sel?'var(--accent2)':'var(--border3)'};background:${sel?'var(--accent2)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
+      ${sel?'<svg width="8" height="8" viewBox="0 0 10 10"><polyline points="1,5 4,8 9,2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':''}
+    </div>
+  </div>`;
 }
 function selectFont(id){
   applyFont(id);
+  renderFontList();
+}
+
+// ─── 커스텀 폰트 추가 ───
+function openCustomFontModal(){
+  const existing=document.getElementById('custom-font-modal');
+  if(existing){
+    document.getElementById('cf-name').value='';
+    existing.classList.remove('hide');
+    return;
+  }
+  const ov=document.createElement('div');
+  ov.id='custom-font-modal';
+  ov.className='ov';
+  ov.style.zIndex='1100';
+  ov.innerHTML=`
+    <div class="modal" style="max-width:340px">
+      <div class="modal-hd">
+        <div class="modal-ttl">✦ 폰트 추가</div>
+        <button class="ico-btn" onclick="document.getElementById('custom-font-modal').classList.add('hide')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding:16px 20px">
+        <p style="font-size:12px;color:var(--t3);line-height:1.7;margin-bottom:14px">기기에 설치된 폰트 이름을 그대로 입력하면 돼요.<br><span style="color:var(--t3)">예: <code style="background:var(--s4);padding:1px 5px;border-radius:4px">MaruBuri</code>, <code style="background:var(--s4);padding:1px 5px;border-radius:4px">온글잎 밀기울</code></span></p>
+        <div class="fg">
+          <label class="fl">폰트 이름</label>
+          <input class="fi" id="cf-name" placeholder="설치된 폰트 이름 입력" style="font-size:14px" oninput="livePreviewFont(this.value)">
+        </div>
+        <div id="cf-preview" style="margin-top:4px;padding:10px 12px;background:var(--s3);border-radius:var(--r);border:1px solid var(--border2);font-size:14px;color:var(--text);line-height:1.7">안녕하세요. 오늘 날씨가 좋네요.</div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-g" onclick="document.getElementById('custom-font-modal').classList.add('hide')">취소</button>
+        <button class="btn btn-p" onclick="saveCustomFont()">추가</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.add('hide');});
+}
+function livePreviewFont(name){
+  const prev=document.getElementById('cf-preview');
+  if(!prev)return;
+  prev.style.fontFamily=name?`'${name}',sans-serif`:'';
+}
+function saveCustomFont(){
+  const name=document.getElementById('cf-name').value.trim();
+  if(!name){alert('폰트 이름을 입력해주세요.');return;}
+  if(!D.customFonts)D.customFonts=[];
+  const id='custom_'+Date.now();
+  const css=`'${name}',sans-serif`;
+  D.customFonts.push({id,label:name,css,sub:'설치된 폰트'});
+  save();
+  document.getElementById('custom-font-modal').classList.add('hide');
+  renderFontList();
+  applyFont(id);
+}
+function deleteCustomFont(id){
+  if(!D.customFonts)return;
+  D.customFonts=D.customFonts.filter(f=>f.id!==id);
+  if(D.chatFont===id){D.chatFont='noto';applyFont('noto');}
+  save();
   renderFontList();
 }
 
