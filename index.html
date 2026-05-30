@@ -1615,7 +1615,7 @@ const GENRES=[
 ];
 
 let D={
-  key:'', model:'claude-sonnet-4-20250514',
+  key:'', model:'claude-sonnet-4-6',
   geminiKey:'', geminiModel:'gemini-2.5-flash',
   activeApi:'claude', outputLength:2,
   chars:[], activeChar:null,
@@ -2978,8 +2978,10 @@ function createRoom(){
 
 // ─── MODAL ───
 const CLAUDE_MODELS=[
-  {value:'claude-opus-4-6',icon:'⚡',name:'하이퍼챗 (Opus 4.6)',desc:'최고 품질 · 롤플레이 최강'},
-  {value:'claude-sonnet-4-20250514',icon:'🔥',name:'슈퍼챗 (Sonnet 4)',desc:'추천 · 균형잡힌 품질과 속도'},
+  {value:'claude-opus-4-8',icon:'👑',name:'울트라챗 (Opus 4.8)',desc:'최신 최고사양 · Anthropic 최강'},
+  {value:'claude-opus-4-7',icon:'⚡',name:'하이퍼챗 (Opus 4.7)',desc:'최고 품질 · 롤플레이 최강'},
+  {value:'claude-opus-4-6',icon:'🔮',name:'하이퍼챗 (Opus 4.6)',desc:'고품질 · 안정된 구버전'},
+  {value:'claude-sonnet-4-6',icon:'🔥',name:'슈퍼챗 (Sonnet 4.6)',desc:'추천 · 균형잡힌 품질과 속도'},
   {value:'claude-haiku-4-5-20251001',icon:'💧',name:'파워챗 (Haiku 4.5)',desc:'빠름 · 가벼운 대화용'},
 ];
 const GEMINI_MODELS=[
@@ -3940,15 +3942,6 @@ function openStatsModal(){
     };
     let cum=0;
     const KRW_RATE=1380;
-    function inCostKRW(tok,model){
-      let usd=0;
-      if(model==='gemini-2.5-pro') usd=(tok/1e6)*1.25;
-      else if(model==='gemini-2.5-flash') usd=(tok/1e6)*0.075;
-      else if(model==='gemini-2.5-flash-lite') usd=(tok/1e6)*0.01;
-      else if(model==='gemini-3.1-pro-preview') usd=(tok/1e6)*2.0;
-      else usd=(tok/1e6)*3;
-      return usd*KRW_RATE;
-    }
     const rows=log.map((l,i)=>{
       cum+=l.krw;
       const krwStr=l.krw<1?'<1원':l.krw.toFixed(1)+'원';
@@ -3958,9 +3951,7 @@ function openStatsModal(){
         const bd=l.breakdown;
         const parts=[bd.charPrompt,bd.profile,bd.note,bd.memory,bd.keyword,bd.history].filter(p=>p&&p.chars>0);
         const totalChars=parts.reduce((s,p)=>s+p.chars,0);
-        const totalTok=parts.reduce((s,p)=>s+p.tok,0);
-        const inKrw=inCostKRW(totalTok,l.model);
-        infoStr='<span style="font-size:10px;color:var(--t3)">입력 '+totalChars.toLocaleString()+'자→'+(inKrw<0.1?'<0.1':inKrw.toFixed(1))+'원</span>';
+        infoStr='<span style="font-size:10px;color:var(--t3)">입력 '+totalChars.toLocaleString()+'자</span>';
       }
       return '<div style="display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--s3);border-radius:8px;font-size:12px">'+
         '<span style="color:var(--t3);flex-shrink:0;min-width:28px">'+(i+1)+'턴</span>'+
