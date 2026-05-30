@@ -126,6 +126,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   cursor:pointer;border:1px solid transparent;
   transition:all 0.15s;position:relative;
   margin-bottom:1px;
+  user-select:none;-webkit-user-select:none;
 }
 .char-item:hover{background:var(--s2)}
 .char-item.active{background:var(--s2)}
@@ -136,6 +137,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   padding:9px 10px 9px 14px;border-radius:var(--r);
   cursor:pointer;border:1px solid transparent;
   transition:all 0.15s;
+  user-select:none;-webkit-user-select:none;
 }
 .scene-sb-item:hover{background:var(--s2)}
 .scene-sb-item.active{background:var(--s2)}
@@ -302,6 +304,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 .msg-row{display:flex;gap:8px;width:100%;animation:fadeUp 0.2s ease}
 .msg-row.me{align-self:flex-end;flex-direction:row-reverse}
 @keyframes ctxPop{from{opacity:0;transform:scale(0.93)}to{opacity:1;transform:scale(1)}}
+@keyframes ctxSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .msg-av{
   width:30px;height:30px;border-radius:50%;
@@ -798,32 +801,46 @@ input[type=file]{display:none}
 
 <!-- ══════════ SIDEBAR ══════════ -->
 <div id="sidebar">
-  <div class="sb-top">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div class="logo">
-          <div class="logo-dot"></div>
-          CharaChat
+
+  <!-- 뷰1: 스토리 목록 -->
+  <div id="sb-view-stories" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0">
+    <div class="sb-top">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="logo"><div class="logo-dot"></div>CharaChat</div>
+          <div class="logo-sub">AI STORY STUDIO</div>
         </div>
-        <div class="logo-sub">AI STORY STUDIO</div>
+        <button id="theme-toggle" onclick="toggleTheme()" title="테마 전환"
+          style="background:var(--s3);border:1px solid var(--border2);border-radius:8px;color:var(--t2);cursor:pointer;padding:6px 8px;font-size:14px;transition:all 0.15s;flex-shrink:0"
+          onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'">🌙</button>
       </div>
-      <button id="theme-toggle" onclick="toggleTheme()" title="테마 전환"
-        style="background:var(--s3);border:1px solid var(--border2);border-radius:8px;
-               color:var(--t2);cursor:pointer;padding:6px 8px;font-size:14px;
-               transition:all 0.15s;flex-shrink:0"
-        onmouseover="this.style.background='var(--s4)'"
-        onmouseout="this.style.background='var(--s3)'">🌙</button>
     </div>
+    <div class="sb-section">스토리</div>
+    <div class="char-scroll" id="char-list"></div>
+    <button class="sb-add" onclick="openModal('char-modal')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      새 스토리
+    </button>
   </div>
 
-  <div class="sb-section">스토리</div>
-  <div class="char-scroll" id="char-list">
-    <!-- 시작 장면 카테고리는 renderChars가 동적으로 생성 -->
+  <!-- 뷰2: 채팅방 목록 -->
+  <div id="sb-view-rooms" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0">
+    <div class="sb-top" style="padding:14px 14px 12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="sbShowStories()" style="background:none;border:none;color:var(--t2);cursor:pointer;padding:4px;display:flex;align-items:center;flex-shrink:0;border-radius:6px;transition:all 0.15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='none'">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div id="sb-rooms-char-emo" class="char-emo" style="width:34px;height:34px;font-size:16px;flex-shrink:0"></div>
+        <div id="sb-rooms-char-name" style="flex:1;min-width:0;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      </div>
+    </div>
+    <div class="sb-section">대화방</div>
+    <div class="char-scroll" id="room-list"></div>
+    <button class="sb-add" id="sb-new-room-btn">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      신규 대화
+    </button>
   </div>
-  <button class="sb-add" onclick="openModal('char-modal')">
-    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-    새 스토리
-  </button>
 
   <div class="sb-bot">
 
@@ -1450,9 +1467,17 @@ function save(){
       if(c.emoImg)imgMap[c.id]=c.emoImg;
       const copy=Object.assign({},c); copy.emoImg=null; return copy;
     });
+    // histories 정제: content가 string인 것만
+    const safeHistories={};
+    Object.keys(D.histories||{}).forEach(k=>{
+      const arr=D.histories[k];
+      if(Array.isArray(arr)){
+        safeHistories[k]=arr.filter(m=>m&&typeof m.content==='string').map(m=>({role:m.role,content:m.content,time:m.time||''}));
+      }
+    });
     const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,activeApi:D.activeApi,
       chars:liteChars,activeChar:D.activeChar,activeRoom:D.activeRoom,
-      rooms:D.rooms,histories:D.histories,
+      rooms:D.rooms,histories:safeHistories,
       charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,roomSummaries:D.roomSummaries,notes:D.notes,roomNoteIds:D.roomNoteIds,
       roomMemories:D.roomMemories,roomNotes:D.roomNotes,roomProfileDefs:D.roomProfileDefs,roomApi:D.roomApi,roomLength:D.roomLength,
       profiles:D.profiles};
@@ -1460,16 +1485,7 @@ function save(){
     try{localStorage.setItem('cc9_imgs',JSON.stringify(imgMap));}
     catch(e){console.warn('이미지 저장 실패');}
   }catch(e){
-    try{
-      const liteChars2=D.chars.map(c=>{const copy=Object.assign({},c);copy.emoImg=null;return copy;});
-      const lite2={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,activeApi:D.activeApi,
-        chars:liteChars2,activeChar:D.activeChar,activeRoom:D.activeRoom,
-        rooms:D.rooms,histories:D.histories,
-        charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,notes:D.notes,roomNoteIds:D.roomNoteIds,
-        roomMemories:D.roomMemories,roomNotes:D.roomNotes,roomProfileDefs:D.roomProfileDefs,roomApi:D.roomApi,roomLength:D.roomLength,
-        profiles:D.profiles};
-      localStorage.setItem('cc9',JSON.stringify(lite2));
-    }catch(e2){console.warn('저장 실패',e2);}
+    console.warn('저장 실패',e);
   }
 }
 const $=id=>document.getElementById(id);
@@ -1528,6 +1544,8 @@ function init(){
   renderTopbar();
   renderChat();
   updateApiToggleBtns();
+  // 앱 시작 시 activeChar 있으면 뷰2로
+  if(D.activeChar) sbShowRooms(D.activeChar);
   // default char
   if(!D.chars.length){
     D.chars.push({
@@ -1666,6 +1684,56 @@ function loadTbEmoImg(e){
   e.target.value='';
 }
 
+// ─── SIDEBAR VIEW SWITCH ───
+function sbShowStories(){
+  document.getElementById('sb-view-stories').style.display='flex';
+  document.getElementById('sb-view-rooms').style.display='none';
+}
+function sbShowRooms(charId){
+  const c=D.chars.find(x=>x.id===charId); if(!c)return;
+  document.getElementById('sb-view-stories').style.display='none';
+  const v=document.getElementById('sb-view-rooms'); v.style.display='flex';
+  // 헤더 채우기
+  const emoEl=document.getElementById('sb-rooms-char-emo');
+  renderAvatar(emoEl,c);
+  document.getElementById('sb-rooms-char-name').textContent=c.name;
+  // 신규 대화 버튼
+  const nbtn=document.getElementById('sb-new-room-btn');
+  nbtn.onclick=()=>openNewRoomModal(charId);
+  // 방 목록 렌더
+  renderRooms(charId);
+}
+function renderRooms(charId){
+  const list=document.getElementById('room-list'); list.innerHTML='';
+  const rooms=D.rooms[charId]||[];
+  if(!rooms.length){
+    list.innerHTML='<div style="padding:10px 14px;font-size:12px;color:var(--t3)">대화방이 없어요</div>';
+    return;
+  }
+  rooms.forEach(room=>{
+    const isActive=D.activeChar===charId&&room.id===D.activeRoom;
+    const cnt=(D.histories[room.id]||[]).filter(m=>m.role==='user').length;
+    const preview=getRoomPreview(room.id);
+    const item=document.createElement('div');
+    item.className='scene-sb-item'+(isActive?' active':'');
+    item.innerHTML=`
+      <div class="scene-dot"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:${isActive?'600':'400'};color:${isActive?'var(--accent)':'var(--text)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${room.name}</div>
+        ${preview?`<div style="font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">${preview}</div>`:''}
+      </div>
+      ${cnt?`<div style="font-size:11px;color:var(--t3);flex-shrink:0">${cnt}턴</div>`:''}
+    `;
+    item.onclick=()=>{selectRoom(charId,room.id);renderRooms(charId);};
+    addLongPress(item,()=>showCtxMenu([
+      {label:'이름 수정',action:()=>renameRoom(charId,room.id)},
+      {label:'대화 초기화',action:()=>clearRoomChat(charId,room.id)},
+      {label:'삭제',action:()=>deleteRoom(charId,room.id),danger:true}
+    ]));
+    list.appendChild(item);
+  });
+}
+
 // ─── CHARS ───
 function renderChars(){
   const list=$('char-list'); list.innerHTML='';
@@ -1676,11 +1744,9 @@ function renderChars(){
   const gMap=Object.fromEntries(GENRES.map(g=>[g.id,g.l]));
   D.chars.forEach(c=>{
     const wrap=document.createElement('div');
+    wrap.style.cssText='margin-bottom:1px';
     const isActiveChar=c.id===D.activeChar;
-    const isOpen=isActiveChar||(D._openChars||{})[c.id];
     const rooms=D.rooms[c.id]||[];
-
-    // ── 캐릭터 헤더 ──
     const d=document.createElement('div');
     d.className='char-item'+(isActiveChar?' active':'');
     const av=document.createElement('div');
@@ -1690,56 +1756,21 @@ function renderChars(){
         <div class="char-meta-name">${c.name}</div>
         <div class="char-meta-tag">${(c.genres||[c.genre]).map(g=>gMap[g]||g).join('·')}${rooms.length?' · '+rooms.length+'개':''}</div>
       </div>
-      <span style="font-size:10px;color:var(--t3);flex-shrink:0;transition:transform 0.2s;display:inline-block;${isOpen?'transform:rotate(90deg)':''}">▶</span>
-`;
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--t3);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
+    `;
     d.insertBefore(av,d.firstChild);
-    d.onclick=()=>{if(!D._openChars)D._openChars={};D._openChars[c.id]=!isOpen;renderChars();};
+    d.onclick=()=>sbShowRooms(c.id);
     addLongPress(d,()=>showCtxMenu([
-      {label:'이름 변경',action:()=>editChar(c.id)},
+      {label:'수정',action:()=>editChar(c.id)},
       {label:'삭제',action:()=>deleteStory(c.id),danger:true}
     ]));
     wrap.appendChild(d);
-
-    // ── 대화방 목록 ──
-    if(isOpen){
-      const bl=document.createElement('div');
-      bl.style.cssText='display:flex;flex-direction:column;gap:0;padding-bottom:4px';
-
-      rooms.forEach((room,ri)=>{
-        const isActive=isActiveChar&&room.id===D.activeRoom;
-        const cnt=(D.histories[room.id]||[]).filter(m=>m.role==='user').length;
-        const preview=getRoomPreview(room.id);
-        const item=document.createElement('div');
-        item.className='scene-sb-item'+(isActive?' active':'');
-        // 왼쪽 액센트 바 (active 시)
-        item.innerHTML=`
-          <div class="scene-dot"></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:${isActive?'600':'400'};color:${isActive?'var(--accent)':'var(--text)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${room.name}</div>
-            ${preview?`<div style="font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">${preview}</div>`:''}
-          </div>
-          ${cnt?`<div style="font-size:11px;color:var(--t3);flex-shrink:0">${cnt}턴</div>`:''}
-`;
-        item.onclick=()=>selectRoom(c.id,room.id);
-        addLongPress(item,()=>showCtxMenu([
-          {label:'이름 수정',action:()=>renameRoom(c.id,room.id)},
-          {label:'대화 초기화',action:()=>clearRoomChat(c.id,room.id)},
-          {label:'삭제',action:()=>deleteRoom(c.id,room.id),danger:true}
-        ]));
-        bl.appendChild(item);
-      });
-
-      // 신규 대화 버튼
-      const newBtn=document.createElement('button');
-      newBtn.className='scene-sb-add';
-      newBtn.innerHTML='＋ 신규 대화';
-      newBtn.onclick=()=>openNewRoomModal(c.id);
-      bl.appendChild(newBtn);
-
-      wrap.appendChild(bl);
-    }
     list.appendChild(wrap);
   });
+  // 현재 activeChar가 있으면 뷰2 유지
+  if(D.activeChar && document.getElementById('sb-view-rooms').style.display==='flex'){
+    renderRooms(D.activeChar);
+  }
 }
 function getRoomPreview(roomId){
   const hist=(D.histories[roomId]||[]);
@@ -1754,38 +1785,39 @@ function selectRoom(charId, roomId){
   save(); renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
 }
 function clearRoomChat(charId, roomId){
-  if(!confirm('이 대화 내용을 초기화할까요?\n(방은 유지되고 대화만 지워져요)'))return;
-  D.histories[roomId]=[];
-  save();
-  if(D.activeChar===charId&&D.activeRoom===roomId){renderChat();}
-  renderChars();
+  showConfirm('이 대화 내용을 초기화할까요?\n(방은 유지되고 대화만 지워져요)',function(){
+    D.histories[roomId]=[];
+    save();
+    if(D.activeChar===charId&&D.activeRoom===roomId){renderChat();}
+    renderChars(); renderRooms(charId);
+  });
 }
 function renameRoom(charId, roomId){
   const rooms=D.rooms[charId]||[];
   const room=rooms.find(r=>r.id===roomId); if(!room)return;
-  const newName=prompt('대화방 이름 수정', room.name);
-  if(newName===null)return;
-  const trimmed=newName.trim();
-  if(!trimmed)return;
-  room.name=trimmed;
-  save(); renderChars();
+  showPrompt('대화방 이름 수정', room.name, function(v){
+    room.name=v;
+    save(); renderChars(); renderRooms(charId);
+  });
 }
 function deleteRoom(charId, roomId){
-  if(!confirm('이 대화를 삭제할까요?'))return;
-  D.rooms[charId]=(D.rooms[charId]||[]).filter(r=>r.id!==roomId);
-  delete D.histories[roomId];
-  if(D.roomProfiles)delete D.roomProfiles[roomId];
-  if(D.roomMemories)delete D.roomMemories[roomId];
-  if(D.roomNotes)delete D.roomNotes[roomId];
-  if(D.roomProfileDefs)delete D.roomProfileDefs[roomId];
-  if(D.roomApi)delete D.roomApi[roomId];
-  if(D.roomLength)delete D.roomLength[roomId];
-  if(D.roomNoteIds)delete D.roomNoteIds[roomId];
-  if(D.activeChar===charId&&D.activeRoom===roomId){
-    const remaining=D.rooms[charId]||[];
-    D.activeRoom=remaining[0]?.id||null;
-  }
-  save(); renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
+  showConfirm('이 대화를 삭제할까요?',function(){
+    D.rooms[charId]=(D.rooms[charId]||[]).filter(r=>r.id!==roomId);
+    delete D.histories[roomId];
+    if(D.roomProfiles)delete D.roomProfiles[roomId];
+    if(D.roomMemories)delete D.roomMemories[roomId];
+    if(D.roomNotes)delete D.roomNotes[roomId];
+    if(D.roomProfileDefs)delete D.roomProfileDefs[roomId];
+    if(D.roomApi)delete D.roomApi[roomId];
+    if(D.roomLength)delete D.roomLength[roomId];
+    if(D.roomNoteIds)delete D.roomNoteIds[roomId];
+    if(D.activeChar===charId&&D.activeRoom===roomId){
+      const remaining=D.rooms[charId]||[];
+      D.activeRoom=remaining[0]?.id||null;
+    }
+    save(); renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
+    renderRooms(charId);
+  });
 }
 function getLastMsg(charId,sceneId){
   const hist=(D.histories[charId]?.[sceneId]||[]);
@@ -1824,25 +1856,26 @@ function deleteBranch(charId, sceneId){
   save(); renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
 }
 function deleteStory(id){
-  if(!confirm('이 스토리를 삭제할까요?\n대화·기억·노트가 모두 삭제됩니다.'))return;
-  // 대화방 히스토리 전부 삭제
-  (D.rooms[id]||[]).forEach(r=>{
-    delete D.histories[r.id];
-    if(D.roomProfiles)delete D.roomProfiles[r.id];
-    if(D.roomMemories)delete D.roomMemories[r.id];
-    if(D.roomNotes)delete D.roomNotes[r.id];
-    if(D.roomProfileDefs)delete D.roomProfileDefs[r.id];
-    if(D.roomApi)delete D.roomApi[r.id];
-    if(D.roomLength)delete D.roomLength[r.id];
-    if(D.roomNoteIds)delete D.roomNoteIds[r.id];
+  showConfirm('이 스토리를 삭제할까요?\n대화·기억·노트가 모두 삭제됩니다.',function(){
+    (D.rooms[id]||[]).forEach(r=>{
+      delete D.histories[r.id];
+      if(D.roomProfiles)delete D.roomProfiles[r.id];
+      if(D.roomMemories)delete D.roomMemories[r.id];
+      if(D.roomNotes)delete D.roomNotes[r.id];
+      if(D.roomProfileDefs)delete D.roomProfileDefs[r.id];
+      if(D.roomApi)delete D.roomApi[r.id];
+      if(D.roomLength)delete D.roomLength[r.id];
+      if(D.roomNoteIds)delete D.roomNoteIds[r.id];
+    });
+    D.chars=D.chars.filter(x=>x.id!==id);
+    delete D.rooms[id];
+    delete D.charMemories[id];
+    delete D.charNotes[id];
+    delete D.charProfiles[id];
+    if(D.activeChar===id){D.activeChar=D.chars[0]?.id||null;D.activeRoom=null;}
+    save(); renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
+    sbShowStories();
   });
-  D.chars=D.chars.filter(x=>x.id!==id);
-  delete D.rooms[id];
-  delete D.charMemories[id];
-  delete D.charNotes[id];
-  delete D.charProfiles[id];
-  if(D.activeChar===id){D.activeChar=D.chars[0]?.id||null;D.activeRoom=null;}
-  save(); renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
 }
 function selectChar(id){
   const rooms=D.rooms[id]||[];
@@ -2090,13 +2123,19 @@ function getMsgIndex(row){
 }
 async function rerollMsg(row){
   const hist=cHist();
-  // data-hist-idx로 정확한 인덱스 찾기
+  if(!hist.length)return;
+
+  // histIdx로 먼저 찾고, 없으면 말풍선 텍스트로 fallback
   let idx=parseInt(row.dataset.histIdx??'-1');
-  if(idx<0||idx>=hist.length){
-    const bubText=row.querySelector('.msg-bub')?.textContent||'';
-    idx=hist.findIndex(m=>m.role==='assistant'&&m.content.startsWith(bubText.slice(0,30)));
+  if(isNaN(idx)||idx<0||idx>=hist.length||hist[idx]?.role!=='assistant'){
+    const bubText=(row.querySelector('.msg-bub')?.textContent||'').trim().slice(0,40);
+    idx=hist.findIndex(m=>m.role==='assistant'&&(m.content||'').trim().startsWith(bubText.slice(0,20)));
   }
-  if(idx<0||idx>=hist.length)return;
+  // 그래도 못 찾으면 마지막 assistant 메시지로
+  if(idx<0||idx>=hist.length){
+    for(let i=hist.length-1;i>=0;i--){if(hist[i].role==='assistant'){idx=i;break;}}
+  }
+  if(idx<0)return;
 
   // 이전 답변 히스토리 초기화(첫 리롤 시)
   if(!row._rerollHistory){
@@ -2283,18 +2322,14 @@ ${genreGuide}
       generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength()].tokens}
     });
     const geminiUrl=`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:generateContent?key=${D.geminiKey}`;
-    const ctrl=new AbortController();
-    const timer=setTimeout(()=>ctrl.abort(),120000);
     try{
-      const res=await fetch(geminiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:geminiBody,signal:ctrl.signal});
-      clearTimeout(timer);
+      const res=await fetch(geminiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:geminiBody});
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini API 오류')}
       const data=await res.json();
       const parts=data.candidates?.[0]?.content?.parts||[];
       for(const p of parts){if(p.thought)continue;if(p.text)full+=p.text;}
     }catch(e){
-      clearTimeout(timer);
-      throw new Error(e.name==='AbortError'?'응답 시간 초과 (120초)':e.message);
+      throw new Error(e.message||'Gemini 오류');
     }
     if(!full)throw new Error('응답이 비어있어요. 잠시 후 다시 시도해주세요.');
     hideTyping(); // 응답 완전히 받은 후 인디케이터 제거
@@ -2372,8 +2407,10 @@ ${genreGuide}
 }
 function _addActionsToRow(row,bub,msg){
   const body=row.querySelector('.msg-body'); if(!body)return;
-  // 스트리밍 완료 후 hist 인덱스 저장
-  const hi=cHist().lastIndexOf(msg);
+  // hist 인덱스 저장 - content로 역방향 검색
+  const h=cHist();
+  let hi=-1;
+  for(let i=h.length-1;i>=0;i--){if(h[i].role==='assistant'&&h[i].content===msg.content){hi=i;break;}}
   if(hi>=0) row.dataset.histIdx=hi;
   // 리롤 히스토리 초기화
   if(!row._rerollHistory) row._rerollHistory=[msg.content];
@@ -2491,8 +2528,11 @@ async function sendMsg(){
     await generateAI(cHist());
   }catch(e){
     hideTyping();
-    const em={role:'assistant',content:'⚠️ 오류: '+e.message,time:now()};
+    const msg=e.message||String(e);
+    const em={role:'assistant',content:'⚠️ 오류: '+msg,time:now()};
+    cHist().push(em);
     appendMsg(em);
+    save();
   }
   $('send').disabled=false; $('inp').focus();
 }
@@ -2708,23 +2748,42 @@ function saveChar(){
     scenes:_editingScenes.filter(s=>s.content.trim()),
     prompt:$('c-prompt').value.trim()
   };
-  if(D.editing){const i=D.chars.findIndex(x=>x.id===D.editing);if(i>=0)D.chars[i]=ch}
-  else{D.chars.push(ch);D.activeChar=ch.id}
+  if(D.editing){
+    const i=D.chars.findIndex(x=>x.id===D.editing);
+    if(i>=0)D.chars[i]=ch;
+  } else {
+    D.chars.push(ch);
+    // 기본 방 자동 생성
+    const roomId='room_'+Date.now();
+    if(!D.rooms)D.rooms={};
+    if(!D.rooms[ch.id]||!D.rooms[ch.id].length){
+      D.rooms[ch.id]=[{id:roomId,name:'대화 1'}];
+      D.histories[roomId]=[];
+    }
+    D.activeChar=ch.id;
+    D.activeRoom=D.rooms[ch.id][0].id;
+  }
+  const wasNew=!D.editing;
+  const newCharId=D.activeChar;
+  D.editing=null;
   save(); closeModal('char-modal');
   renderChars(); renderTopbar(); renderChat();
+  if(wasNew) sbShowRooms(newCharId);
 }
 function deleteChar(){
-  if(!D.editing||!confirm('정말 삭제할까요?'))return;
+  if(!D.editing)return;
   const id=D.editing;
-  D.chars=D.chars.filter(x=>x.id!==id);
-  delete D.histories[id];
-  delete D.charMemories[id];
-  delete D.charNotes[id];
-  delete D.charStory[id];
-  delete D.charProfiles[id];
-  if(D.activeChar===id){D.activeChar=D.chars[0]?.id||null;D.activeRoom=null;}
-  D.editing=null; save(); closeModal('char-modal');
-  renderChars(); renderTopbar(); renderChat();
+  showConfirm('정말 삭제할까요?',function(){
+    D.chars=D.chars.filter(x=>x.id!==id);
+    delete D.histories[id];
+    delete D.charMemories[id];
+    delete D.charNotes[id];
+    delete D.charStory[id];
+    delete D.charProfiles[id];
+    if(D.activeChar===id){D.activeChar=D.chars[0]?.id||null;D.activeRoom=null;}
+    D.editing=null; save(); closeModal('char-modal');
+    renderChars(); renderTopbar(); renderChat(); sbShowStories();
+  });
 }
 
 // ─── CHAR ADD BUTTON ───
@@ -3291,16 +3350,19 @@ function exportSeqDownload(){
   updateSeqInfo();
 }
 function exportSeqReset(){
-  if(!confirm('저장 위치를 초기화할까요?\n(다음 이어서 저장이 1턴부터 시작돼요)'))return;
-  setSeqIdx(0);
-  updateSeqInfo();
+  showConfirm('저장 위치를 초기화할까요?\n(다음 이어서 저장이 1턴부터 시작돼요)',function(){
+    setSeqIdx(0); updateSeqInfo();
+  });
 }
 
 // ─── MISC ───
 function clearChat(){
-  if(!D.activeRoom||!confirm('이 대화를 초기화할까요?'))return;
-  D.histories[D.activeRoom]=[];
-  save(); renderChat(); renderChars();
+  if(!D.activeRoom)return;
+  showConfirm('이 대화를 초기화할까요?',function(){
+    D.histories[D.activeRoom]=[];
+    save(); renderChat(); renderChars();
+    if(D.activeChar) renderRooms(D.activeChar);
+  });
 }
 
 // ─── OVERRIDE BUTTONS ───
@@ -3344,6 +3406,66 @@ function initLengthSlider(){
 
 
 // ─── LONG PRESS & CONTEXT MENU ───
+function showConfirm(msg, onOk){
+  var old=document.getElementById('ctx-overlay');if(old)old.remove();
+  var overlay=document.createElement('div');
+  overlay.id='ctx-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px)';
+  var box=document.createElement('div');
+  box.style.cssText='background:var(--s2);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:280px;overflow:hidden;animation:ctxPop 0.15s ease;';
+  var txt=document.createElement('div');
+  txt.style.cssText='padding:20px 20px 14px;text-align:center;font-size:14px;line-height:1.6;color:var(--text);font-family:\'Noto Sans KR\',sans-serif;white-space:pre-line;';
+  txt.textContent=msg;
+  var btns=document.createElement('div');
+  btns.style.cssText='display:flex;border-top:1px solid var(--border);';
+  var cancel=document.createElement('button');
+  cancel.style.cssText='flex:1;padding:14px;background:none;border:none;border-right:1px solid var(--border);font-family:\'Noto Sans KR\',sans-serif;font-size:15px;color:var(--t2);cursor:pointer;';
+  cancel.textContent='취소';
+  cancel.onclick=function(){overlay.remove();};
+  var ok=document.createElement('button');
+  ok.style.cssText='flex:1;padding:14px;background:none;border:none;font-family:\'Noto Sans KR\',sans-serif;font-size:15px;color:var(--danger);font-weight:600;cursor:pointer;';
+  ok.textContent='확인';
+  ok.onclick=function(){overlay.remove();onOk();};
+  btns.appendChild(cancel);btns.appendChild(ok);
+  box.appendChild(txt);box.appendChild(btns);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+function showPrompt(msg, defaultVal, onOk){
+  var old=document.getElementById('ctx-overlay');if(old)old.remove();
+  var overlay=document.createElement('div');
+  overlay.id='ctx-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px)';
+  var box=document.createElement('div');
+  box.style.cssText='background:var(--s2);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:280px;overflow:hidden;animation:ctxPop 0.15s ease;';
+  var inner=document.createElement('div');
+  inner.style.cssText='padding:20px;';
+  var lbl=document.createElement('div');
+  lbl.style.cssText='font-size:13px;color:var(--t2);margin-bottom:10px;font-family:\'Noto Sans KR\',sans-serif;';
+  lbl.textContent=msg;
+  var inp=document.createElement('input');
+  inp.value=defaultVal||'';
+  inp.style.cssText='width:100%;background:var(--s3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:\'Noto Sans KR\',sans-serif;font-size:14px;padding:9px 12px;outline:none;';
+  inp.addEventListener('focus',function(){inp.style.borderColor='rgba(157,127,244,0.4)';});
+  inp.addEventListener('blur',function(){inp.style.borderColor='var(--border2)';});
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){var v=inp.value.trim();if(v){overlay.remove();onOk(v);}}if(e.key==='Escape')overlay.remove();});
+  var btns=document.createElement('div');
+  btns.style.cssText='display:flex;gap:8px;margin-top:14px;';
+  var cancel=document.createElement('button');
+  cancel.style.cssText='flex:1;padding:10px;background:transparent;border:1px solid var(--border2);border-radius:8px;font-family:\'Noto Sans KR\',sans-serif;font-size:14px;color:var(--t2);cursor:pointer;';
+  cancel.textContent='취소';
+  cancel.onclick=function(){overlay.remove();};
+  var ok=document.createElement('button');
+  ok.style.cssText='flex:1;padding:10px;background:var(--accent2);border:none;border-radius:8px;font-family:\'Noto Sans KR\',sans-serif;font-size:14px;color:#fff;font-weight:600;cursor:pointer;';
+  ok.textContent='확인';
+  ok.onclick=function(){var v=inp.value.trim();if(v){overlay.remove();onOk(v);}};
+  btns.appendChild(cancel);btns.appendChild(ok);
+  inner.appendChild(lbl);inner.appendChild(inp);inner.appendChild(btns);
+  box.appendChild(inner);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  setTimeout(function(){inp.focus();inp.select();},100);
+}
 function showCtxMenu(items){
   var old=document.getElementById('ctx-menu');if(old)old.remove();
   var oldOv=document.getElementById('ctx-overlay');if(oldOv)oldOv.remove();
@@ -3352,20 +3474,22 @@ function showCtxMenu(items){
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px)';
   var menu=document.createElement('div');
   menu.id='ctx-menu';
-  menu.style.cssText='background:var(--s2);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:280px;overflow:hidden;animation:ctxPop 0.15s ease;';
-  items.forEach(function(item){
+  menu.style.cssText='background:var(--s2);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:280px;overflow:hidden;animation:ctxPop 0.15s ease;';
+  items.forEach(function(item,i){
     var btn=document.createElement('button');
-    btn.style.cssText='display:block;width:100%;padding:16px 20px;text-align:center;background:none;border:none;border-bottom:1px solid var(--border);font-family:\'Noto Sans KR\',sans-serif;font-size:15px;color:'+(item.danger?'var(--danger)':'var(--text)')+';cursor:pointer;letter-spacing:0.2px;';
+    btn.style.cssText='display:block;width:100%;padding:16px 20px;text-align:center;background:none;border:none;'+(i<items.length-1?'border-bottom:1px solid var(--border);':'')+';font-family:\'Noto Sans KR\',sans-serif;font-size:15px;color:'+(item.danger?'var(--danger)':'var(--text)')+';cursor:pointer;letter-spacing:0.2px;transition:background 0.1s;';
     btn.textContent=item.label;
-    btn.addEventListener('touchstart',function(){btn.style.background='var(--s3)';});
-    btn.addEventListener('touchend',function(){btn.style.background='';});
-    btn.addEventListener('click',function(){overlay.remove();item.action();});
+    btn.addEventListener('touchstart',function(){btn.style.background='var(--s3)';},{passive:true});
+    btn.addEventListener('touchend',function(){btn.style.background='';},{passive:true});
+    btn.addEventListener('click',function(e){e.stopPropagation();overlay.remove();item.action();});
     menu.appendChild(btn);
   });
   var cancelBtn=document.createElement('button');
-  cancelBtn.style.cssText='display:block;width:100%;padding:14px 20px;text-align:center;background:none;border:none;font-family:\'Noto Sans KR\',sans-serif;font-size:14px;color:var(--t3);cursor:pointer;';
+  cancelBtn.style.cssText='display:block;width:100%;padding:14px 20px;text-align:center;background:none;border:none;border-top:6px solid var(--bg);font-family:\'Noto Sans KR\',sans-serif;font-size:15px;font-weight:500;color:var(--t2);cursor:pointer;transition:background 0.1s;';
   cancelBtn.textContent='취소';
-  cancelBtn.addEventListener('click',function(){overlay.remove();});
+  cancelBtn.addEventListener('touchstart',function(){cancelBtn.style.background='var(--s3)';},{passive:true});
+  cancelBtn.addEventListener('touchend',function(){cancelBtn.style.background='';},{passive:true});
+  cancelBtn.addEventListener('click',function(e){e.stopPropagation();overlay.remove();});
   menu.appendChild(cancelBtn);
   overlay.appendChild(menu);
   overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
@@ -3382,10 +3506,10 @@ function addLongPress(el,cb){
   el.addEventListener('touchmove',function(){moved=true;clearTimeout(timer);},{passive:true});
   el.addEventListener('touchend',function(e){
     clearTimeout(timer);
-    if(fired){e.preventDefault();}
-  },{passive:false});
-  el.addEventListener('touchcancel',function(){clearTimeout(timer);},{passive:true});
-  el.addEventListener('click',function(e){if(fired){e.stopPropagation();}});
+    if(fired){e.stopPropagation();}
+  },{passive:true});
+  el.addEventListener('touchcancel',function(){clearTimeout(timer);fired=false;},{passive:true});
+  el.addEventListener('click',function(e){if(fired){e.stopPropagation();fired=false;}});
   el.addEventListener('contextmenu',function(e){e.preventDefault();cb();});
 }
 
