@@ -453,8 +453,7 @@ body.light .msg-bub.model-gemini-2-5-lite{background:#fcec90!important;border-co
 
 /* ─── INPUT ─── */
 #input-wrap{
-  padding:8px 10px;
-  padding-bottom:max(8px, env(safe-area-inset-bottom));
+  padding:8px 10px 10px;
   border-top:1px solid var(--border);
   background:var(--s1);flex-shrink:0;
 }
@@ -1319,6 +1318,12 @@ input[type=file]{display:none}
         </div>
       </div>
 
+      <!-- 폰트 섹션 -->
+      <div style="padding:16px 20px 14px;border-top:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:600;margin-bottom:10px">✦ 채팅 폰트</div>
+        <div id="font-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+
     </div>
     <div class="modal-ft">
       <button class="btn btn-g" onclick="closeModal('key-modal')">취소</button>
@@ -1326,8 +1331,6 @@ input[type=file]{display:none}
     </div>
   </div>
 </div>
-
-<!-- CHAR MODAL -->
 <div class="ov hide" id="char-modal">
   <div class="modal wide">
     <div class="modal-hd">
@@ -1798,8 +1801,9 @@ function init(){
   renderTopbar();
   renderChat();
   updateApiToggleBtns();
-  // 앱 시작 시 항상 스토리 목록으로
   sbShowStories();
+  // 저장된 폰트 복원
+  if(D.chatFont) applyFont(D.chatFont);
 
   $('key-inp').addEventListener('input',updateKeySt);
   $('gemini-key-inp').addEventListener('input',updateGeminiKeySt);
@@ -2522,14 +2526,8 @@ This is a dedicated creative roleplay space.
     const fixed=[];
     for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
     while(fixed.length&&fixed[fixed.length-1].role!=='user')fixed.pop();
-    // 마지막 user 메시지 이전까지 캐시 적용 (5분 캐시)
-    const messages=fixed.map((m,i)=>{
-      if(i===fixed.length-2&&fixed.length>=2){
-        const txt=typeof m.content==='string'?m.content:m.content;
-        return{role:m.role,content:[{type:'text',text:typeof txt==='string'?txt:JSON.stringify(txt),cache_control:{type:'ephemeral'}}]};
-      }
-      return m;
-    });
+    // 캐시 포인트 최대 4개: 25%, 50%, 75%, 끝에서 두 번째
+    const messages=applyMultiCache(fixed);
     if(!messages.length) throw new Error('메시지 없음');
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength()].tokens,system:[{type:"text",text:sys,cache_control:{type:"ephemeral"}}],messages,stream:true})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
@@ -2767,13 +2765,7 @@ ${genreGuide}
       const fixed=[];
       for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
       while(fixed.length&&fixed[fixed.length-1].role!=='user')fixed.pop();
-      const messages=fixed.map((m,i)=>{
-        if(i===fixed.length-2&&fixed.length>=2){
-          const txt=typeof m.content==='string'?m.content:JSON.stringify(m.content);
-          return{role:m.role,content:[{type:'text',text:txt,cache_control:{type:'ephemeral'}}]};
-        }
-        return m;
-      });
+      const messages=applyMultiCache(fixed);
       if(!messages.length){row2.remove();return;}
       const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength()].tokens,system:[{type:"text",text:sys,cache_control:{type:"ephemeral"}}],messages,stream:true})});
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
@@ -3090,6 +3082,7 @@ function openModal(id){
     $('gemini-key-inp').value=D.geminiKey||'';
     updateKeySt(); updateGeminiKeySt();
     renderModelCards();
+    renderFontList();
   }
 }
 function closeModal(id){$(id).classList.add('hide')}
@@ -3136,8 +3129,58 @@ function updateApiToggleBtns(){
 function saveKey(){
   D.key=$('key-inp').value.trim();
   D.geminiKey=$('gemini-key-inp').value.trim();
-  // D.model, D.geminiModel은 카드 클릭으로 이미 설정됨
   save(); closeModal('key-modal'); renderTopbar(); updateApiToggleBtns();
+}
+
+// ─── 폰트 설정 ───
+const FONT_OPTIONS=[
+  {id:'noto',label:'Noto Sans KR',sub:'기본 — 깔끔한 고딕체',css:"'Noto Sans KR',sans-serif"},
+  {id:'gowun',label:'Gowun Batang',sub:'고운 바탕 — 소설 느낌',css:"'Gowun Batang',serif"},
+  {id:'garamond',label:'IM Fell English',sub:'빈티지 serif — 서양 판타지',css:"'IM Fell English',serif"},
+  {id:'mono',label:'Nanum Myeongjo',sub:'나눔 명조 — 고전적 명조체',css:"'Nanum Myeongjo',serif"},
+  {id:'gothic',label:'Nanum Gothic',sub:'나눔 고딕 — 부드러운 고딕',css:"'Nanum Gothic',sans-serif"},
+];
+const FONT_LINKS={
+  gowun:'https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap',
+  garamond:'https://fonts.googleapis.com/css2?family=IM+Fell+English&display=swap',
+  mono:'https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap',
+  gothic:'https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap',
+};
+function applyFont(fontId){
+  const f=FONT_OPTIONS.find(x=>x.id===fontId)||FONT_OPTIONS[0];
+  // 폰트 로드
+  if(FONT_LINKS[fontId]&&!document.querySelector('link[data-font="'+fontId+'"]')){
+    const lk=document.createElement('link');
+    lk.rel='stylesheet'; lk.href=FONT_LINKS[fontId];
+    lk.setAttribute('data-font',fontId);
+    document.head.appendChild(lk);
+  }
+  // 채팅 말풍선 + 입력창에 적용
+  const style=document.getElementById('font-override')||document.createElement('style');
+  style.id='font-override';
+  style.textContent=`.msg-bub,#inp{font-family:${f.css}!important}`;
+  if(!style.parentNode) document.head.appendChild(style);
+  D.chatFont=fontId; save();
+}
+function renderFontList(){
+  const el=$('font-list'); if(!el)return;
+  const cur=D.chatFont||'noto';
+  el.innerHTML=FONT_OPTIONS.map(f=>`
+    <div onclick="selectFont('${f.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r);border:1px solid ${cur===f.id?'var(--accent2)':'var(--border2)'};background:${cur===f.id?'var(--ag2)':'transparent'};cursor:pointer;transition:all 0.15s">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-family:${f.css};font-weight:500">${f.label}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:1px">${f.sub}</div>
+        <div style="font-size:12px;font-family:${f.css};color:var(--t2);margin-top:3px">안녕하세요. 오늘 날씨가 좋네요.</div>
+      </div>
+      <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid ${cur===f.id?'var(--accent2)':'var(--border3)'};background:${cur===f.id?'var(--accent2)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
+        ${cur===f.id?'<svg width="8" height="8" viewBox="0 0 10 10"><polyline points="1,5 4,8 9,2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':''}
+      </div>
+    </div>
+  `).join('');
+}
+function selectFont(id){
+  applyFont(id);
+  renderFontList();
 }
 
 // ─── CHAR EDITOR ───
@@ -4050,16 +4093,45 @@ function openStatsModal(){
   let cacheHtml='';
   if(cs){
     const hit=cs.read>0;
-    const saved=hit?Math.round(cs.read*0.9):0; // 캐시 read는 0.1배이므로 0.9배 절약
-    const hitColor=hit?'var(--teal)':'var(--t3)';
-    const hitIcon=hit?'✦':'○';
-    cacheHtml='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s3);border-radius:8px;margin-top:6px;font-size:11px">'+
-      '<span style="color:'+hitColor+';font-size:13px">'+hitIcon+'</span>'+
-      '<span style="color:var(--t2)">캐시 '+(hit?'<span style="color:var(--teal);font-weight:600">HIT</span>':'<span style="color:var(--t3)">MISS</span>')+
-      (hit?' — 입력 '+cs.read.toLocaleString()+'tok 절약 (약 '+saved+'tok 절약)':' — 다음 턴부터 적용')+
-      '</span>'+
-      (cs.write?'<span style="color:var(--t3);margin-left:auto">캐시저장 '+cs.write.toLocaleString()+'tok</span>':'')+
-    '</div>';
+    // 캐시 read는 정가의 10% → 90% 절약
+    // 모델 가격으로 절약 금액 계산
+    const KRW=1420;
+    const activeModel=getRoomApi()==='gemini'?D.geminiModel:D.model;
+    let pricePerMTok=3; // sonnet 기본
+    if(activeModel&&activeModel.includes('opus')) pricePerMTok=15;
+    else if(activeModel&&activeModel.includes('haiku')) pricePerMTok=0.8;
+    else if(activeModel==='gemini-2.5-pro') pricePerMTok=1.25;
+    else if(activeModel==='gemini-2.5-flash') pricePerMTok=0.075;
+    else if(activeModel==='gemini-2.5-flash-lite') pricePerMTok=0.01;
+    const savedTok=cs.read||0;
+    const savedKRW=hit?Math.round((savedTok/1e6)*pricePerMTok*0.9*KRW):0;
+    const savedStr=savedKRW<1?'< ₩1':'₩'+savedKRW.toLocaleString();
+    cacheHtml=
+      '<div style="margin-top:8px;border-radius:10px;overflow:hidden;border:1px solid var(--border2)">'+
+        '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s3)">'+
+          '<span style="font-size:13px">'+(hit?'✦':'○')+'</span>'+
+          '<span style="font-size:12px;font-weight:600;color:'+(hit?'var(--teal)':'var(--t3)')+'">'+(hit?'캐시 HIT':'캐시 MISS')+'</span>'+
+          '<span style="font-size:11px;color:var(--t3);margin-left:auto">'+(hit?'이번 턴 절약':'다음 턴부터 적용')+'</span>'+
+        '</div>'+
+        (hit?
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border)">'+
+            '<div style="background:var(--s2);padding:8px 10px;text-align:center">'+
+              '<div style="font-size:10px;color:var(--t3);margin-bottom:2px">캐시 읽기</div>'+
+              '<div style="font-size:13px;font-weight:700;color:var(--teal)">'+cs.read.toLocaleString()+'<span style="font-size:10px;font-weight:400"> tok</span></div>'+
+            '</div>'+
+            '<div style="background:var(--s2);padding:8px 10px;text-align:center">'+
+              '<div style="font-size:10px;color:var(--t3);margin-bottom:2px">절약률</div>'+
+              '<div style="font-size:13px;font-weight:700;color:var(--teal)">90%</div>'+
+            '</div>'+
+            '<div style="background:var(--s2);padding:8px 10px;text-align:center">'+
+              '<div style="font-size:10px;color:var(--t3);margin-bottom:2px">절약 금액</div>'+
+              '<div style="font-size:13px;font-weight:700;color:var(--accent)">'+savedStr+'</div>'+
+            '</div>'+
+          '</div>':
+          '<div style="padding:8px 12px;background:var(--s2);font-size:11px;color:var(--t3)">첫 턴은 캐시 저장만 해요. 두 번째 턴부터 HIT되면 입력 비용 90% 절약!</div>'
+        )+
+        (cs.write?'<div style="padding:6px 12px;background:var(--s3);font-size:10px;color:var(--t3)">캐시 저장 '+cs.write.toLocaleString()+'tok (다음 턴에 적용)</div>':'')+
+      '</div>';
   }
 
   body.innerHTML=
@@ -4120,29 +4192,49 @@ function buildContextMsgs(hist){
   return hist.slice(-11);
 }
 // 실제 턴 비용 계산 (실제 입력토큰 사용)
+function applyMultiCache(fixed){
+  // 캐시 포인트 최대 4개 — 끝에서 2번째 포함, 나머지는 25%간격
+  if(fixed.length<2) return fixed;
+  const cacheIdxSet=new Set();
+  // 끝에서 두 번째는 항상 캐시
+  cacheIdxSet.add(fixed.length-2);
+  // 대화가 8턴 이상이면 25/50/75% 지점도 추가 (최대 3개 추가)
+  if(fixed.length>=8){
+    [0.25,0.5,0.75].forEach(r=>{
+      const idx=Math.floor((fixed.length-2)*r);
+      if(idx>0) cacheIdxSet.add(idx);
+    });
+  }
+  return fixed.map((m,i)=>{
+    if(!cacheIdxSet.has(i)) return m;
+    const txt=typeof m.content==='string'?m.content:JSON.stringify(m.content);
+    return{role:m.role,content:[{type:'text',text:txt,cache_control:{type:'ephemeral'}}]};
+  });
+}
 function calcTurnCostKRW(outputText, model, inTokOverride, cacheRead, cacheWrite){
-  const KRW=1380;
+  const KRW=1420;
   const outTok=Math.round(outputText.length*2.5);
   const inTok=inTokOverride||3000;
   const cR=cacheRead||0; const cW=cacheWrite||0;
-  // 일반 입력 = 전체 입력 - 캐시읽기 - 캐시쓰기
   const plainIn=Math.max(0, inTok-cR-cW);
   let costUSD=0;
   if(model==='gemini-2.5-pro'){
-    const r=1.25,w=10,out=10;
-    costUSD=(plainIn/1e6)*r+(cR/1e6)*(r*0.1)+(cW/1e6)*(r*1.25)+(outTok/1e6)*out;
+    costUSD=(plainIn/1e6)*1.25+(cR/1e6)*0.31+(cW/1e6)*1.56+(outTok/1e6)*10;
   } else if(model==='gemini-2.5-flash'){
     costUSD=(plainIn/1e6)*0.075+(cR/1e6)*0.01875+(cW/1e6)*0.09375+(outTok/1e6)*0.30;
   } else if(model==='gemini-2.5-flash-lite'){
     costUSD=(plainIn/1e6)*0.01+(outTok/1e6)*0.04;
-  } else if(model&&model.includes('opus')){
-    // opus: in $5, cache read $0.5 (90%할인), cache write $6.25 (25%추가), out $25
-    costUSD=(plainIn/1e6)*5+(cR/1e6)*0.5+(cW/1e6)*6.25+(outTok/1e6)*25;
+  } else if(model&&(model.includes('opus-4-8')||model.includes('opus-4-7'))){
+    // Opus 4: in $15, cache read $1.5, cache write $18.75, out $75
+    costUSD=(plainIn/1e6)*15+(cR/1e6)*1.5+(cW/1e6)*18.75+(outTok/1e6)*75;
+  } else if(model&&model.includes('opus-4-6')){
+    // Opus 4.6(이전): in $15, cache read $1.5, cache write $18.75, out $75
+    costUSD=(plainIn/1e6)*15+(cR/1e6)*1.5+(cW/1e6)*18.75+(outTok/1e6)*75;
   } else if(model&&model.includes('haiku')){
-    // haiku: in $0.8, cache read $0.08, cache write $1.0, out $4
+    // Haiku 4.5: in $0.8, cache read $0.08, cache write $1.0, out $4
     costUSD=(plainIn/1e6)*0.8+(cR/1e6)*0.08+(cW/1e6)*1.0+(outTok/1e6)*4;
   } else {
-    // sonnet: in $3, cache read $0.3, cache write $3.75, out $15
+    // Sonnet 4.5/4.6: in $3, cache read $0.3, cache write $3.75, out $15
     costUSD=(plainIn/1e6)*3+(cR/1e6)*0.3+(cW/1e6)*3.75+(outTok/1e6)*15;
   }
   return Math.round(costUSD*KRW*10)/10;
