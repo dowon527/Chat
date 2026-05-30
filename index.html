@@ -1064,6 +1064,38 @@ input[type=file]{display:none}
   </div>
 </div>
 
+<!-- ══════════ NOTE EDIT MODAL ══════════ -->
+<div class="ov hide" id="note-edit-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        노트 수정
+      </div>
+      <button class="ico-btn" onclick="closeModal('note-edit-modal');openNoteModal()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <input type="hidden" id="note-edit-id">
+      <div class="fg">
+        <label class="fl">노트 이름</label>
+        <input class="fi" id="note-edit-name" placeholder="노트 이름">
+      </div>
+      <div class="fg">
+        <label class="fl">내용 <span>— AI 프롬프트에 그대로 들어감</span></label>
+        <textarea class="fta" id="note-edit-ctx" style="min-height:260px" maxlength="2000"
+          oninput="$('note-edit-count').textContent=this.value.length+' / 2000'"></textarea>
+        <div style="text-align:right;margin-top:4px;font-size:11px;color:var(--t3)" id="note-edit-count">0 / 2000</div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-g" onclick="closeModal('note-edit-modal');openNoteModal()">취소</button>
+      <button class="btn btn-p" onclick="saveNoteEdit()" style="background:var(--amber);border-color:var(--amber)">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════ MODALS ══════════ -->
 
 <!-- KEY MODAL -->
@@ -1402,11 +1434,12 @@ let D={
   geminiKey:'', geminiModel:'gemini-2.5-flash',
   activeApi:'claude', outputLength:2,
   chars:[], activeChar:null,
-  rooms:{},       // rooms[charId] = [{id,name,sceneId,createdAt}]
-  histories:{},   // histories[roomId] = [{role,content,time}]
+  rooms:{},
+  histories:{},
   charMemories:{}, charNotes:{}, charProfiles:{}, roomProfiles:{}, roomSummaries:{}, roomNoteIds:{},
   roomMemories:{}, roomNotes:{}, roomProfileDefs:{}, roomApi:{}, roomLength:{}, notes:[],
   profiles:[],
+  costLog:{}, // costLog[roomId] = [{turn, model, krw, time}]
   editing:null,
   emoSel:EMOJIS[0], emoImg:null,
   pEmoSel:USER_EMOJIS[0],
@@ -1469,12 +1502,16 @@ function save(){
       if(c.emoImg)imgMap[c.id]=c.emoImg;
       const copy=Object.assign({},c); copy.emoImg=null; return copy;
     });
-    // histories 정제: content가 string인 것만
+    // histories 정제: content가 string인 것만, rerollHistory도 저장
     const safeHistories={};
     Object.keys(D.histories||{}).forEach(k=>{
       const arr=D.histories[k];
       if(Array.isArray(arr)){
-        safeHistories[k]=arr.filter(m=>m&&typeof m.content==='string').map(m=>({role:m.role,content:m.content,time:m.time||''}));
+        safeHistories[k]=arr.filter(m=>m&&typeof m.content==='string').map(m=>{
+          const o={role:m.role,content:m.content,time:m.time||''};
+          if(m._rh&&Array.isArray(m._rh))o._rh=m._rh; // 리롤 히스토리
+          return o;
+        });
       }
     });
     const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,activeApi:D.activeApi,
@@ -1482,7 +1519,7 @@ function save(){
       rooms:D.rooms,histories:safeHistories,
       charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,roomSummaries:D.roomSummaries,notes:D.notes,roomNoteIds:D.roomNoteIds,
       roomMemories:D.roomMemories,roomNotes:D.roomNotes,roomProfileDefs:D.roomProfileDefs,roomApi:D.roomApi,roomLength:D.roomLength,
-      profiles:D.profiles};
+      profiles:D.profiles, costLog:D.costLog||{}};
     localStorage.setItem('cc9',JSON.stringify(lite));
     try{localStorage.setItem('cc9_imgs',JSON.stringify(imgMap));}
     catch(e){console.warn('이미지 저장 실패');}
@@ -1594,28 +1631,37 @@ function buildEmoGrid(){
 }
 function buildGenreTags(){
   const g=$('genre-tags'); g.innerHTML='';
-  // 편집 시 현재 캐릭터 genres 로드
-  const sel=Array.isArray(D._editGenres)?D._editGenres:(D._editGenres=[...(D.genres||['fantasy'])]);
+  const sel=Array.isArray(D._editGenres)?D._editGenres:(D._editGenres=[]);
+  const builtinIds=GENRES.map(gn=>gn.id);
+
+  // 기존 장르 태그
   GENRES.forEach(gn=>{
     const t=document.createElement('div');
     t.className='gtag'+(sel.includes(gn.id)?' sel':'');
     t.textContent=gn.l;
     t.onclick=()=>{
-      if(sel.includes(gn.id)){
-        sel.splice(sel.indexOf(gn.id),1);
-      } else {
-        sel.push(gn.id);
-      }
+      if(sel.includes(gn.id)){sel.splice(sel.indexOf(gn.id),1);}
+      else{sel.push(gn.id);}
       t.classList.toggle('sel',sel.includes(gn.id));
     };
     g.appendChild(t);
   });
-  // 커스텀 장르 입력
+
+  // 기존 커스텀 장르 복원 (built-in 아닌 것들)
+  sel.filter(s=>!builtinIds.includes(s)).forEach(v=>{
+    const ct=document.createElement('div');
+    ct.className='gtag sel';
+    ct.textContent=v;
+    ct.onclick=()=>{sel.splice(sel.indexOf(v),1);ct.remove();};
+    g.insertBefore(ct,g.lastChild);
+  });
+
+  // 커스텀 입력
   const customWrap=document.createElement('div');
   customWrap.style.cssText='display:flex;gap:6px;align-items:center;margin-top:8px;width:100%';
   const customInp=document.createElement('input');
   customInp.id='genre-custom-inp';
-  customInp.placeholder='직접 입력 후 Enter (예: 무협, 궁중로맨스...)';
+  customInp.placeholder='직접 입력 후 Enter (예: 펑크물, 회귀물...)';
   customInp.style.cssText="flex:1;background:var(--s3);border:1px solid var(--border2);border-radius:20px;color:var(--text);font-family:\'Noto Sans KR\',sans-serif;font-size:12px;padding:5px 12px;outline:none;transition:border-color 0.15s";
   customInp.addEventListener('focus',()=>customInp.style.borderColor='rgba(157,127,244,0.4)');
   customInp.addEventListener('blur',()=>customInp.style.borderColor='var(--border2)');
@@ -1625,14 +1671,10 @@ function buildGenreTags(){
       const v=customInp.value.trim(); if(!v)return;
       if(!sel.includes(v)){
         sel.push(v);
-        // 태그 동적 추가
         const ct=document.createElement('div');
         ct.className='gtag sel';
         ct.textContent=v;
-        ct.onclick=()=>{
-          sel.splice(sel.indexOf(v),1);
-          ct.classList.remove('sel');
-        };
+        ct.onclick=()=>{sel.splice(sel.indexOf(v),1);ct.remove();};
         g.insertBefore(ct,customWrap);
       }
       customInp.value='';
@@ -2084,7 +2126,11 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
     bub.appendChild(nav);
     row._navEl=nav; row._navCounter=counter; row._prevBtn=prevBtn; row._nextBtn=nextBtn;
     row._bubText=bubText; // 스트리밍 타겟
-    row._rerollHistory=[msg.content]; row._rerollIdx=0;
+    row._rerollHistory=msg._rh&&msg._rh.length?msg._rh:[msg.content]; row._rerollIdx=(msg._rh&&msg._rh.length?msg._rh.length-1:0);
+    // 로드 시 nav 복원
+    if(row._rerollHistory.length>1){
+      _updateRerollNav(row,nav,counter,prevBtn,nextBtn);
+    }
     body.appendChild(acts);
   } else {
     // 유저: 수정 + 삭제
@@ -2193,6 +2239,8 @@ async function rerollMsg(row){
   row._rerollHistory.push(newContent);
   row._rerollIdx=row._rerollHistory.length-1;
   const newMsg={role:'assistant',content:newContent,time:now()};
+  // 리롤 히스토리를 메시지에 저장
+  newMsg._rh=row._rerollHistory.slice();
   cHist().push(newMsg);save();renderChars();
   row.dataset.histIdx=String(cHist().length-1);
   if(row._navEl&&row._navCounter&&row._prevBtn&&row._nextBtn){
@@ -2413,6 +2461,7 @@ ${genreGuide}
   }
   const newMsg={role:'assistant',content:full,time:now()};
   cHist().push(newMsg); save(); renderChars();
+  if(D.activeRoom) logTurnCost(D.activeRoom, full, usingGemini?D.geminiModel:D.model);
   _addActionsToRow(row2,bub2,newMsg);
 }
 function _addActionsToRow(row,bub,msg){
@@ -2724,7 +2773,7 @@ function openCharModal(editing=false){
       D.emoSel=c.emoji||EMOJIS[0]; D.emoImg=c.emoImg||null;
       $('c-name').value=c.name||'';
       $('c-prompt').value=c.prompt||'';
-      D._editGenres=c.genres||(c.genre?[c.genre]:['fantasy']);
+      D._editGenres=c.genres||(c.genre?[c.genre]:[]);
       _editingScenes=JSON.parse(JSON.stringify(c.scenes||[]));
       updatePromptCount();
       const p=$('emo-preview');
@@ -2737,7 +2786,7 @@ function openCharModal(editing=false){
     const img=$('emo-preview').querySelector('img');if(img)img.remove();
     $('c-name').value='';
     $('c-prompt').value='';
-    D._editGenres=['fantasy']; _editingScenes=[]; updatePromptCount();
+    D._editGenres=[]; _editingScenes=[]; updatePromptCount();
   }
   buildEmoGrid(); buildGenreTags();
   renderSceneList();
@@ -3049,6 +3098,7 @@ function renderNotes(){
   if(!D.roomNoteIds)D.roomNoteIds={};
   allNotes.forEach(n=>{
     const isOn=rid()?(D.roomNoteIds[rid()]||[]).includes(n.id):false;
+    const preview=(n.content||'').slice(0,60)+(n.content&&n.content.length>60?'…':'');
     const card=document.createElement('div');
     card.className='profile-card'+(isOn?' on':'');
     card.innerHTML=`
@@ -3058,6 +3108,7 @@ function renderNotes(){
           <span class="p-slider"></span>
         </label>
         <div class="profile-card-name">${n.name}</div>
+        <button class="profile-del" style="color:var(--accent);font-size:12px;padding:3px 6px" onclick="event.stopPropagation();openNoteEditor('${n.id}')">✎</button>
         <button class="profile-del" onclick="event.stopPropagation();deleteNote('${n.id}')">✕</button>
         <div class="profile-chv ${isOn?'on':''}" id="nchv-${n.id}">▾</div>
       </div>
@@ -3066,6 +3117,24 @@ function renderNotes(){
       </div>`;
     list.appendChild(card);
   });
+}
+function openNoteEditor(id){
+  const n=(D.notes||[]).find(x=>x.id===id); if(!n)return;
+  // note-modal 숨기고 note-edit-modal 열기
+  closeModal('note-modal');
+  $('note-edit-id').value=id;
+  $('note-edit-name').value=n.name;
+  $('note-edit-ctx').value=n.content||'';
+  $('note-edit-count').textContent=(n.content||'').length+' / 2000';
+  openModal('note-edit-modal');
+}
+function saveNoteEdit(){
+  const id=$('note-edit-id').value;
+  const name=$('note-edit-name').value.trim(); if(!name){$('note-edit-name').focus();return;}
+  const content=$('note-edit-ctx').value.trim();
+  const n=(D.notes||[]).find(x=>x.id===id); if(!n)return;
+  n.name=name; n.content=content;
+  save(); closeModal('note-edit-modal'); openNoteModal();
 }
 function toggleNote(id, on){
   if(!rid())return;
@@ -3363,66 +3432,65 @@ function openStatsModal(){
   if(!D.activeChar)return;
   const c=D.chars.find(x=>x.id===D.activeChar);
   const rooms=D.rooms[D.activeChar]||[];
-  const KRW=1380;
 
-  // 전체 대화 수집
-  let totalMsgs=0, totalChars=0;
-  const roomStats=rooms.map(room=>{
-    const hist=(D.histories[room.id]||[]);
-    const msgs=hist.filter(m=>m.role!=='summary_note');
-    const chars=msgs.reduce((s,m)=>s+(m.content||'').length,0);
-    totalMsgs+=msgs.length;
-    totalChars+=chars;
-    return {name:room.name, turns:Math.floor(msgs.length/2), chars};
+  // 현재 방의 costLog
+  const roomId=D.activeRoom;
+  const log=(D.costLog&&roomId&&D.costLog[roomId])||[];
+  const totalKRW=log.reduce((s,l)=>s+l.krw,0);
+
+  // 전체 턴수
+  let totalTurns=0;
+  rooms.forEach(r=>{
+    const h=D.histories[r.id]||[];
+    totalTurns+=Math.floor(h.filter(m=>m.role!=='summary_note').length/2);
   });
 
-  // 토큰 추정 (한국어 1자 ≈ 1.5토큰)
-  const estTokens=Math.round(totalChars*1.5);
-
-  // 모델별 금액 계산
-  const model=getRoomApi()==='gemini'?D.geminiModel:'claude';
-  let inPrice,outPrice,modelName;
-  if(model==='gemini-2.5-pro'){inPrice=1.25;outPrice=10;modelName='Gemini 2.5 Pro';}
-  else if(model==='gemini-2.5-flash'){inPrice=0.075;outPrice=0.30;modelName='Gemini 2.5 Flash';}
-  else if(model==='gemini-2.5-flash-lite'){inPrice=0.01;outPrice=0.04;modelName='Flash Lite';}
-  else{inPrice=3;outPrice=15;modelName='Claude Sonnet';}
-
-  const inTok=estTokens*0.4, outTok=estTokens*0.6;
-  const costUSD=(inTok/1e6)*inPrice+(outTok/1e6)*outPrice;
-  const costKRW=Math.round(costUSD*KRW);
-
   const body=$('stats-body');
-  let roomsHtml='';
-  if(roomStats.length>1){
-    const rows=roomStats.map(r=>
-      '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--s3);border-radius:8px">'+
-      '<span style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:8px">'+r.name+'</span>'+
-      '<span style="font-size:11px;color:var(--t3);flex-shrink:0">'+r.turns+'턴</span></div>'
-    ).join('');
-    roomsHtml='<div style="font-size:11px;color:var(--t3);margin-bottom:6px;font-weight:600;letter-spacing:0.5px">대화방별</div>'+
-      '<div style="display:flex;flex-direction:column;gap:4px">'+rows+'</div>';
+
+  // 턴별 로그 HTML
+  let logHtml='';
+  if(log.length){
+    const modelLabel=m=>{
+      if(m==='gemini-2.5-pro')return'Pro';
+      if(m==='gemini-2.5-flash')return'Flash';
+      if(m==='gemini-2.5-flash-lite')return'Lite';
+      if(m&&m.includes('claude'))return'Claude';
+      return m||'?';
+    };
+    let cum=0;
+    const rows=log.map((l,i)=>{
+      cum+=l.krw;
+      const krwStr=l.krw<1?'<1원':l.krw.toFixed(1)+'원';
+      const cumStr=cum<1?'<1원':Math.round(cum)+'원';
+      return '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--s3);border-radius:8px;font-size:12px">'+
+        '<span style="color:var(--t3);flex-shrink:0;min-width:28px">'+(i+1)+'턴</span>'+
+        '<span style="background:var(--s4);padding:1px 6px;border-radius:10px;font-size:10px;color:var(--t2);flex-shrink:0">'+modelLabel(l.model)+'</span>'+
+        '<span style="color:var(--accent);font-weight:600;flex:1;text-align:right">'+krwStr+'</span>'+
+        '<span style="color:var(--t3);font-size:10px;flex-shrink:0">누적 '+cumStr+'</span>'+
+      '</div>';
+    }).join('');
+    logHtml='<div style="font-size:11px;color:var(--t3);margin:12px 0 6px;font-weight:600;letter-spacing:0.5px">턴별 비용</div>'+
+      '<div style="display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto">'+rows+'</div>';
+  } else {
+    logHtml='<div style="font-size:12px;color:var(--t3);margin-top:10px;text-align:center">아직 대화 기록이 없어요</div>';
   }
+
+  const totalStr=totalKRW<1?'< 1':totalKRW<10?totalKRW.toFixed(1):Math.round(totalKRW).toLocaleString();
+
   body.innerHTML=
-    '<div style="margin-bottom:14px">'+
-      '<div style="font-size:12px;color:var(--t3);margin-bottom:6px">📖 '+(c?c.name:'스토리')+'</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-        '<div style="background:var(--s3);border-radius:10px;padding:10px 12px">'+
-          '<div style="font-size:10px;color:var(--t3);margin-bottom:3px">총 턴수</div>'+
-          '<div style="font-size:18px;font-weight:700;color:var(--text)">'+Math.floor(totalMsgs/2)+'<span style="font-size:11px;font-weight:400;color:var(--t3)"> 턴</span></div>'+
-        '</div>'+
-        '<div style="background:var(--s3);border-radius:10px;padding:10px 12px">'+
-          '<div style="font-size:10px;color:var(--t3);margin-bottom:3px">추정 토큰</div>'+
-          '<div style="font-size:18px;font-weight:700;color:var(--text)">'+(estTokens/1000).toFixed(1)+'<span style="font-size:11px;font-weight:400;color:var(--t3)">K</span></div>'+
-        '</div>'+
-        '<div style="background:var(--ag2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;grid-column:span 2">'+
-          '<div style="font-size:10px;color:var(--t3);margin-bottom:3px">누적 예상 비용 · '+modelName+'</div>'+
-          '<div style="font-size:20px;font-weight:700;color:var(--accent)">약 '+(costKRW<1?'< 1':costKRW.toLocaleString())+'원</div>'+
-          '<div style="font-size:10px;color:var(--t3);margin-top:2px">≈ $'+costUSD.toFixed(4)+'</div>'+
-        '</div>'+
+    '<div style="font-size:12px;color:var(--t3);margin-bottom:10px">📖 '+(c?c.name:'스토리')+(D.activeRoom?' · '+(rooms.find(r=>r.id===D.activeRoom)||{}).name:'')+'</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">'+
+      '<div style="background:var(--s3);border-radius:10px;padding:10px 12px">'+
+        '<div style="font-size:10px;color:var(--t3);margin-bottom:3px">총 턴수</div>'+
+        '<div style="font-size:18px;font-weight:700;color:var(--text)">'+totalTurns+'<span style="font-size:11px;font-weight:400;color:var(--t3)"> 턴</span></div>'+
+      '</div>'+
+      '<div style="background:var(--ag2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px">'+
+        '<div style="font-size:10px;color:var(--t3);margin-bottom:3px">이 방 총 비용</div>'+
+        '<div style="font-size:18px;font-weight:700;color:var(--accent)">'+totalStr+'<span style="font-size:11px;font-weight:400;color:var(--t3)">원</span></div>'+
       '</div>'+
     '</div>'+
-    roomsHtml+
-    '<div style="font-size:10px;color:var(--t4);margin-top:12px;line-height:1.6">※ 토큰·비용은 추정값이에요. 실제와 다를 수 있어요.</div>';
+    logHtml+
+    '<div style="font-size:10px;color:var(--t4);margin-top:10px;line-height:1.6">※ 텍스트 길이 기반 추정이에요.</div>';
   openModal('stats-modal');
 }
 function exportSeqReset(){
@@ -3455,8 +3523,30 @@ const LENGTH_PRESETS = [
   { label:'길게',   tokens:8192,  prompt:'6~8문단 내외로 응답합니다. 풍부한 묘사와 감정선.' },
   { label:'최대',   tokens:16000, prompt:'분량 제한 없이 충분히 깊고 길게 응답합니다.' },
 ];
-// 1턴 예상 비용 계산 (한화, 환율 1380원)
-function calcCostKRW(outputTokens, model){
+// 실제 턴 비용 계산 (텍스트 길이 기반)
+function calcTurnCostKRW(outputText, model){
+  const KRW=1380;
+  const outTok=Math.round(outputText.length*1.5); // 한국어 1자 ≈ 1.5토큰
+  const inTok=3000;
+  let costUSD=0;
+  if(model==='gemini-2.5-pro'){
+    costUSD=(inTok/1e6)*1.25+(outTok/1e6)*10+(outTok*0.5/1e6)*3.5;
+  } else if(model==='gemini-2.5-flash'){
+    costUSD=(inTok/1e6)*0.075+(outTok/1e6)*0.30;
+  } else if(model==='gemini-2.5-flash-lite'){
+    costUSD=(inTok/1e6)*0.01+(outTok/1e6)*0.04;
+  } else {
+    costUSD=(inTok/1e6)*3+(outTok/1e6)*15;
+  }
+  return Math.round(costUSD*KRW*10)/10; // 소수점 1자리
+}
+function logTurnCost(roomId, content, model){
+  if(!D.costLog)D.costLog={};
+  if(!D.costLog[roomId])D.costLog[roomId]=[];
+  const krw=calcTurnCostKRW(content,model);
+  D.costLog[roomId].push({model,krw,time:now()});
+  save();
+}
   const KRW=1380;
   const inTok=3000; // 평균 입력 토큰 추정
   let costUSD=0;
