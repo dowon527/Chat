@@ -378,7 +378,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   border-radius:18px;padding:10px 10px 10px 16px;
   transition:border-color 0.15s;
 }
-.input-box:focus-within{border-color:rgba(157,127,244,0.3)}
+.input-box:focus-within{border-color:rgba(220,100,40,0.4)}
 #inp{
   background:transparent;border:none;outline:none;
   color:var(--text);font-family:'Noto Sans KR',sans-serif;
@@ -455,7 +455,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   color:var(--text);font-family:'Noto Sans KR',sans-serif;
   font-size:13px;padding:9px 12px;outline:none;transition:border-color 0.15s;
 }
-.fi:focus,.fta:focus,.fsel:focus{border-color:rgba(157,127,244,0.4)}
+.fi:focus,.fta:focus,.fsel:focus{border-color:rgba(220,100,40,0.45)}
 .fta{resize:vertical;min-height:80px;line-height:1.6}
 .fsel{cursor:pointer}
 .fsel option{background:var(--s3)}
@@ -497,7 +497,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   background:var(--s3);border:1px solid var(--border2);border-radius:var(--r2);
   overflow:hidden;transition:border-color 0.15s;
 }
-.profile-card.on{border-color:rgba(157,127,244,0.35)}
+.profile-card.on{border-color:rgba(220,100,40,0.4)}
 .profile-card-hd{
   display:flex;align-items:center;gap:10px;
   padding:11px 14px;cursor:pointer;
@@ -609,7 +609,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   align-items:center;justify-content:center;transition:all 0.12s;
 }
 .emo-opt:hover{background:var(--s3);border-color:var(--border2)}
-.emo-opt.sel{background:var(--ag);border-color:rgba(157,127,244,0.3)}
+.emo-opt.sel{background:var(--amg);border-color:rgba(220,100,40,0.35)}
 
 /* img upload */
 .img-upload-btn{
@@ -630,7 +630,7 @@ input[type=file]{display:none}
   border:1px solid var(--border2);background:var(--s4);
   color:var(--t2);cursor:pointer;transition:all 0.15s;
 }
-.gtag:hover,.gtag.sel{border-color:rgba(157,127,244,0.35);color:var(--accent);background:var(--ag)}
+.gtag:hover,.gtag.sel{border-color:rgba(220,100,40,0.4);color:var(--amber);background:var(--amg)}
 
 /* note badge */
 .note-badge{
@@ -1625,7 +1625,7 @@ function init(){
     this.style.height=Math.min(this.scrollHeight,130)+'px';
   });
   $('inp').addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}
+    // 엔터는 줄바꿈만, 전송은 버튼으로만
   });
   // 모달은 X버튼/취소 버튼으로만 닫힘 (오버레이 클릭 닫힘 제거)
 }
@@ -1681,7 +1681,7 @@ function buildGenreTags(){
   customInp.id='genre-custom-inp';
   customInp.placeholder='직접 입력 후 Enter (예: 펑크물, 회귀물...)';
   customInp.style.cssText="flex:1;background:var(--s3);border:1px solid var(--border2);border-radius:20px;color:var(--text);font-family:\'Noto Sans KR\',sans-serif;font-size:12px;padding:5px 12px;outline:none;transition:border-color 0.15s";
-  customInp.addEventListener('focus',()=>customInp.style.borderColor='rgba(157,127,244,0.4)');
+  customInp.addEventListener('focus',()=>customInp.style.borderColor='rgba(220,100,40,0.45)');
   customInp.addEventListener('blur',()=>customInp.style.borderColor='var(--border2)');
   customInp.addEventListener('keydown',e=>{
     if(e.key==='Enter'){
@@ -2641,7 +2641,7 @@ function openNewRoomModal(charId){
       _newRoomSceneId=sc.id;
       sl.querySelectorAll('div').forEach(x=>x.style.borderColor='var(--border2)');
       freeOpt.removeAttribute('data-sel');
-      opt.style.borderColor='rgba(157,127,244,0.4)';
+      opt.style.borderColor='rgba(220,100,40,0.4)';
     };
     sl.appendChild(opt);
   });
@@ -3313,7 +3313,7 @@ function renderSceneList(){
         <div style="font-size:11px;color:var(--t3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(sc.content||'').slice(0,50)}${(sc.content||'').length>50?'…':''}</div>
       </div>
       <span style="font-size:11px;color:var(--accent);flex-shrink:0">편집 →</span>`;
-    item.onmouseover=()=>item.style.borderColor='rgba(157,127,244,0.35)';
+    item.onmouseover=()=>item.style.borderColor='rgba(220,100,40,0.4)';
     item.onmouseout=()=>item.style.borderColor='var(--border2)';
     item.onclick=()=>openSceneModal(i);
     list.appendChild(item);
@@ -3738,7 +3738,7 @@ function showPrompt(msg, defaultVal, onOk){
   var inp=document.createElement('input');
   inp.value=defaultVal||'';
   inp.style.cssText='width:100%;background:var(--s3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:\'Noto Sans KR\',sans-serif;font-size:14px;padding:9px 12px;outline:none;';
-  inp.addEventListener('focus',function(){inp.style.borderColor='rgba(157,127,244,0.4)';});
+  inp.addEventListener('focus',function(){inp.style.borderColor='rgba(220,100,40,0.45)';});
   inp.addEventListener('blur',function(){inp.style.borderColor='var(--border2)';});
   inp.addEventListener('keydown',function(e){if(e.key==='Enter'){var v=inp.value.trim();if(v){overlay.remove();onOk(v);}}if(e.key==='Escape')overlay.remove();});
   var btns=document.createElement('div');
