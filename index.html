@@ -911,12 +911,6 @@ input[type=file]{display:none}
 
   <!-- INPUT -->
   <div id="input-wrap" style="display:none">
-    <!-- 요약/저장 버튼 -->
-    <div id="chat-action-bar" style="display:none;gap:4px;align-items:center;padding:4px 10px 0">
-      <button class="cab-btn" id="summary-btn" onclick="openSummaryModal()" title="이전 스토리 요약">📌 요약</button>
-      <button class="cab-btn" onclick="openExportModal()" title="대화 내보내기">💾 저장</button>
-      <button class="cab-btn" onclick="openStatsModal()" title="사용량 통계" style="margin-left:2px">ℹ️</button>
-    </div>
     <!-- 입력창 + 전송 버튼 한 박스 -->
     <div class="input-box">
       <div style="display:flex;align-items:flex-end;gap:8px">
@@ -924,6 +918,12 @@ input[type=file]{display:none}
         <button id="send" onclick="sendMsg()" title="전송">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
         </button>
+      </div>
+      <!-- 하단 액션 버튼 -->
+      <div id="chat-action-bar" style="display:none;gap:4px;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+        <button class="cab-btn" id="summary-btn" onclick="openSummaryModal()" title="이전 스토리 요약">📌 요약</button>
+        <button class="cab-btn" onclick="openExportModal()" title="대화 내보내기">💾 저장</button>
+        <button class="cab-btn" onclick="openStatsModal()" title="사용량 통계">ℹ️</button>
       </div>
     </div>
   </div>
@@ -1902,6 +1902,7 @@ function renderTopbar(){
   }
   const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
   tb.style.display='flex'; iw.style.display='block';
+  // cab는 input-wrap 안에 있으므로 border-top만 표시 여부로 제어
   if(cab)cab.style.display=D.activeRoom?'flex':'none';
   const hasKey=(getRoomApi()==='gemini')?!!D.geminiKey:!!D.key;
   nk.style.display=(hasKey&&D.activeRoom)?'none':'flex';
@@ -1962,10 +1963,10 @@ function renderChat(){
     empty.appendChild(ch2);
     area.appendChild(empty); return;
   }
-  hist.forEach((m,i)=>{ const r=appendMsg(m,false); });
+  hist.forEach((m,i)=>{ appendMsg(m,false,i); });
   area.scrollTop=area.scrollHeight;
 }
-function appendMsg(msg,scroll=true){
+function appendMsg(msg,scroll=true,forceIdx=-1){
   const area=$('chat');
   const empty=area.querySelector('.empty'); if(empty)empty.remove();
   const welcome=area.querySelector('#welcome'); if(welcome)welcome.remove();
@@ -1984,14 +1985,12 @@ function appendMsg(msg,scroll=true){
     bub.style.whiteSpace='pre-wrap'; bub.style.wordBreak='break-word';
     bub.textContent=msg.content;
     const t=document.createElement('div'); t.className='msg-t'; t.textContent=msg.time||'';
-    // 수정/삭제 버튼 (이모지)
     const acts=document.createElement('div'); acts.className='msg-actions';
     const editBtn=document.createElement('button'); editBtn.className='msg-act-btn edit-btn';
     editBtn.textContent='✎'; editBtn.title='수정';
     editBtn.onclick=(e)=>{e.stopPropagation();editMsg(row,bub,msg)};
     const delBtn=document.createElement('button'); delBtn.className='msg-act-btn del-btn';
     delBtn.textContent='✕'; delBtn.title='삭제';
-    delBtn.style.cssText='';
     delBtn.onclick=(e)=>{
       e.stopPropagation();
       const hist=cHist();
@@ -2000,7 +1999,6 @@ function appendMsg(msg,scroll=true){
       row.remove(); renderChars();
     };
     acts.appendChild(editBtn); acts.appendChild(delBtn);
-    // 말풍선 클릭으로 액션 토글
     bub.onclick=()=>row.classList.toggle('acts-open');
     body.appendChild(who); body.appendChild(bub); body.appendChild(acts);
     row.appendChild(body);
@@ -2012,12 +2010,11 @@ function appendMsg(msg,scroll=true){
   const isMe=msg.role==='user';
   const row=document.createElement('div');
   row.className='msg-row'+(isMe?' me':'');
-  // hist 인덱스 추적용 (DOM↔data 매핑)
-  const histIdx=cHist().indexOf(msg);
-  if(histIdx>=0) row.dataset.histIdx=histIdx;
-  // AI 아바타는 msg-header 안에서 처리
+  // hist 인덱스: 직접 전달된 값 우선, 아니면 검색
+  let histIdx=forceIdx>=0?forceIdx:cHist().findIndex((m,i)=>m===msg||(m.role===msg.role&&m.content===msg.content&&m.time===msg.time));
+  if(histIdx>=0) row.dataset.histIdx=String(histIdx);
+
   const body=document.createElement('div'); body.className='msg-body';
-  // 헤더줄: 아바타 + 이름 (AI 메시지만)
   if(!isMe){
     const header=document.createElement('div'); header.className='msg-header';
     const avSm=document.createElement('div'); avSm.className='msg-av-sm';
@@ -2028,16 +2025,12 @@ function appendMsg(msg,scroll=true){
     body.appendChild(header);
   }
   const bub=document.createElement('div'); bub.className='msg-bubble msg-bub';
-  // *이탤릭* → 회색 em 태그로 렌더링
   bub.innerHTML=renderMsgContent(msg.content);
-  // 말풍선 클릭으로 액션 토글
   bub.onclick=()=>row.classList.toggle('acts-open');
   const t=document.createElement('div'); t.className='msg-t'; t.textContent=msg.time||'';
 
-  // ─── 액션 버튼 (이모지) ───
   const acts=document.createElement('div'); acts.className='msg-actions';
   if(!isMe){
-    // AI: 리롤 + 수정 + 삭제
     const rerollBtn=document.createElement('button');
     rerollBtn.className='msg-act-btn reroll';
     rerollBtn.textContent='↺'; rerollBtn.title='리롤';
@@ -2049,7 +2042,6 @@ function appendMsg(msg,scroll=true){
     const aiDelBtn=document.createElement('button');
     aiDelBtn.className='msg-act-btn del-btn';
     aiDelBtn.textContent='✕'; aiDelBtn.title='삭제';
-    aiDelBtn.style.cssText='';
     aiDelBtn.onclick=(e)=>{
       e.stopPropagation();
       const hist=cHist();
@@ -2058,6 +2050,35 @@ function appendMsg(msg,scroll=true){
       row.remove(); renderChars();
     };
     acts.appendChild(rerollBtn); acts.appendChild(editBtn); acts.appendChild(aiDelBtn);
+    // nav 추가
+    const nav=document.createElement('div'); nav.className='reroll-nav'; nav.style.display='none';
+    const prevBtn=document.createElement('button'); prevBtn.className='reroll-nav-btn'; prevBtn.textContent='◀';
+    const counter=document.createElement('span'); counter.className='reroll-nav-counter';
+    const nextBtn=document.createElement('button'); nextBtn.className='reroll-nav-btn'; nextBtn.textContent='▶';
+    prevBtn.onclick=(e)=>{
+      e.stopPropagation();
+      const rh=row._rerollHistory||[]; const cur=row._rerollIdx||0;
+      if(cur<=0)return;
+      row._rerollIdx=cur-1;
+      bub.innerHTML=renderMsgContent(rh[row._rerollIdx]);
+      const hi=parseInt(row.dataset.histIdx??'-1');
+      if(hi>=0&&cHist()[hi])cHist()[hi].content=rh[row._rerollIdx];
+      save(); _updateRerollNav(row,nav,counter,prevBtn,nextBtn);
+    };
+    nextBtn.onclick=(e)=>{
+      e.stopPropagation();
+      const rh=row._rerollHistory||[]; const cur=row._rerollIdx||0;
+      if(cur>=rh.length-1)return;
+      row._rerollIdx=cur+1;
+      bub.innerHTML=renderMsgContent(rh[row._rerollIdx]);
+      const hi=parseInt(row.dataset.histIdx??'-1');
+      if(hi>=0&&cHist()[hi])cHist()[hi].content=rh[row._rerollIdx];
+      save(); _updateRerollNav(row,nav,counter,prevBtn,nextBtn);
+    };
+    nav.appendChild(prevBtn); nav.appendChild(counter); nav.appendChild(nextBtn);
+    row._navEl=nav; row._navCounter=counter; row._prevBtn=prevBtn; row._nextBtn=nextBtn;
+    row._rerollHistory=[msg.content]; row._rerollIdx=0;
+    body.appendChild(acts); body.appendChild(nav);
   } else {
     // 유저: 수정 + 삭제
     const editBtn=document.createElement('button');
@@ -2126,7 +2147,7 @@ async function rerollMsg(row){
   const hist=cHist();
   if(!hist.length)return;
 
-  // histIdx로 먼저 찾고, fallback
+  // histIdx로 찾기, fallback
   let idx=parseInt(row.dataset.histIdx??'-1');
   if(isNaN(idx)||idx<0||idx>=hist.length||hist[idx]?.role!=='assistant'){
     const bubText=(row.querySelector('.msg-bub')?.textContent||'').trim().slice(0,40);
@@ -2143,8 +2164,11 @@ async function rerollMsg(row){
     row._rerollIdx=0;
   }
 
-  // hist에서 이 메시지 이후 제거
+  // hist에서 이 메시지까지 잘라서 직전 user까지만 남김
   const histBefore=hist.slice(0,idx);
+  const lastUserIdx=histBefore.map(m=>m.role).lastIndexOf('user');
+  if(lastUserIdx<0){return;} // user 메시지 없으면 불가
+
   if(D.activeRoom) D.histories[D.activeRoom]=histBefore;
   save();
 
@@ -2157,9 +2181,6 @@ async function rerollMsg(row){
   const bub=row.querySelector('.msg-bub');
   if(bub) bub.style.opacity='0.35';
 
-  const lastUser=histBefore.filter(m=>m.role==='user').slice(-1)[0];
-  if(!lastUser){if(bub)bub.style.opacity='';return;}
-
   $('send').disabled=true; showTyping();
   let newContent='';
   try{
@@ -2170,32 +2191,28 @@ async function rerollMsg(row){
     $('send').disabled=false;
     return;
   }
+  hideTyping();
   $('send').disabled=false;
-  if(!bub) return;
+  if(!bub||!newContent) return;
 
-  // 기존 말풍선 원래대로
   bub.style.opacity='';
-
-  if(!newContent) return;
 
   // rerollHistory에 추가
   row._rerollHistory.push(newContent);
   row._rerollIdx=row._rerollHistory.length-1;
 
-  // 말풍선 내용을 새 응답으로 교체
+  // 말풍선 내용 교체
   bub.innerHTML=renderMsgContent(newContent);
 
-  // hist에 새 메시지 push & histIdx 업데이트
+  // hist에 push & histIdx 업데이트
   const newMsg={role:'assistant',content:newContent,time:now()};
   cHist().push(newMsg); save(); renderChars();
-  const newHi=cHist().length-1;
-  row.dataset.histIdx=newHi;
+  row.dataset.histIdx=String(cHist().length-1);
 
-  // 네비게이터 표시/업데이트
+  // 네비게이터 업데이트
   if(row._navEl&&row._navCounter&&row._prevBtn&&row._nextBtn){
     _updateRerollNav(row,row._navEl,row._navCounter,row._prevBtn,row._nextBtn);
   }
-
   $('chat').scrollTop=$('chat').scrollHeight;
 }
 // generateAI와 같지만 결과를 반환 (row 재사용용)
@@ -2214,7 +2231,10 @@ async function generateAIReroll(hist, targetBub=null){
 
   let full='';
   if(usingGemini){
-    let gMsgs=hist.slice(-16).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
+    let gMsgs=hist.slice(-16).map(m=>{
+      if(m.role==='summary_note') return {role:'model',parts:[{text:`[스토리 요약]\n${m.content}`}]};
+      return {role:m.role==='assistant'?'model':'user',parts:[{text:m.content||''}]};
+    }).filter(m=>m.parts[0].text);
     while(gMsgs.length&&gMsgs[0].role!=='user')gMsgs.shift();
     if(!gMsgs.length) throw new Error('메시지 없음');
     const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:generateContent?key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:D.geminiModel==='gemini-2.5-pro'?LENGTH_PRESETS[getRoomLength()].tokens*4:LENGTH_PRESETS[getRoomLength()].tokens*2}})});
