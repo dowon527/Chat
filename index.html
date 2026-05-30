@@ -2148,11 +2148,19 @@ function duplicateStory(id){
 function renderTopbar(){
   const tb=$('topbar'), iw=$('input-wrap'), nk=$('nokey'), cab=$('chat-action-bar');
   if(!D.activeChar){
-    tb.style.display='none'; iw.style.display='none'; nk.style.display='none';
+    // 홈: sb-toggle 보이도록 topbar 유지, 나머지만 숨김
+    tb.style.display='flex';
+    const _tbInfo=tb.querySelector('.tb-info'), _tbActs=tb.querySelector('.tb-acts');
+    if(_tbInfo)_tbInfo.style.visibility='hidden';
+    if(_tbActs)_tbActs.style.visibility='hidden';
+    iw.style.display='none'; nk.style.display='none';
     if(cab)cab.style.display='none';
     return;
   }
   const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
+  // 채팅 진입 시 visibility 복원
+  const _ri=tb.querySelector('.tb-info'), _ra=tb.querySelector('.tb-acts');
+  if(_ri)_ri.style.visibility=''; if(_ra)_ra.style.visibility='';
   tb.style.display='flex'; iw.style.display='block';
   // cab는 input-wrap 안에 있으므로 border-top만 표시 여부로 제어
   if(cab)cab.style.display=D.activeRoom?'flex':'none';
@@ -2212,41 +2220,70 @@ function renderChat(){
     area.innerHTML='';
     const w=document.createElement('div'); w.id='welcome';
     w.style.cssText='position:relative;flex:1;align-self:stretch;display:flex;align-items:stretch;justify-content:stretch;overflow:hidden;padding:0;min-height:0';
-    // 랜덤 2장 선택
+    // 랜덤 1장 선택
     const _pool=HOME_IMGS.slice();
     const _i1=Math.floor(Math.random()*_pool.length);
-    const _img1=_pool.splice(_i1,1)[0];
-    const _i2=Math.floor(Math.random()*_pool.length);
-    const _img2=_pool[_i2];
-    // 배경 블러 (두 이미지 반반 블러)
+    const _img1=_pool[_i1];
+    // 배경 블러 (1장 전체 블러)
     const wBg=document.createElement('div');
-    wBg.style.cssText='position:absolute;inset:0;display:flex;z-index:0;filter:blur(22px) brightness(0.32);transform:scale(1.1)';
-    const wBg1=document.createElement('div');
-    wBg1.style.cssText='flex:1;background-image:url("'+_img1+'");background-size:cover;background-position:center top';
-    const wBg2=document.createElement('div');
-    wBg2.style.cssText='flex:1;background-image:url("'+_img2+'");background-size:cover;background-position:center top';
-    wBg.appendChild(wBg1); wBg.appendChild(wBg2);
+    wBg.style.cssText='position:absolute;inset:0;z-index:0;filter:blur(26px) brightness(0.3) saturate(1.2);transform:scale(1.12);background-image:url("'+_img1+'");background-size:cover;background-position:center center';
     // 어두운 오버레이
     const wOv=document.createElement('div');
-    wOv.style.cssText='position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,11,18,0.15) 0%,rgba(11,11,18,0.05) 40%,rgba(11,11,18,0.5) 100%);z-index:1';
-    // 사진 2장 나란히
+    wOv.style.cssText='position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,11,18,0.10) 0%,rgba(11,11,18,0.02) 35%,rgba(11,11,18,0.55) 100%);z-index:1';
+    // 사진 1장 중앙
     const wRow=document.createElement('div');
-    wRow.style.cssText='position:relative;z-index:2;display:flex;width:100%;height:100%;gap:3px';
-    function makeImgPanel(src){
-      const p=document.createElement('div');
-      p.style.cssText='flex:1;overflow:hidden;position:relative';
-      const img=document.createElement('img');
-      img.src=src;
-      img.style.cssText='width:100%;height:100%;object-fit:cover;object-position:center top;display:block';
-      // 가운데 경계 그라디언트
-      const fade=document.createElement('div');
-      fade.style.cssText='position:absolute;inset:0;background:linear-gradient(to bottom,transparent 60%,rgba(11,11,18,0.55) 100%)';
-      p.appendChild(img); p.appendChild(fade);
-      return p;
+    wRow.style.cssText='position:relative;z-index:2;display:flex;width:100%;height:100%;align-items:center;justify-content:center';
+    const wImgWrap=document.createElement('div');
+    wImgWrap.style.cssText='position:relative;height:100%;max-width:520px;width:100%;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,0.6)';
+    const wImg=document.createElement('img');
+    wImg.src=_img1;
+    wImg.style.cssText='width:100%;height:100%;object-fit:cover;object-position:center center;display:block';
+    const wFade=document.createElement('div');
+    wFade.style.cssText='position:absolute;inset:0;background:linear-gradient(to bottom,transparent 55%,rgba(11,11,18,0.6) 100%)';
+    wImgWrap.appendChild(wImg); wImgWrap.appendChild(wFade);
+    wRow.appendChild(wImgWrap);
+    // 꽃 떨어지는 애니메이션
+    if(!document.getElementById('petal-style')){
+      const ps=document.createElement('style'); ps.id='petal-style';
+      ps.textContent=`
+        @keyframes petalFall{
+          0%{transform:translateY(-60px) rotate(0deg) scale(1);opacity:0}
+          8%{opacity:1}
+          85%{opacity:0.85}
+          100%{transform:translateY(110vh) rotate(720deg) scale(0.6);opacity:0}
+        }
+        @keyframes petalSway{
+          0%,100%{margin-left:0}
+          25%{margin-left:28px}
+          75%{margin-left:-28px}
+        }
+        .petal{
+          position:absolute;top:0;z-index:10;
+          font-size:22px;pointer-events:none;
+          animation:petalFall linear infinite, petalSway ease-in-out infinite;
+          will-change:transform,opacity;
+        }
+      `;
+      document.head.appendChild(ps);
     }
-    wRow.appendChild(makeImgPanel(_img1));
-    wRow.appendChild(makeImgPanel(_img2));
-    w.appendChild(wBg); w.appendChild(wOv); w.appendChild(wRow);
+    const petalEmojis=['🌸','🌺','🌸','🌼','🌸','🌺','✿','🌸'];
+    const petalContainer=document.createElement('div');
+    petalContainer.id='petal-container';
+    petalContainer.style.cssText='position:absolute;inset:0;z-index:9;pointer-events:none;overflow:hidden';
+    const numPetals=18;
+    for(let i=0;i<numPetals;i++){
+      const p=document.createElement('span');
+      p.className='petal';
+      const fallDur=(4+Math.random()*6).toFixed(2);
+      const swayDur=(2+Math.random()*3).toFixed(2);
+      const delay=(-Math.random()*10).toFixed(2);
+      const leftPct=(Math.random()*100).toFixed(1);
+      const size=(16+Math.random()*14).toFixed(0);
+      p.style.cssText=`left:${leftPct}%;font-size:${size}px;animation-duration:${fallDur}s,${swayDur}s;animation-delay:${delay}s,${delay}s;opacity:0`;
+      p.textContent=petalEmojis[i%petalEmojis.length];
+      petalContainer.appendChild(p);
+    }
+    w.appendChild(wBg); w.appendChild(wOv); w.appendChild(wRow); w.appendChild(petalContainer);
     area.appendChild(w); return;
   }
   const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
