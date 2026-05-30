@@ -2177,7 +2177,7 @@ async function rerollMsg(row){
   for(let i=allRows.length-1;i>domIdx;i--){if(allRows[i]?.parentNode)allRows[i].remove();}
 
   const streamTarget=row._bubText||row.querySelector('.bub-text')||row.querySelector('.msg-bub');
-  if(streamTarget){streamTarget.style.opacity='0.4';streamTarget.textContent='';}
+  if(streamTarget) streamTarget.style.opacity='0.35';
 
   $('send').disabled=true;
   let newContent='';
@@ -2221,12 +2221,24 @@ async function generateAIReroll(hist, targetBub=null){
     }).filter(m=>m.parts[0].text);
     while(gMsgs.length&&gMsgs[0].role!=='user')gMsgs.shift();
     if(!gMsgs.length) throw new Error('메시지 없음');
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:generateContent?key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:D.geminiModel==='gemini-2.5-pro'?LENGTH_PRESETS[getRoomLength()].tokens*4:LENGTH_PRESETS[getRoomLength()].tokens*2}})});
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:D.geminiModel==='gemini-2.5-pro'?LENGTH_PRESETS[getRoomLength()].tokens*4:LENGTH_PRESETS[getRoomLength()].tokens*2}})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini 오류');}
-    const data=await res.json();
-    const parts=data.candidates?.[0]?.content?.parts||[];
-    for(const p of parts){if(!p.thought&&p.text)full+=p.text;}
-    hideTyping();
+    if(targetBub){targetBub.style.opacity='1';}
+    const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='';
+    while(true){
+      const {done,value}=await reader.read(); if(done)break;
+      buf+=decoder.decode(value,{stream:true});
+      const lines=buf.split('\n'); buf=lines.pop()||'';
+      for(const line of lines){
+        if(!line.startsWith('data: '))continue;
+        const d=line.slice(6).trim(); if(d==='[DONE]')break;
+        try{
+          const j=JSON.parse(d);
+          const parts=j.candidates?.[0]?.content?.parts||[];
+          for(const p of parts){if(p.thought)continue;if(p.text){full+=p.text;if(targetBub){targetBub.innerHTML=renderMsgContent(full);const area=$('chat');area.scrollTop=area.scrollHeight;}}}
+        }catch(e){}
+      }
+    }
     if(!full) throw new Error('응답 비어있음');
     return full;
   } else {
@@ -2241,8 +2253,7 @@ async function generateAIReroll(hist, targetBub=null){
     if(!messages.length) throw new Error('메시지 없음');
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength()].tokens,system:sys,messages,stream:true})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
-    hideTyping();
-    if(targetBub){targetBub.style.opacity='1';targetBub.textContent='';}
+    if(targetBub){targetBub.style.opacity='1';}
     const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='';
     try{
       while(true){
@@ -2353,14 +2364,24 @@ ${genreGuide}
         contents:geminiMsgs,
         generationConfig:{maxOutputTokens:D.geminiModel==='gemini-2.5-pro'?LENGTH_PRESETS[getRoomLength()].tokens*4:LENGTH_PRESETS[getRoomLength()].tokens*2}
       });
-      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:generateContent?key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:geminiBody});
+      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:geminiBody});
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini API 오류');}
-      const data=await res.json();
-      const parts=data.candidates?.[0]?.content?.parts||[];
-      for(const p of parts){if(p.thought)continue;if(p.text)full+=p.text;}
+      const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='';
+      while(true){
+        const {done,value}=await reader.read(); if(done)break;
+        buf+=decoder.decode(value,{stream:true});
+        const lines=buf.split('\n'); buf=lines.pop()||'';
+        for(const line of lines){
+          if(!line.startsWith('data: '))continue;
+          const d=line.slice(6).trim(); if(d==='[DONE]')break;
+          try{
+            const j=JSON.parse(d);
+            const parts=j.candidates?.[0]?.content?.parts||[];
+            for(const p of parts){if(p.thought)continue;if(p.text){full+=p.text;bubText2.innerHTML=renderMsgContent(full);area.scrollTop=area.scrollHeight;}}
+          }catch(e){}
+        }
+      }
       if(!full)throw new Error('응답이 비어있어요.');
-      bubText2.innerHTML=renderMsgContent(full);
-      area.scrollTop=area.scrollHeight;
     } else {
       let rawMsgs=hist.slice(-30).map(m=>{
         if(m.role==='summary_note')return{role:'assistant',content:'[스토리 요약]\n'+m.content};
@@ -2437,8 +2458,8 @@ function _addActionsToRow(row,bub,msg){
     const hist=row._rerollHistory||[]; const cur=row._rerollIdx||0;
     if(cur<=0)return;
     row._rerollIdx=cur-1;
-    bub.innerHTML=renderMsgContent(hist[row._rerollIdx]);
-    // hist 데이터도 업데이트
+    const bt=bub.querySelector('.bub-text')||bub;
+    bt.innerHTML=renderMsgContent(hist[row._rerollIdx]);
     const hi=parseInt(row.dataset.histIdx??'-1');
     if(hi>=0&&cHist()[hi])cHist()[hi].content=hist[row._rerollIdx];
     save();
@@ -2449,7 +2470,8 @@ function _addActionsToRow(row,bub,msg){
     const hist=row._rerollHistory||[]; const cur=row._rerollIdx||0;
     if(cur>=hist.length-1)return;
     row._rerollIdx=cur+1;
-    bub.innerHTML=renderMsgContent(hist[row._rerollIdx]);
+    const bt=bub.querySelector('.bub-text')||bub;
+    bt.innerHTML=renderMsgContent(hist[row._rerollIdx]);
     const hi=parseInt(row.dataset.histIdx??'-1');
     if(hi>=0&&cHist()[hi])cHist()[hi].content=hist[row._rerollIdx];
     save();
@@ -2457,7 +2479,7 @@ function _addActionsToRow(row,bub,msg){
   };
   nav.appendChild(prevBtn); nav.appendChild(counter); nav.appendChild(nextBtn);
   body.appendChild(acts);
-  body.appendChild(nav);
+  bub.appendChild(nav);
   // row에 nav 참조 저장
   row._navEl=nav; row._navCounter=counter; row._prevBtn=prevBtn; row._nextBtn=nextBtn;
 }
