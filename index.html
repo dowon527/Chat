@@ -2,13 +2,15 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>CharaChat ✦</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet"></noscript>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 :root{
   --bg:#0b0b12;
   --s1:#111119;
@@ -118,7 +120,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   font-size:10px;font-weight:700;letter-spacing:1.5px;
   color:var(--t3);text-transform:uppercase;flex-shrink:0
 }
-.char-scroll{flex:1;overflow-y:auto;padding:0 6px 8px}
+.char-scroll{flex:1;overflow-y:auto;padding:0 6px 8px;-webkit-overflow-scrolling:touch}
 
 
 /* ── 키워드 카드 ── */
@@ -256,16 +258,23 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 .sb-btn.red:hover{color:var(--danger)}
 
 /* ─── MAIN ─── */
-#main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;height:-webkit-fill-available;overflow:hidden;background:var(--bg)}
+#main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;height:-webkit-fill-available;overflow:hidden;background:var(--bg);position:relative}
 
 /* ─── TOPBAR ─── */
 #topbar{
   height:56px;border-bottom:1px solid var(--border);
   display:flex;align-items:center;padding:0 14px;gap:10px;
   background:var(--s1);flex-shrink:0;
+  position:relative;z-index:10;
+  transition:background 0.2s, border-color 0.2s;
+}
+#topbar.home-mode{
+  position:absolute;top:0;left:0;right:0;
+  background:transparent;
+  border-bottom-color:transparent;
 }
 @media(max-width:700px){
-  #topbar{padding-left:10px}
+  #topbar{padding-left:max(10px, env(safe-area-inset-left, 10px));padding-right:max(10px, env(safe-area-inset-right, 10px))}
 }
 .tb-info{flex:1;min-width:0}
 .tb-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
@@ -278,8 +287,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   transition:all 0.15s;flex-shrink:0;
 }
 .ico-btn:hover{background:var(--s2);border-color:var(--border2);color:var(--text)}
-/* user row: no avatar */
-.msg-row.me .msg-av{display:none}
+
 
 /* ─── STORY BAR ─── */
 #story-bar{
@@ -307,6 +315,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 /* ─── CHAT ─── */
 #chat{
   flex:1;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
   padding:16px 12px;
   display:flex;flex-direction:column;gap:10px;
   background:var(--bg);
@@ -338,9 +347,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 .msg-av-sm img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .msg-who{font-size:12px;font-weight:600;color:var(--text)}
 .msg-row.me .msg-header{display:none}
-/* AI 아바타는 헤더줄로 대체, 유저 아바타는 유지 */
-.msg-row:not(.me) .msg-av{display:none}
-.msg-row.me .msg-av{display:flex}
+/* AI/유저 아바타 모두 숨김 (헤더줄로 대체) */
+.msg-row .msg-av{display:none}
 .msg-bub{
   padding:10px 14px;border-radius:18px;
   font-size:14px;line-height:1.75;white-space:pre-wrap;word-break:break-word;
@@ -411,7 +419,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 /* ─── INPUT ─── */
 #input-wrap{
   padding:8px 10px;
-  padding-bottom:calc(10px + env(safe-area-inset-bottom, 20px));
+  padding-bottom:max(10px, calc(env(safe-area-inset-bottom, 0px) + 10px));
   border-top:1px solid var(--border);
   background:var(--s1);flex-shrink:0;
 }
@@ -672,6 +680,7 @@ input[type=file]{display:none}
   border:1px solid var(--border2);background:var(--s4);
   color:var(--t2);cursor:pointer;transition:all 0.15s;
 }
+/* 장르 태그는 표시 전용 */
 .gtag:hover,.gtag.sel{border-color:rgba(220,100,40,0.4);color:var(--amber);background:var(--amg)}
 
 /* note badge */
@@ -1279,23 +1288,6 @@ input[type=file]{display:none}
         </div>
       </div>
 
-      <!-- OPENROUTER 섹션 -->
-      <div style="padding:16px 20px 12px;border-top:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <span style="font-size:13px;font-weight:600">🆓 OpenRouter</span>
-          <span style="font-size:11px;color:var(--teal);background:var(--tg);padding:1px 6px;border-radius:10px">무료 모델 있음</span>
-        </div>
-        <div class="key-wrap" style="margin-bottom:8px">
-          <input class="fi" id="or-key-inp" type="password" placeholder="sk-or-v1-..." style="font-size:13px">
-          <button class="eye-btn" onclick="toggleEye('or-key-inp','eye-ico3')">
-            <svg id="eye-ico3" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-        </div>
-        <div style="font-size:11px;color:var(--t3);margin-top:4px">
-          무료 모델: Llama 4 Scout · 발급: <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--teal)">openrouter.ai/keys</a>
-        </div>
-      </div>
-
     </div>
     <div class="modal-ft">
       <button class="btn btn-g" onclick="closeModal('key-modal')">취소</button>
@@ -1607,26 +1599,19 @@ input[type=file]{display:none}
 <script>
 // ─── DATA ───
 const EMOJIS=['🧚','🧙','🗡️','🌙','🦊','🐉','🌸','⚔️','🔮','🌊','🌺','🦋','👁️','🌟','🧜','🏹','🌿','👑','🎭','🦁','🐺','💎','🌀','⚡','🔥','🌑','🕯️','🎪','🌈','🦄','🐦','🌻','🍀','🦅','🐬','🌹','💀','🎩','🦋','👻'];
-const USER_EMOJIS=['😊','😎','🙂','😏','😶','🤔','🧑','👤','🦊','🌙','⚡','🌊','🌸','🔮','🌟'];
+
 const GENRES=[
   {id:'fantasy',l:'판타지',cls:'pill-f'},
   {id:'romance',l:'로맨스',cls:'pill-r'},
-  {id:'romcom',l:'로맨스코미디',cls:'pill-r'},
-  {id:'pureromance',l:'순애',cls:'pill-r'},
   {id:'bl',l:'BL',cls:'pill-r'},
   {id:'gl',l:'GL',cls:'pill-r'},
   {id:'action',l:'액션',cls:'pill-a'},
   {id:'thriller',l:'스릴러',cls:'pill-a'},
-  {id:'horror',l:'호러',cls:'pill-a'},
   {id:'mystery',l:'미스터리',cls:'pill-f'},
   {id:'slice',l:'일상',cls:'pill-s'},
-  {id:'healing',l:'힐링',cls:'pill-s'},
   {id:'scifi',l:'SF',cls:'pill-f'},
-  {id:'hist',l:'시대극',cls:'pill-s'},
-  {id:'school',l:'학원물',cls:'pill-s'},
-  {id:'isekai',l:'이세계',cls:'pill-f'},
   {id:'dark',l:'다크',cls:'pill-a'},
-  {id:'drama',l:'드라마',cls:'pill-r'},
+  {id:'etc',l:'기타',cls:'pill-s'},
 ];
 
 let D={
@@ -1642,7 +1627,7 @@ let D={
   costLog:{}, // costLog[roomId] = [{turn, model, krw, time}]
   editing:null,
   emoSel:EMOJIS[0], emoImg:null,
-  pEmoSel:USER_EMOJIS[0],
+  pEmoSel:'👤',
   genres:['fantasy'],
   activeRoom:null
 };
@@ -1758,9 +1743,7 @@ function cNote(){
   const onIds=D.roomNoteIds[rid()]||[];
   return (D.notes||[]).filter(n=>onIds.includes(n.id)).map(n=>n.content).join('\n\n');
 }
-function setNote(v){/* 구버전 호환 — 사용안함 */}
 function cSummary(){if(!rid())return'';if(!D.roomSummaries)D.roomSummaries={};return D.roomSummaries[rid()]||''}
-function setSummary(v){if(!rid())return;if(!D.roomSummaries)D.roomSummaries={};D.roomSummaries[rid()]=v;}
 function cProfs(){
   // 전역 프로필 중 이 room에서 켜진 것만 반환
   if(!rid())return[];
@@ -1787,18 +1770,7 @@ function init(){
   updateApiToggleBtns();
   // 앱 시작 시 activeChar 있으면 뷰2로
   if(D.activeChar) sbShowRooms(D.activeChar);
-  // default char
-  if(!D.chars.length){
-    D.chars.push({
-      id:'d1', emoji:'🧚', emoImg:null, name:'해린',
-      genre:'fantasy', greeting:'...여기 있었군요. 용건이 뭔가요?',
-      prompt:'당신은 해린, 20세 마법학교 2학년생입니다.\n- 성격: 조용하고 신중하며 마법 연구에 진심\n- 말투: 간결한 존댓말 사용\n- 절대 캐릭터를 벗어나지 않습니다',
-      world:'마법학교 에테리아, 봄날 저녁 도서관',
-      scenario:'유저는 편입생으로 도서관에서 처음 해린을 만났다.'
-    });
-    save();
-    renderChars();
-  }
+
   $('key-inp').addEventListener('input',updateKeySt);
   $('gemini-key-inp').addEventListener('input',updateGeminiKeySt);
   $('mem-content').addEventListener('input',()=>{
@@ -1836,11 +1808,11 @@ function buildGenreTags(){
   const sel=Array.isArray(D._editGenres)?D._editGenres:(D._editGenres=[]);
   const builtinIds=GENRES.map(gn=>gn.id);
 
-  // 기존 장르 태그
+  // 장르 태그 (#태그 형태, 클릭 선택 가능)
   GENRES.forEach(gn=>{
     const t=document.createElement('div');
     t.className='gtag'+(sel.includes(gn.id)?' sel':'');
-    t.textContent=gn.l;
+    t.textContent='#'+gn.l;
     t.onclick=()=>{
       if(sel.includes(gn.id)){sel.splice(sel.indexOf(gn.id),1);}
       else{sel.push(gn.id);}
@@ -1849,16 +1821,16 @@ function buildGenreTags(){
     g.appendChild(t);
   });
 
-  // 기존 커스텀 장르 복원 (built-in 아닌 것들)
+  // 기존 커스텀 장르 복원
   sel.filter(s=>!builtinIds.includes(s)).forEach(v=>{
     const ct=document.createElement('div');
     ct.className='gtag sel';
-    ct.textContent=v;
+    ct.textContent='#'+v;
     ct.onclick=()=>{sel.splice(sel.indexOf(v),1);ct.remove();};
     g.insertBefore(ct,g.lastChild);
   });
 
-  // 커스텀 입력
+  // 커스텀 입력 (# 자동 붙음)
   const customWrap=document.createElement('div');
   customWrap.style.cssText='display:flex;gap:6px;align-items:center;margin-top:8px;width:100%';
   const customInp=document.createElement('input');
@@ -1875,7 +1847,7 @@ function buildGenreTags(){
         sel.push(v);
         const ct=document.createElement('div');
         ct.className='gtag sel';
-        ct.textContent=v;
+        ct.textContent='#'+v;
         ct.onclick=()=>{sel.splice(sel.indexOf(v),1);ct.remove();};
         g.insertBefore(ct,customWrap);
       }
@@ -2008,7 +1980,7 @@ function renderChars(){
     d.innerHTML=`
       <div class="char-meta">
         <div class="char-meta-name">${c.name}</div>
-        <div class="char-meta-tag">${((c.genres&&c.genres.length)?c.genres:(c.genre?[c.genre]:[])).map(g=>gMap[g]||g).join('·')||'장르 없음'}${rooms.length?' · '+rooms.length+'개':''}</div>
+        <div class="char-meta-tag">${((c.genres&&c.genres.length)?c.genres:(c.genre?[c.genre]:[])).map(g=>'#'+(gMap[g]||g)).join(' ')||'장르 없음'}${rooms.length?' · '+rooms.length+'개':''}</div>
       </div>
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--t3);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
     `;
@@ -2073,42 +2045,6 @@ function deleteRoom(charId, roomId){
     renderRooms(charId);
   });
 }
-function getLastMsg(charId,sceneId){
-  const hist=(D.histories[charId]?.[sceneId]||[]);
-  const last=hist[hist.length-1];
-  if(!last)return'';
-  return last.content.replace(/\*[^*]+\*/g,'').slice(0,30)+(last.content.length>30?'…':'');
-}
-function toggleCharOpen(charId){
-  if(!D._openChars)D._openChars={};
-  D._openChars[charId]=!D._openChars[charId];
-  renderChars();
-}
-function selectBranch(charId, sceneId){
-  D.activeChar=charId; D.activeScene=sceneId;
-  if(!D._openChars)D._openChars={};
-  D._openChars[charId]=true;
-  save(); renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
-}
-function newFreeBranch(charId){
-  const id='free_'+Date.now();
-  if(!D.histories[charId])D.histories[charId]={};
-  D.histories[charId][id]=[];
-  D.activeChar=charId; D.activeScene=id;
-  if(!D._openChars)D._openChars={};
-  D._openChars[charId]=true;
-  save(); renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
-}
-function deleteBranch(charId, sceneId){
-  if(!confirm('이 대화 줄기를 삭제할까요?'))return;
-  if(D.histories[charId])delete D.histories[charId][sceneId];
-  if(D.activeChar===charId&&D.activeScene===sceneId){
-    // 다른 줄기로 이동
-    const remaining=Object.keys(D.histories[charId]||{});
-    D.activeScene=remaining[0]||null;
-  }
-  save(); renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
-}
 function deleteStory(id){
   showConfirm('이 스토리를 삭제할까요?\n대화·기억·노트가 모두 삭제됩니다.',function(){
     (D.rooms[id]||[]).forEach(r=>{
@@ -2131,25 +2067,12 @@ function deleteStory(id){
     sbShowStories();
   });
 }
-function selectChar(id){
-  const rooms=D.rooms[id]||[];
-  const firstRoom=rooms[0]?.id||null;
-  if(firstRoom){selectRoom(id,firstRoom);}
-  else{D.activeChar=id;D.activeRoom=null;if(!D._openChars)D._openChars={};D._openChars[id]=true;save();renderChars();renderTopbar();renderChat();}
-}
-function duplicateStory(id){
-  const src=D.chars.find(x=>x.id===id); if(!src)return;
-  const newId=Date.now()+'';
-  const copy=JSON.parse(JSON.stringify(src));
-  copy.id=newId; copy.name=src.name+' (복사)';
-  D.chars.push(copy);
-  save(); renderChars();
-}
 function renderTopbar(){
   const tb=$('topbar'), iw=$('input-wrap'), nk=$('nokey'), cab=$('chat-action-bar');
   if(!D.activeChar){
-    // 홈: sb-toggle 보이도록 topbar 유지, 나머지만 숨김
+    // 홈: topbar 투명하게 배경 위에 띄움
     tb.style.display='flex';
+    tb.classList.add('home-mode');
     const _tbInfo=tb.querySelector('.tb-info'), _tbActs=tb.querySelector('.tb-acts');
     if(_tbInfo)_tbInfo.style.visibility='hidden';
     if(_tbActs)_tbActs.style.visibility='hidden';
@@ -2157,6 +2080,7 @@ function renderTopbar(){
     if(cab)cab.style.display='none';
     return;
   }
+  tb.classList.remove('home-mode');
   const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
   // 채팅 진입 시 visibility 복원
   const _ri=tb.querySelector('.tb-info'), _ra=tb.querySelector('.tb-acts');
@@ -2165,7 +2089,7 @@ function renderTopbar(){
   // cab는 input-wrap 안에 있으므로 border-top만 표시 여부로 제어
   if(cab)cab.style.display=D.activeRoom?'flex':'none';
   const activeApi=getRoomApi();
-  const hasKey=(activeApi==='gemini')?!!D.geminiKey:(activeApi==='openrouter')?!!D.openrouterKey:!!D.key;
+  const hasKey=(activeApi==='gemini')?!!D.geminiKey:!!D.key;
   nk.style.display=(hasKey&&D.activeRoom)?'none':'flex';
   if(!D.activeRoom) nk.style.display='none';
   $('tb-name').textContent=c.name;
@@ -2178,30 +2102,6 @@ function renderTopbar(){
 }
 
 // ─── CHAT ───
-function appendSummaryCard(area){
-  const s=cSummary();
-  if(!s||!s.trim())return;
-  const c=D.chars.find(x=>x.id===D.activeChar);
-  const row=document.createElement('div');
-  row.className='summary-card msg-row';
-  const av=document.createElement('div'); av.className='msg-av';
-  renderAvatar(av, c||{emoji:'🤖',emoImg:null});
-  const body=document.createElement('div'); body.className='msg-body';
-  const who=document.createElement('div'); who.className='msg-who';
-  who.innerHTML=`<span style="color:var(--pink)">📌 ${c?c.name:'AI'}</span> <span style="font-size:10px;color:var(--t3)">이전 스토리 요약 · AI 미전송</span>`;
-  const bub=document.createElement('div'); bub.className='msg-bub';
-  bub.style.cssText='background:rgba(232,121,160,0.08);border:1px solid rgba(232,121,160,0.25);border-bottom-left-radius:4px;font-size:13px;line-height:1.8;white-space:pre-wrap;word-break:break-word;';
-  bub.textContent=s;
-  const acts=document.createElement('div'); acts.style.cssText='margin-top:4px;padding:0 3px';
-  acts.innerHTML=`<button onclick="openSummaryModal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:2px 4px;border-radius:6px;font-family:'Noto Sans KR',sans-serif" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='var(--t3)'">✏️ 요약 편집</button>`;
-  body.appendChild(who); body.appendChild(bub); body.appendChild(acts);
-  row.appendChild(body);
-  area.appendChild(row);
-}
-function renderSummaryCard(){
-  // 요약 변경 시 채팅 전체 재렌더
-  renderChat();
-}
 function goHome(){
   D.activeChar=null; D.activeRoom=null;
   save();
@@ -2217,16 +2117,17 @@ function renderChat(){
   const area=$('chat');
   if(!D.activeChar||!D.activeRoom){
     area.style.padding='0';
+    area.style.position='relative';
     area.innerHTML='';
     const w=document.createElement('div'); w.id='welcome';
-    w.style.cssText='position:relative;flex:1;align-self:stretch;display:flex;align-items:stretch;justify-content:stretch;overflow:hidden;padding:0;min-height:0';
+    w.style.cssText='position:absolute;inset:0;display:flex;align-items:stretch;justify-content:stretch;overflow:hidden;padding:0';
     // 랜덤 1장 선택
     const _pool=HOME_IMGS.slice();
     const _i1=Math.floor(Math.random()*_pool.length);
     const _img1=_pool[_i1];
     // 배경 블러 (1장 전체 블러)
     const wBg=document.createElement('div');
-    wBg.style.cssText='position:absolute;inset:0;z-index:0;filter:blur(26px) brightness(0.3) saturate(1.2);transform:scale(1.12);background-image:url("'+_img1+'");background-size:cover;background-position:center center';
+    wBg.style.cssText='position:absolute;inset:0;z-index:0;filter:blur(8px) brightness(0.55) saturate(1.1);transform:scale(1.06);background-image:url("'+_img1+'");background-size:cover;background-position:center 30%';
     // 어두운 오버레이
     const wOv=document.createElement('div');
     wOv.style.cssText='position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,11,18,0.10) 0%,rgba(11,11,18,0.02) 35%,rgba(11,11,18,0.55) 100%);z-index:1';
@@ -2234,10 +2135,10 @@ function renderChat(){
     const wRow=document.createElement('div');
     wRow.style.cssText='position:relative;z-index:2;display:flex;width:100%;height:100%;align-items:center;justify-content:center';
     const wImgWrap=document.createElement('div');
-    wImgWrap.style.cssText='position:relative;height:100%;max-width:520px;width:100%;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,0.6)';
+    wImgWrap.style.cssText='position:relative;height:82%;max-height:600px;max-width:380px;width:80%;overflow:hidden;border-radius:18px;box-shadow:0 8px 60px rgba(0,0,0,0.7)';
     const wImg=document.createElement('img');
     wImg.src=_img1;
-    wImg.style.cssText='width:100%;height:100%;object-fit:cover;object-position:center center;display:block';
+    wImg.style.cssText='width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block';
     const wFade=document.createElement('div');
     wFade.style.cssText='position:absolute;inset:0;background:linear-gradient(to bottom,transparent 55%,rgba(11,11,18,0.6) 100%)';
     wImgWrap.appendChild(wImg); wImgWrap.appendChild(wFade);
@@ -2289,6 +2190,7 @@ function renderChat(){
   const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
   const hist=cHist();
   area.style.padding='16px 12px';
+  area.style.position='';
   area.innerHTML='';
   if(!hist.length){
     const empty=document.createElement('div'); empty.className='empty';
@@ -2466,26 +2368,7 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
   if(scroll) area.scrollTop=area.scrollHeight;
   return bub;
 }
-function showTyping(){
-  const area=$('chat');
-  const c=D.chars.find(x=>x.id===D.activeChar);
-  const row=document.createElement('div'); row.className='typing-row'; row.id='typing';
-  const av=document.createElement('div'); av.className='msg-av';
-  renderAvatar(av,c||{emoji:'🤖',emoImg:null});
-  const bub=document.createElement('div'); bub.className='typing-bub';
-  bub.innerHTML='<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-  row.appendChild(av); row.appendChild(bub);
-  area.appendChild(row); area.scrollTop=area.scrollHeight;
-}
-function hideTyping(){const t=$('typing');if(t)t.remove()}
-
 // ─── REROLL / EDIT MSG ───
-function getMsgIndex(row){
-  // row의 메시지가 hist에서 몇 번째인지 반환
-  const rows=[...$('chat').querySelectorAll('.msg-row')];
-  const idx=rows.indexOf(row);
-  return idx;
-}
 async function rerollMsg(row){
   const hist=cHist();
   if(!hist.length)return;
@@ -3131,7 +3014,6 @@ function openModal(id){
   if(id==='key-modal'){
     $('key-inp').value=D.key;
     $('gemini-key-inp').value=D.geminiKey||'';
-    if($('or-key-inp'))$('or-key-inp').value=D.openrouterKey||'';
     updateKeySt(); updateGeminiKeySt();
     renderModelCards();
   }
@@ -3155,12 +3037,6 @@ function updateGeminiKeySt(){
 function toggleEye(inputId, iconId){
   const i=$(inputId||'key-inp'); i.type=i.type==='password'?'text':'password';
 }
-function switchKeyTab(api){
-  $('ktab-claude').classList.toggle('on',api==='claude');
-  $('ktab-gemini').classList.toggle('on',api==='gemini');
-  $('kpanel-claude').style.display=api==='claude'?'block':'none';
-  $('kpanel-gemini').style.display=api==='gemini'?'block':'none';
-}
 function setActiveApi(api){
   if(rid()){
     if(!D.roomApi)D.roomApi={};
@@ -3183,11 +3059,9 @@ function updateApiToggleBtns(){
   const col='var(--accent2)';
   if(active){active.style.background=col;active.style.color='#fff';active.style.borderColor=col;}
 }
-function updateActiveApiBar(){/* 제거됨 */}
 function saveKey(){
   D.key=$('key-inp').value.trim();
   D.geminiKey=$('gemini-key-inp').value.trim();
-  D.openrouterKey=$('or-key-inp')?$('or-key-inp').value.trim():'';
   // D.model, D.geminiModel은 카드 클릭으로 이미 설정됨
   save(); closeModal('key-modal'); renderTopbar(); updateApiToggleBtns();
 }
@@ -3308,10 +3182,6 @@ function deleteChar(){
 (function(){const btn=document.querySelector('.sb-add');if(btn)btn.onclick=()=>openCharModal(false);})();
 
 // ─── PROFILES ───
-function getRoomProfiles(){
-  // 하위호환용 - 전역 profiles 반환
-  return D.profiles||[];
-}
 function renderProfiles(){
   const list=$('profile-list'); list.innerHTML='';
   const el=$('profile-modal-char'); if(el)el.textContent=charName();
@@ -3406,7 +3276,6 @@ function deleteProfileFromModal(){
   deleteProfile(id);
   closeModal('profile-edit-modal'); openProfileModal();
 }
-function addProfile(){ openProfileAdd(); }
 function deleteProfile(id){
   D.profiles=(D.profiles||[]).filter(p=>p.id!==id);
   if(D.roomProfiles){
@@ -3669,22 +3538,6 @@ function toggleNoteExpand(id){
   if(exp)exp.classList.toggle('on');
   if(chv)chv.classList.toggle('on');
 }
-function addNote(){
-  const name=$('note-name-inp').value.trim(); if(!name){$('note-name-inp').focus();return}
-  const content=$('note-ctx-inp').value.trim();
-  if(!D.notes)D.notes=[];
-  const newId=Date.now()+'';
-  D.notes.push({id:newId,name,content});
-  // 현재 room에서 자동 켜짐
-  if(rid()){
-    if(!D.roomNoteIds)D.roomNoteIds={};
-    if(!D.roomNoteIds[rid()])D.roomNoteIds[rid()]=[];
-    D.roomNoteIds[rid()].push(newId);
-  }
-  $('note-name-inp').value=''; $('note-ctx-inp').value='';
-  $('note-ctx-count').textContent='0 / 1000';
-  save(); renderNotes();
-}
 function deleteNote(id){
   D.notes=(D.notes||[]).filter(n=>n.id!==id);
   if(D.roomNoteIds){
@@ -3866,13 +3719,6 @@ function renderSceneList(){
     list.appendChild(item);
   });
 }
-function addScene(){
-  _editingScenes.push({id:Date.now()+'',title:'',content:''});
-  openSceneModal(_editingScenes.length-1);
-}
-function deleteScene(i){
-  _editingScenes.splice(i,1); renderSceneList();
-}
 // ─── SCENE MODAL ───
 let _sceneModalIdx=-1;
 function openSceneModal(idx){
@@ -3936,13 +3782,6 @@ function openSummaryModal(){
   $('summary-char-count').textContent='0자';
   openModal('summary-modal');
   setTimeout(()=>ta.focus(),80);
-}
-function clearSummary(){
-  setSummary('');
-  save();
-  const ta=$('summary-textarea'); if(ta){ta.value='';$('summary-char-count').textContent='0자';}
-  updateSummaryBtn();
-  closeModal('summary-modal');
 }
 function updateSummaryBtn(){
   const btn=$('summary-btn'); if(!btn)return;
