@@ -362,6 +362,24 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 .streaming::after{content:'';display:none}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
+/* ─── 로딩 문구 ─── */
+.loading-phrase{
+  color:var(--t3);font-size:13px;font-style:italic;
+  display:flex;align-items:center;gap:8px;
+  animation:fadeUp 0.3s ease;
+  padding:2px 0;
+}
+.loading-phrase::before{
+  content:'';display:inline-block;
+  width:6px;height:6px;border-radius:50%;
+  background:var(--accent);opacity:0.6;
+  animation:phrasePulse 1.4s ease-in-out infinite;
+  flex-shrink:0;
+}
+@keyframes phrasePulse{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.4);opacity:1}}
+.loading-phrase.fade-out{animation:phraseOut 0.25s ease forwards}
+@keyframes phraseOut{to{opacity:0;transform:translateY(-4px)}}
+
 .typing-row{display:flex;gap:9px;animation:fadeUp 0.2s ease}
 .typing-bub{
   padding:11px 16px;background:var(--ai-bub);
@@ -2235,7 +2253,7 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
     delBtn.className='msg-act-btn del-btn';
     delBtn.textContent='✕'; delBtn.title='삭제';
     delBtn.style.cssText='';
-    delBtn.onclick=async()=>{
+    delBtn.onclick=()=>{
       const hist=cHist();
       let idx=parseInt(row.dataset.histIdx??'-1');
       if(idx<0||idx>=hist.length){
@@ -2243,22 +2261,15 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
         idx=rows.indexOf(row);
       }
       if(idx<0||idx>=hist.length)return;
-      // 이 메시지 이후 전부 제거 (유저 메시지 삭제 → 그 뒤 AI 응답도 같이)
+      // 유저 메시지 + 그 뒤 AI 응답까지 hist에서 제거
       hist.splice(idx);
-      save();
-      // DOM에서 이 row 이후 전부 제거
+      save(); renderChars();
+      // DOM에서 이 row 이후 전부 제거 (빈 말풍선 포함)
       const allRows=[...$('chat').querySelectorAll('.msg-row')];
       const domIdx=allRows.indexOf(row);
       for(let i=allRows.length-1;i>=domIdx;i--){if(allRows[i]?.parentNode)allRows[i].remove();}
-      // 직전에 user 메시지가 있으면 자동으로 AI 응답 생성
-      const lastUser=hist.filter(m=>m.role==='user').slice(-1)[0];
-      if(lastUser){
-        $('send').disabled=true;
-        try{await generateAI(hist);}catch(e){}
-        $('send').disabled=false;
-      } else {
-        renderChat();
-      }
+      // 히스토리 비었으면 빈 상태 렌더
+      if(!cHist().length) renderChat();
     };
     acts.appendChild(editBtn); acts.appendChild(delBtn);
   }
@@ -2422,6 +2433,26 @@ This is a dedicated creative roleplay space.
     return full;
   }
 }
+// ─── 세계관 로딩 문구 ───
+const LOADING_PHRASES=[
+  '운명의 실을 잇는 중…',
+  '이야기를 짜는 중…',
+  '다음 장면을 소환하는 중…',
+  '기억을 더듬는 중…',
+  '감정을 가다듬는 중…',
+  '별빛을 모으는 중…',
+  '세계의 목소리를 듣는 중…',
+  '말을 고르는 중…',
+  '마음의 잉크를 적시는 중…',
+  '이야기의 문을 여는 중…',
+  '인연의 페이지를 넘기는 중…',
+  '운명을 그리는 중…',
+  '침묵 속에서 답을 찾는 중…',
+  '감정의 파장이 퍼지는 중…',
+  '이 순간을 기억에 새기는 중…',
+];
+function getLoadingPhrase(){return LOADING_PHRASES[Math.floor(Math.random()*LOADING_PHRASES.length)];}
+
 async function generateAI(hist){
   const usingGemini=(getRoomApi()==='gemini');
   const c=D.chars.find(x=>x.id===D.activeChar);
@@ -2492,6 +2523,17 @@ ${genreGuide}
   body2.appendChild(hdr2); body2.appendChild(bub2);
   row2.appendChild(body2); area.appendChild(row2); area.scrollTop=area.scrollHeight;
 
+  // 로딩 문구
+  const phraseEl=document.createElement('div'); phraseEl.className='loading-phrase';
+  phraseEl.textContent=getLoadingPhrase();
+  bubText2.appendChild(phraseEl);
+  let phraseRemoved=false;
+  function removePhrase(){
+    if(phraseRemoved)return; phraseRemoved=true;
+    phraseEl.classList.add('fade-out');
+    setTimeout(()=>{if(phraseEl.parentNode)phraseEl.remove();},220);
+  }
+
   let full='';
   try{
     if(usingGemini){
@@ -2519,7 +2561,7 @@ ${genreGuide}
           try{
             const j=JSON.parse(d);
             const parts=j.candidates?.[0]?.content?.parts||[];
-            for(const p of parts){if(p.thought)continue;if(p.text){full+=p.text;bubText2.innerHTML=renderMsgContent(full);area.scrollTop=area.scrollHeight;}}
+            for(const p of parts){if(p.thought)continue;if(p.text){full+=p.text;removePhrase();bubText2.innerHTML=renderMsgContent(full);area.scrollTop=area.scrollHeight;}}
           }catch(e){}
         }
       }
@@ -2544,12 +2586,13 @@ ${genreGuide}
         for(const line of lines){
           if(!line.startsWith('data: '))continue;
           const d=line.slice(6).trim(); if(d==='[DONE]')break;
-          try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;bubText2.innerHTML=renderMsgContent(full);area.scrollTop=area.scrollHeight;}}catch(e){}
+          try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;removePhrase();bubText2.innerHTML=renderMsgContent(full);area.scrollTop=area.scrollHeight;}}catch(e){}
         }
       }
       if(!full)throw new Error('응답이 비어있어요.');
     }
   }catch(e){
+    removePhrase();
     row2.remove();
     throw e;
   }
@@ -2682,10 +2725,52 @@ async function sendMsg(){
     await generateAI(cHist());
   }catch(e){
     const msg=e.message||String(e);
-    const em={role:'assistant',content:'⚠️ 오류: '+msg,time:now()};
-    cHist().push(em);
-    appendMsg(em);
-    save();
+    // 오류 말풍선 - hist에는 저장 안 하고 DOM에만 표시 + 재시도 버튼
+    const area=$('chat');
+    const c2=D.chars.find(x=>x.id===D.activeChar);
+    const errRow=document.createElement('div'); errRow.className='msg-row'; errRow.id='err-row';
+    const errBody=document.createElement('div'); errBody.className='msg-body';
+    const errHdr=document.createElement('div'); errHdr.className='msg-header';
+    const errAvSm=document.createElement('div'); errAvSm.className='msg-av-sm';
+    renderAvatar(errAvSm,c2||{emoji:'🤖',emoImg:null});
+    const errWho=document.createElement('div'); errWho.className='msg-who'; errWho.textContent=c2?c2.name:'AI';
+    errHdr.appendChild(errAvSm); errHdr.appendChild(errWho);
+    const errBub=document.createElement('div'); errBub.className='msg-bub';
+    errBub.style.cssText='background:var(--dg);border:1px solid rgba(240,112,112,0.25);border-top-left-radius:4px;';
+    const isOverload=msg.includes('high demand')||msg.includes('overloaded')||msg.includes('529')||msg.includes('과부하');
+    errBub.innerHTML=`<div style="color:var(--danger);font-size:13px;margin-bottom:8px">${isOverload?'🌊 서버가 혼잡해요. 잠시 후 다시 시도해보세요.':'⚠️ '+msg}</div>`+
+      `<button onclick="retryLastMsg(this)" style="padding:6px 14px;border-radius:20px;border:1px solid rgba(240,112,112,0.4);background:transparent;color:var(--danger);cursor:pointer;font-size:12px;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--dg)'" onmouseout="this.style.background='transparent'">↺ 다시 시도</button>`;
+    errBody.appendChild(errHdr); errBody.appendChild(errBub);
+    errRow.appendChild(errBody); area.appendChild(errRow); area.scrollTop=area.scrollHeight;
+  }
+  $('send').disabled=false; $('inp').focus();
+}
+async function retryLastMsg(btn){
+  // 오류 말풍선 제거
+  const errRow=document.getElementById('err-row'); if(errRow)errRow.remove();
+  // 마지막 유저 메시지로 재시도
+  const hist=cHist();
+  if(!hist.length||hist[hist.length-1].role!=='user')return;
+  $('send').disabled=true;
+  try{ await generateAI(hist); }
+  catch(e){
+    const area=$('chat');
+    const c2=D.chars.find(x=>x.id===D.activeChar);
+    const errRow2=document.createElement('div'); errRow2.className='msg-row'; errRow2.id='err-row';
+    const errBody2=document.createElement('div'); errBody2.className='msg-body';
+    const errHdr2=document.createElement('div'); errHdr2.className='msg-header';
+    const errAvSm2=document.createElement('div'); errAvSm2.className='msg-av-sm';
+    renderAvatar(errAvSm2,c2||{emoji:'🤖',emoImg:null});
+    const errWho2=document.createElement('div'); errWho2.className='msg-who'; errWho2.textContent=c2?c2.name:'AI';
+    errHdr2.appendChild(errAvSm2); errHdr2.appendChild(errWho2);
+    const errBub2=document.createElement('div'); errBub2.className='msg-bub';
+    errBub2.style.cssText='background:var(--dg);border:1px solid rgba(240,112,112,0.25);border-top-left-radius:4px;';
+    const msg2=e.message||String(e);
+    const isOverload2=msg2.includes('high demand')||msg2.includes('overloaded')||msg2.includes('529')||msg2.includes('과부하');
+    errBub2.innerHTML=`<div style="color:var(--danger);font-size:13px;margin-bottom:8px">${isOverload2?'🌊 서버가 혼잡해요. 잠시 후 다시 시도해보세요.':'⚠️ '+msg2}</div>`+
+      `<button onclick="retryLastMsg(this)" style="padding:6px 14px;border-radius:20px;border:1px solid rgba(240,112,112,0.4);background:transparent;color:var(--danger);cursor:pointer;font-size:12px;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--dg)'" onmouseout="this.style.background='transparent'">↺ 다시 시도</button>`;
+    errBody2.appendChild(errHdr2); errBody2.appendChild(errBub2);
+    errRow2.appendChild(errBody2); area.appendChild(errRow2); area.scrollTop=area.scrollHeight;
   }
   $('send').disabled=false; $('inp').focus();
 }
@@ -2758,7 +2843,7 @@ const GEMINI_MODELS=[
   {value:'gemini-2.5-pro',icon:'🌟',name:'프로챗 2.5 (Gemini 2.5 Pro)',desc:'최고 품질 · 풍부한 묘사'},
   {value:'gemini-2.5-flash',icon:'✦',name:'프로챗 1.0 (Gemini 2.5 Flash)',desc:'추천 · 무료 티어 있음'},
   {value:'gemini-2.5-flash-lite',icon:'💚',name:'파워챗 (Gemini 2.5 Flash-Lite)',desc:'빠름 · 무료 티어 있음'},
-  {value:'gemini-3.1-pro',icon:'🌙',name:'프로챗 3.1 (Gemini 3.1 Pro)',desc:'신모델 · 고품질'},
+  {value:'gemini-3.1-pro-preview',icon:'🌙',name:'프로챗 3.1 (Gemini 3.1 Pro)',desc:'신모델 · 고품질'},
 ];
 function renderModelCards(){
   const cl=$('claude-model-list'); const gm=$('gemini-model-list');
