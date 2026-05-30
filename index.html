@@ -185,6 +185,31 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 }
 .scene-sb-add:hover{color:var(--accent);background:var(--s2)}
 
+/* ── 모델별 말풍선 색상 ── */
+/* 다크모드 - 클로드 핑크 계열 (배경 어둡게, 글자 밝게) */
+.msg-bub.model-opus-4-8{background:#3d1428!important;border-color:#ff8cb8!important;color:#ffe0ef!important;}
+.msg-bub.model-opus-4-7{background:#2e1832!important;border-color:#e8a0d8!important;color:#f5d8f8!important;}
+.msg-bub.model-opus-4-6{background:#2a1a28!important;border-color:#d4a8c8!important;color:#eedcee!important;}
+/* 소넷 - 푸른 계열 */
+.msg-bub.model-sonnet-4-6{background:#0e1e3a!important;border-color:#5ca0e8!important;color:#c8def8!important;}
+/* 하이쿠 - 청록 계열 */
+.msg-bub.model-haiku{background:#0a1e1e!important;border-color:#30c8b0!important;color:#b0f0e4!important;}
+/* 제미나이 계열 - 노란 계열 */
+.msg-bub.model-gemini-3-1{background:#2a2210!important;border-color:#e8d080!important;color:#fff5c8!important;}
+.msg-bub.model-gemini-2-5-pro{background:#221600!important;border-color:#d4a020!important;color:#ffe898!important;}
+.msg-bub.model-gemini-2-5-flash{background:#1a1200!important;border-color:#b88a10!important;color:#f8e090!important;}
+.msg-bub.model-gemini-2-5-lite{background:#141000!important;border-color:#a07808!important;color:#f0d880!important;}
+/* 라이트모드 - 파스텔 */
+body.light .msg-bub.model-opus-4-8{background:#ffe0ef!important;border-color:#f06090!important;color:#5a0830!important;}
+body.light .msg-bub.model-opus-4-7{background:#f8d8f0!important;border-color:#c878c0!important;color:#580858!important;}
+body.light .msg-bub.model-opus-4-6{background:#fce8e0!important;border-color:#e09888!important;color:#601820!important;}
+body.light .msg-bub.model-sonnet-4-6{background:#ddeeff!important;border-color:#3a80d0!important;color:#0a2850!important;}
+body.light .msg-bub.model-haiku{background:#d8f8f2!important;border-color:#18a090!important;color:#044038!important;}
+body.light .msg-bub.model-gemini-3-1{background:#faf3d0!important;border-color:#c8a850!important;color:#3c2c00!important;}
+body.light .msg-bub.model-gemini-2-5-pro{background:#fef4b0!important;border-color:#a87800!important;color:#3c2800!important;}
+body.light .msg-bub.model-gemini-2-5-flash{background:#fdf0a0!important;border-color:#907000!important;color:#342000!important;}
+body.light .msg-bub.model-gemini-2-5-lite{background:#fcec90!important;border-color:#786800!important;color:#2c1800!important;}
+
 /* 메시지 버블 내 이탤릭(*텍스트*) 스타일 */
 .msg-bub em{
   font-style:normal;color:var(--t2);font-size:13px;
@@ -1047,11 +1072,7 @@ input[type=file]{display:none}
 
   <!-- CHAT -->
   <div id="chat">
-    <div id="welcome">
-      <svg width="64" height="64" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <h2>CharaChat</h2>
-      <p>왼쪽에서 스토리를 선택하거나 새 스토리를 만들어보세요.<br>API 키를 먼저 설정해야 대화할 수 있어요.</p>
-    </div>
+    <div id="welcome"></div>
   </div>
 
   <!-- INPUT -->
@@ -1694,7 +1715,7 @@ function save(){
     Object.keys(D.histories||{}).forEach(k=>{
       const arr=D.histories[k];
       if(Array.isArray(arr)){
-        safeHistories[k]=arr.filter(m=>m&&m.role&&(m.content!=null)).map(m=>({role:m.role,content:String(m.content),time:m.time||''}));
+        safeHistories[k]=arr.filter(m=>m&&m.role&&(m.content!=null)).map(m=>({role:m.role,content:String(m.content),time:m.time||'',model:m.model||''}));
       }
     });
     const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,activeApi:D.activeApi,
@@ -2206,6 +2227,19 @@ function renderChat(){
   hist.forEach((m,i)=>{ appendMsg(m,false,i); });
   area.scrollTop=area.scrollHeight;
 }
+function getModelClass(model){
+  if(!model) return '';
+  if(model.includes('opus-4-8')) return 'model-opus-4-8';
+  if(model.includes('opus-4-7')) return 'model-opus-4-7';
+  if(model.includes('opus-4-6')) return 'model-opus-4-6';
+  if(model.includes('sonnet')) return 'model-sonnet-4-6';
+  if(model.includes('haiku')) return 'model-haiku';
+  if(model.includes('gemini-3.1')||model.includes('3.1-pro')) return 'model-gemini-3-1';
+  if(model.includes('2.5-pro')) return 'model-gemini-2-5-pro';
+  if(model.includes('2.5-flash-lite')||model.includes('flash-lite')) return 'model-gemini-2-5-lite';
+  if(model.includes('2.5-flash')) return 'model-gemini-2-5-flash';
+  return '';
+}
 function appendMsg(msg,scroll=true,forceIdx=-1){
   const area=$('chat');
   const empty=area.querySelector('.empty'); if(empty)empty.remove();
@@ -2264,7 +2298,8 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
     header.appendChild(avSm); header.appendChild(who);
     body.appendChild(header);
   }
-  const bub=document.createElement('div'); bub.className='msg-bubble msg-bub';
+  const modelCls=(!isMe&&msg.model)?getModelClass(msg.model):'';
+  const bub=document.createElement('div'); bub.className='msg-bubble msg-bub'+(modelCls?' '+modelCls:'');
   bub.innerHTML=renderMsgContent(msg.content);
   bub.onclick=()=>row.classList.toggle('acts-open');
   const t=document.createElement('div'); t.className='msg-t'; t.textContent=msg.time||'';
@@ -2410,7 +2445,7 @@ async function rerollMsg(row){
   if(streamTarget){streamTarget.style.opacity='';streamTarget.innerHTML=renderMsgContent(newContent);}
   row._rerollHistory.push(newContent);
   row._rerollIdx=row._rerollHistory.length-1;
-  const newMsg={role:'assistant',content:newContent,time:now()};
+  const newMsg={role:'assistant',content:newContent,time:now(),model:getRoomApi()==='gemini'?D.geminiModel:(D.model||'claude-sonnet-4-6')};
   // 리롤 히스토리를 메시지에 저장
   newMsg._rh=row._rerollHistory.slice();
   cHist().push(newMsg);save();renderChars();
@@ -2747,7 +2782,7 @@ ${genreGuide}
     row2.remove();
     throw e;
   }
-  const newMsg={role:'assistant',content:full,time:now()};
+  const newMsg={role:'assistant',content:full,time:now(),model:usingGemini?D.geminiModel:(D.model||'claude-sonnet-4-6')};
   cHist().push(newMsg); save(); renderChars();
   if(D.activeRoom){
     const bd=calcInputBreakdown(sys,hist,c);
@@ -2997,10 +3032,10 @@ const CLAUDE_MODELS=[
   {value:'claude-haiku-4-5-20251001',icon:'💧',name:'파워챗 (Haiku 4.5)',desc:'빠름 · 가벼운 대화용'},
 ];
 const GEMINI_MODELS=[
-  {value:'gemini-2.5-pro',icon:'🌟',name:'프로챗 2.5 (Gemini 2.5 Pro)',desc:'최고 품질 · 풍부한 묘사'},
-  {value:'gemini-2.5-flash',icon:'✦',name:'프로챗 1.0 (Gemini 2.5 Flash)',desc:'추천 · 무료 티어 있음'},
+  {value:'gemini-3.1-pro-preview',icon:'🌙',name:'프로챗 3.1 (Gemini 3.1 Pro)',desc:'최신 · 최고품질'},
+  {value:'gemini-2.5-pro',icon:'🌟',name:'프로챗 2.5 (Gemini 2.5 Pro)',desc:'고품질 · 풍부한 묘사'},
+  {value:'gemini-2.5-flash',icon:'✦',name:'플래쉬챗 (Gemini 2.5 Flash)',desc:'추천 · 무료 티어 있음'},
   {value:'gemini-2.5-flash-lite',icon:'💚',name:'파워챗 (Gemini 2.5 Flash-Lite)',desc:'빠름 · 무료 티어 있음'},
-  {value:'gemini-3.1-pro-preview',icon:'🌙',name:'프로챗 3.1 (Gemini 3.1 Pro)',desc:'신모델 · 고품질'},
 ];
 function renderModelCards(){
   const cl=$('claude-model-list'); const gm=$('gemini-model-list');
