@@ -897,6 +897,17 @@ input[type=file]{display:none}
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
       대화 초기화
     </button>
+    <div style="display:flex;gap:4px;padding:2px 0">
+      <button class="sb-btn" style="flex:1;justify-content:center;gap:4px" onclick="exportAllData()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        내보내기
+      </button>
+      <button class="sb-btn" style="flex:1;justify-content:center;gap:4px" onclick="importAllData()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        불러오기
+      </button>
+    </div>
+    <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="handleImportFile(this)">
   </div>
 </div>
 
@@ -2378,7 +2389,7 @@ This is a dedicated creative roleplay space.
 
   let full='';
   if(usingGemini){
-    let gMsgs=hist.slice(-16).map(m=>{
+    let gMsgs=hist.slice(-11).map(m=>{
       if(m.role==='summary_note') return {role:'model',parts:[{text:`[스토리 요약]\n${m.content}`}]};
       return {role:m.role==='assistant'?'model':'user',parts:[{text:m.content||''}]};
     }).filter(m=>m.parts[0].text);
@@ -2405,14 +2416,14 @@ This is a dedicated creative roleplay space.
     if(!full) throw new Error('응답 비어있음');
     return full;
   } else {
-    let rawMsgs=hist.slice(-30).map(m=>{
+    let rawMsgs=hist.slice(-22).map(m=>{
       if(m.role==='summary_note')return{role:'assistant',content:`[스토리 요약]\n${m.content}`};
       return{role:m.role,content:m.content};
     });
     const fixed=[];
     for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
     while(fixed.length&&fixed[fixed.length-1].role!=='user')fixed.pop();
-    const messages=fixed.slice(-16);
+    const messages=fixed.slice(-11);
     if(!messages.length) throw new Error('메시지 없음');
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength()].tokens,system:sys,messages,stream:true})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
@@ -2537,7 +2548,7 @@ ${genreGuide}
   let full='';
   try{
     if(usingGemini){
-      let geminiMsgs=hist.slice(-16).map(m=>{
+      let geminiMsgs=hist.slice(-11).map(m=>{
         if(m.role==='summary_note') return {role:'model',parts:[{text:'[스토리 요약]\n'+m.content}]};
         return {role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]};
       }).filter(Boolean);
@@ -2567,14 +2578,14 @@ ${genreGuide}
       }
       if(!full)throw new Error('응답이 비어있어요.');
     } else {
-      let rawMsgs=hist.slice(-30).map(m=>{
+      let rawMsgs=hist.slice(-22).map(m=>{
         if(m.role==='summary_note')return{role:'assistant',content:'[스토리 요약]\n'+m.content};
         return{role:m.role,content:m.content};
       });
       const fixed=[];
       for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
       while(fixed.length&&fixed[fixed.length-1].role!=='user')fixed.pop();
-      const messages=fixed.slice(-16);
+      const messages=fixed.slice(-11);
       if(!messages.length){row2.remove();return;}
       const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength()].tokens,system:sys,messages,stream:true})});
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
@@ -3967,14 +3978,14 @@ function calcInputBreakdown(sys, hist, c){
   const noteLen=note.trim().length;
   const memLen=mems.reduce((s,m)=>s+(m.title+': '+m.content).length,0);
   const kwLen=kws.reduce((s,k)=>s+(k.name+': '+k.ctx).length,0);
-  const histLen=hist.slice(-16).reduce((s,m)=>s+(m.content||'').length,0);
+  const histLen=hist.slice(-11).reduce((s,m)=>s+(m.content||'').length,0);
   return {
     charPrompt:{label:'캐릭터 프롬프트',chars:charPromptLen,tok:tok(c&&c.prompt||'')},
     profile:{label:'유저 프로필',chars:profileLen,tok:tok(activeProfs.map(p=>p.ctx||'').join(''))},
     note:{label:'유저 노트',chars:noteLen,tok:tok(note)},
     memory:{label:'장기 기억',chars:memLen,tok:tok(mems.map(m=>m.title+': '+m.content).join(''))},
     keyword:{label:'키워드',chars:kwLen,tok:tok(kws.map(k=>k.name+': '+k.ctx).join(''))},
-    history:{label:'대화 히스토리',chars:histLen,tok:tok(hist.slice(-16).map(m=>m.content||'').join(''))},
+    history:{label:'대화 히스토리',chars:histLen,tok:tok(hist.slice(-11).map(m=>m.content||'').join(''))},
   };
 }
 function calcCostKRW(outputTokens, model){
@@ -4136,6 +4147,50 @@ function addLongPress(el,cb){
   el.addEventListener('touchcancel',function(){clearTimeout(timer);fired=false;},{passive:true});
   el.addEventListener('click',function(e){if(fired){e.stopPropagation();fired=false;}});
   el.addEventListener('contextmenu',function(e){e.preventDefault();cb();});
+}
+
+// ─── 전체 데이터 내보내기 / 불러오기 ───
+function exportAllData(){
+  try{
+    const exportData={
+      version:1,
+      exportedAt:new Date().toISOString(),
+      data:JSON.parse(JSON.stringify(D))
+    };
+    const blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const date=new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','');
+    a.href=url; a.download=`charachat-backup-${date}.json`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }catch(e){alert('내보내기 실패: '+e.message);}
+}
+function importAllData(){
+  $('import-file-input').value='';
+  $('import-file-input').click();
+}
+function handleImportFile(input){
+  const file=input.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const parsed=JSON.parse(e.target.result);
+      const importD=parsed.version===1?parsed.data:parsed;
+      if(!importD||!importD.chars){alert('올바른 백업 파일이 아니에요.');return;}
+      showConfirm('불러오면 현재 데이터가 덮어써져요.\n계속할까요?', function(){
+        // API 키는 유지, 나머지 덮어쓰기
+        const keepKey=D.key; const keepGeminiKey=D.geminiKey;
+        Object.assign(D, importD);
+        if(keepKey&&!D.key) D.key=keepKey;
+        if(keepGeminiKey&&!D.geminiKey) D.geminiKey=keepGeminiKey;
+        save();
+        renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
+        alert('불러오기 완료!');
+      });
+    }catch(err){alert('파일을 읽을 수 없어요: '+err.message);}
+  };
+  reader.readAsText(file);
 }
 
 try{
