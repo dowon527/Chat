@@ -187,28 +187,28 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
 
 /* ── 모델별 말풍선 색상 ── */
 /* 다크모드 - 클로드 핑크 계열 (배경 어둡게, 글자 밝게) */
-.msg-bub.model-opus-4-8{background:#3d1428!important;border-color:#ff8cb8!important;color:#ffe0ef!important;}
-.msg-bub.model-opus-4-7{background:#2e1832!important;border-color:#e8a0d8!important;color:#f5d8f8!important;}
-.msg-bub.model-opus-4-6{background:#2a1a28!important;border-color:#d4a8c8!important;color:#eedcee!important;}
+.msg-bub.model-opus-4-8{background:#3d1428!important;border-color:transparent!important;color:#e4e2f0!important;}
+.msg-bub.model-opus-4-7{background:#2e1832!important;border-color:transparent!important;color:#e4e2f0!important;}
+.msg-bub.model-opus-4-6{background:#2a1a28!important;border-color:transparent!important;color:#e4e2f0!important;}
 /* 소넷 - 푸른 계열 */
-.msg-bub.model-sonnet-4-6{background:#0e1e3a!important;border-color:#5ca0e8!important;color:#c8def8!important;}
+.msg-bub.model-sonnet-4-6{background:#0e1e3a!important;border-color:transparent!important;color:#e4e2f0!important;}
 /* 하이쿠 - 청록 계열 */
-.msg-bub.model-haiku{background:#0a1e1e!important;border-color:#30c8b0!important;color:#b0f0e4!important;}
+.msg-bub.model-haiku{background:#0a1e1e!important;border-color:transparent!important;color:#e4e2f0!important;}
 /* 제미나이 계열 - 노란 계열 */
-.msg-bub.model-gemini-3-1{background:#2a2210!important;border-color:#e8d080!important;color:#fff5c8!important;}
-.msg-bub.model-gemini-2-5-pro{background:#221600!important;border-color:#d4a020!important;color:#ffe898!important;}
-.msg-bub.model-gemini-2-5-flash{background:#1a1200!important;border-color:#b88a10!important;color:#f8e090!important;}
-.msg-bub.model-gemini-2-5-lite{background:#141000!important;border-color:#a07808!important;color:#f0d880!important;}
+.msg-bub.model-gemini-3-1{background:#2a2210!important;border-color:transparent!important;color:#e4e2f0!important;}
+.msg-bub.model-gemini-2-5-pro{background:#221600!important;border-color:transparent!important;color:#e4e2f0!important;}
+.msg-bub.model-gemini-2-5-flash{background:#1a1200!important;border-color:transparent!important;color:#e4e2f0!important;}
+.msg-bub.model-gemini-2-5-lite{background:#141000!important;border-color:transparent!important;color:#e4e2f0!important;}
 /* 라이트모드 - 파스텔 */
-body.light .msg-bub.model-opus-4-8{background:#ffe0ef!important;border-color:#f06090!important;color:#5a0830!important;}
-body.light .msg-bub.model-opus-4-7{background:#f8d8f0!important;border-color:#c878c0!important;color:#580858!important;}
-body.light .msg-bub.model-opus-4-6{background:#fce8e0!important;border-color:#e09888!important;color:#601820!important;}
-body.light .msg-bub.model-sonnet-4-6{background:#ddeeff!important;border-color:#3a80d0!important;color:#0a2850!important;}
-body.light .msg-bub.model-haiku{background:#d8f8f2!important;border-color:#18a090!important;color:#044038!important;}
-body.light .msg-bub.model-gemini-3-1{background:#faf3d0!important;border-color:#c8a850!important;color:#3c2c00!important;}
-body.light .msg-bub.model-gemini-2-5-pro{background:#fef4b0!important;border-color:#a87800!important;color:#3c2800!important;}
-body.light .msg-bub.model-gemini-2-5-flash{background:#fdf0a0!important;border-color:#907000!important;color:#342000!important;}
-body.light .msg-bub.model-gemini-2-5-lite{background:#fcec90!important;border-color:#786800!important;color:#2c1800!important;}
+body.light .msg-bub.model-opus-4-8{background:#ffe0ef!important;border-color:transparent!important;color:#1a1614!important;}
+body.light .msg-bub.model-opus-4-7{background:#f8d8f0!important;border-color:transparent!important;color:#1a1614!important;}
+body.light .msg-bub.model-opus-4-6{background:#fce8e0!important;border-color:transparent!important;color:#1a1614!important;}
+body.light .msg-bub.model-sonnet-4-6{background:#ddeeff!important;border-color:transparent!important;color:#1a1614!important;}
+body.light .msg-bub.model-haiku{background:#d8f8f2!important;border-color:transparent!important;color:#1a1614!important;}
+body.light .msg-bub.model-gemini-3-1{background:#faf3d0!important;border-color:transparent!important;color:#1a1614!important;}
+body.light .msg-bub.model-gemini-2-5-pro{background:#fef4b0!important;border-color:transparent!important;color:#1a1614!important;}
+body.light .msg-bub.model-gemini-2-5-flash{background:#fdf0a0!important;border-color:transparent!important;color:#1a1614!important;}
+body.light .msg-bub.model-gemini-2-5-lite{background:#fcec90!important;border-color:transparent!important;color:#1a1614!important;}
 
 /* 메시지 버블 내 이탤릭(*텍스트*) 스타일 */
 .msg-bub em{
@@ -380,7 +380,7 @@ body.light .msg-bub.model-gemini-2-5-lite{background:#fcec90!important;border-co
   cursor:pointer;
 }
 .msg-row:not(.me) .msg-bub{
-  background:var(--ai-bub);border:1px solid var(--border);
+  background:var(--ai-bub);border:none;
   border-top-left-radius:4px;color:var(--text);
 }
 .msg-row.me .msg-bub{
@@ -416,7 +416,7 @@ body.light .msg-bub.model-gemini-2-5-lite{background:#fcec90!important;border-co
 .typing-row{display:flex;gap:9px;animation:fadeUp 0.2s ease}
 .typing-bub{
   padding:11px 16px;background:var(--ai-bub);
-  border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;
+  border:none;border-radius:16px;border-bottom-left-radius:4px;
   display:flex;gap:5px;align-items:center;
 }
 .dot{width:6px;height:6px;border-radius:50%;background:var(--t3);animation:bounce 1.2s infinite}
@@ -444,7 +444,7 @@ body.light .msg-bub.model-gemini-2-5-lite{background:#fcec90!important;border-co
 /* ─── INPUT ─── */
 #input-wrap{
   padding:8px 10px;
-  padding-bottom:max(10px, calc(env(safe-area-inset-bottom, 0px) + 10px));
+  padding-bottom:max(12px, calc(env(safe-area-inset-bottom) + 8px));
   border-top:1px solid var(--border);
   background:var(--s1);flex-shrink:0;
 }
@@ -2516,7 +2516,14 @@ This is a dedicated creative roleplay space.
     const fixed=[];
     for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
     while(fixed.length&&fixed[fixed.length-1].role!=='user')fixed.pop();
-    const messages=fixed;
+    // 마지막 user 메시지 이전까지 캐시 적용 (5분 캐시)
+    const messages=fixed.map((m,i)=>{
+      if(i===fixed.length-2&&fixed.length>=2){
+        const txt=typeof m.content==='string'?m.content:m.content;
+        return{role:m.role,content:[{type:'text',text:typeof txt==='string'?txt:JSON.stringify(txt),cache_control:{type:'ephemeral'}}]};
+      }
+      return m;
+    });
     if(!messages.length) throw new Error('메시지 없음');
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength()].tokens,system:[{type:"text",text:sys,cache_control:{type:"ephemeral"}}],messages,stream:true})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
@@ -2760,7 +2767,13 @@ ${genreGuide}
       const fixed=[];
       for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
       while(fixed.length&&fixed[fixed.length-1].role!=='user')fixed.pop();
-      const messages=fixed;
+      const messages=fixed.map((m,i)=>{
+        if(i===fixed.length-2&&fixed.length>=2){
+          const txt=typeof m.content==='string'?m.content:JSON.stringify(m.content);
+          return{role:m.role,content:[{type:'text',text:txt,cache_control:{type:'ephemeral'}}]};
+        }
+        return m;
+      });
       if(!messages.length){row2.remove();return;}
       const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength()].tokens,system:[{type:"text",text:sys,cache_control:{type:"ephemeral"}}],messages,stream:true})});
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
@@ -2787,7 +2800,10 @@ ${genreGuide}
   if(D.activeRoom){
     const bd=calcInputBreakdown(sys,hist,c);
     const _inTok=Object.values(bd).filter(v=>v&&v.tok).reduce((s,v)=>s+(v.tok||0),0);
-    logTurnCost(D.activeRoom, full, usingGemini?D.geminiModel:D.model, bd, _inTok);
+    const _cs=D.lastCacheStats&&D.lastCacheStats[D.activeRoom];
+    const _cR=_cs?_cs.read:0; const _cW=_cs?_cs.write:0;
+    const _realIn=_cs&&_cs.input?_cs.input:_inTok;
+    logTurnCost(D.activeRoom, full, usingGemini?D.geminiModel:D.model, bd, _realIn, _cR, _cW);
   }
   _addActionsToRow(row2,bub2,newMsg);
 }
@@ -4095,36 +4111,45 @@ function buildContextMsgs(hist){
   return hist.slice(-11);
 }
 // 실제 턴 비용 계산 (실제 입력토큰 사용)
-function calcTurnCostKRW(outputText, model, inTokOverride){
+function calcTurnCostKRW(outputText, model, inTokOverride, cacheRead, cacheWrite){
   const KRW=1380;
-  const outTok=Math.round(outputText.length*1.5);
+  const outTok=Math.round(outputText.length*2.5);
   const inTok=inTokOverride||3000;
+  const cR=cacheRead||0; const cW=cacheWrite||0;
+  // 일반 입력 = 전체 입력 - 캐시읽기 - 캐시쓰기
+  const plainIn=Math.max(0, inTok-cR-cW);
   let costUSD=0;
   if(model==='gemini-2.5-pro'){
-    costUSD=(inTok/1e6)*1.25+(outTok/1e6)*10+(outTok*0.5/1e6)*3.5;
+    const r=1.25,w=10,out=10;
+    costUSD=(plainIn/1e6)*r+(cR/1e6)*(r*0.1)+(cW/1e6)*(r*1.25)+(outTok/1e6)*out;
   } else if(model==='gemini-2.5-flash'){
-    costUSD=(inTok/1e6)*0.075+(outTok/1e6)*0.30;
+    costUSD=(plainIn/1e6)*0.075+(cR/1e6)*0.01875+(cW/1e6)*0.09375+(outTok/1e6)*0.30;
   } else if(model==='gemini-2.5-flash-lite'){
-    costUSD=(inTok/1e6)*0.01+(outTok/1e6)*0.04;
+    costUSD=(plainIn/1e6)*0.01+(outTok/1e6)*0.04;
   } else if(model&&model.includes('opus')){
-    costUSD=(inTok/1e6)*15+(outTok/1e6)*75;
+    // opus: in $5, cache read $0.5 (90%할인), cache write $6.25 (25%추가), out $25
+    costUSD=(plainIn/1e6)*5+(cR/1e6)*0.5+(cW/1e6)*6.25+(outTok/1e6)*25;
+  } else if(model&&model.includes('haiku')){
+    // haiku: in $0.8, cache read $0.08, cache write $1.0, out $4
+    costUSD=(plainIn/1e6)*0.8+(cR/1e6)*0.08+(cW/1e6)*1.0+(outTok/1e6)*4;
   } else {
-    costUSD=(inTok/1e6)*3+(outTok/1e6)*15;
+    // sonnet: in $3, cache read $0.3, cache write $3.75, out $15
+    costUSD=(plainIn/1e6)*3+(cR/1e6)*0.3+(cW/1e6)*3.75+(outTok/1e6)*15;
   }
   return Math.round(costUSD*KRW*10)/10;
 }
-function logTurnCost(roomId, content, model, breakdown, inTok){
+function logTurnCost(roomId, content, model, breakdown, inTok, cacheRead, cacheWrite){
   if(!D.costLog)D.costLog={};
   if(!D.costLog[roomId])D.costLog[roomId]=[];
-  const krw=calcTurnCostKRW(content,model,inTok);
-  D.costLog[roomId].push({model,krw,time:now(),breakdown:breakdown||null,inTok:inTok||0});
+  const krw=calcTurnCostKRW(content,model,inTok,cacheRead||0,cacheWrite||0);
+  D.costLog[roomId].push({model,krw,time:now(),breakdown:breakdown||null,inTok:inTok||0,cacheRead:cacheRead||0,cacheWrite:cacheWrite||0});
   // 5턴 초과 시 오래된 것부터 자동 삭제
   if(D.costLog[roomId].length>5) D.costLog[roomId]=D.costLog[roomId].slice(-5);
   save();
 }
 // 입력 구성 계산 (켜진 것만)
 function calcInputBreakdown(sys, hist, c){
-  const tok=s=>Math.round((s||'').length*1.5);
+  const tok=s=>Math.round((s||'').length*2.5);
   const activeProfs=cProfs();
   const mems=cMems();
   const note=cNote();
@@ -4153,11 +4178,15 @@ function calcCostKRW(outputTokens, model){
   const inTok=3000;
   let costUSD=0;
   if(model==='gemini-2.5-pro'){
-    costUSD=(inTok/1e6)*1.25+(outputTokens/1e6)*10+(outputTokens*0.5/1e6)*3.5;
+    costUSD=(inTok/1e6)*1.25+(outputTokens/1e6)*10;
   } else if(model==='gemini-2.5-flash'){
     costUSD=(inTok/1e6)*0.075+(outputTokens/1e6)*0.30;
   } else if(model==='gemini-2.5-flash-lite'){
     costUSD=(inTok/1e6)*0.01+(outputTokens/1e6)*0.04;
+  } else if(model&&model.includes&&model.includes('opus')){
+    costUSD=(inTok/1e6)*5+(outputTokens/1e6)*25;
+  } else if(model&&model.includes&&model.includes('haiku')){
+    costUSD=(inTok/1e6)*0.8+(outputTokens/1e6)*4;
   } else {
     costUSD=(inTok/1e6)*3+(outputTokens/1e6)*15;
   }
