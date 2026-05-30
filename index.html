@@ -2598,7 +2598,10 @@ ${genreGuide}
   }
   const newMsg={role:'assistant',content:full,time:now()};
   cHist().push(newMsg); save(); renderChars();
-  if(D.activeRoom) logTurnCost(D.activeRoom, full, usingGemini?D.geminiModel:D.model);
+  if(D.activeRoom){
+    const bd=calcInputBreakdown(sys,hist,c);
+    logTurnCost(D.activeRoom, full, usingGemini?D.geminiModel:D.model, bd);
+  }
   _addActionsToRow(row2,bub2,newMsg);
 }
 function _addActionsToRow(row,bub,msg){
@@ -3840,13 +3843,33 @@ function openStatsModal(){
       return m||'?';
     };
     let cum=0;
+    const KRW_RATE=1380;
+    function inCostKRW(tok,model){
+      let usd=0;
+      if(model==='gemini-2.5-pro') usd=(tok/1e6)*1.25;
+      else if(model==='gemini-2.5-flash') usd=(tok/1e6)*0.075;
+      else if(model==='gemini-2.5-flash-lite') usd=(tok/1e6)*0.01;
+      else if(model==='gemini-3.1-pro-preview') usd=(tok/1e6)*2.0;
+      else usd=(tok/1e6)*3;
+      return usd*KRW_RATE;
+    }
     const rows=log.map((l,i)=>{
       cum+=l.krw;
       const krwStr=l.krw<1?'<1원':l.krw.toFixed(1)+'원';
       const cumStr=cum<1?'<1원':Math.round(cum)+'원';
-      return '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--s3);border-radius:8px;font-size:12px">'+
+      let infoStr='';
+      if(l.breakdown){
+        const bd=l.breakdown;
+        const parts=[bd.charPrompt,bd.profile,bd.note,bd.memory,bd.keyword,bd.history].filter(p=>p&&p.chars>0);
+        const totalChars=parts.reduce((s,p)=>s+p.chars,0);
+        const totalTok=parts.reduce((s,p)=>s+p.tok,0);
+        const inKrw=inCostKRW(totalTok,l.model);
+        infoStr='<span style="font-size:10px;color:var(--t3)">입력 '+totalChars.toLocaleString()+'자→'+(inKrw<0.1?'<0.1':inKrw.toFixed(1))+'원</span>';
+      }
+      return '<div style="display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--s3);border-radius:8px;font-size:12px">'+
         '<span style="color:var(--t3);flex-shrink:0;min-width:28px">'+(i+1)+'턴</span>'+
         '<span style="background:var(--s4);padding:1px 6px;border-radius:10px;font-size:10px;color:var(--t2);flex-shrink:0">'+modelLabel(l.model)+'</span>'+
+        (infoStr?infoStr:'')+
         '<span style="color:var(--accent);font-weight:600;flex:1;text-align:right">'+krwStr+'</span>'+
         '<span style="color:var(--t3);font-size:10px;flex-shrink:0">누적 '+cumStr+'</span>'+
       '</div>';
@@ -3922,14 +3945,37 @@ function calcTurnCostKRW(outputText, model){
   }
   return Math.round(costUSD*KRW*10)/10; // 소수점 1자리
 }
-function logTurnCost(roomId, content, model){
+function logTurnCost(roomId, content, model, breakdown){
   if(!D.costLog)D.costLog={};
   if(!D.costLog[roomId])D.costLog[roomId]=[];
   const krw=calcTurnCostKRW(content,model);
-  D.costLog[roomId].push({model,krw,time:now()});
+  D.costLog[roomId].push({model,krw,time:now(),breakdown:breakdown||null});
   // 5턴 초과 시 오래된 것부터 자동 삭제
   if(D.costLog[roomId].length>5) D.costLog[roomId]=D.costLog[roomId].slice(-5);
   save();
+}
+// 입력 구성 계산 (켜진 것만)
+function calcInputBreakdown(sys, hist, c){
+  const tok=s=>Math.round((s||'').length*1.5);
+  const activeProfs=cProfs();
+  const mems=cMems();
+  const note=cNote();
+  const kws=(c&&c.keywords||[]).filter(k=>k.on!==false);
+  // 각 파트 글자수
+  const charPromptLen=(c&&c.prompt||'').length;
+  const profileLen=activeProfs.reduce((s,p)=>s+(p.ctx||'').length,0);
+  const noteLen=note.trim().length;
+  const memLen=mems.reduce((s,m)=>s+(m.title+': '+m.content).length,0);
+  const kwLen=kws.reduce((s,k)=>s+(k.name+': '+k.ctx).length,0);
+  const histLen=hist.slice(-16).reduce((s,m)=>s+(m.content||'').length,0);
+  return {
+    charPrompt:{label:'캐릭터 프롬프트',chars:charPromptLen,tok:tok(c&&c.prompt||'')},
+    profile:{label:'유저 프로필',chars:profileLen,tok:tok(activeProfs.map(p=>p.ctx||'').join(''))},
+    note:{label:'유저 노트',chars:noteLen,tok:tok(note)},
+    memory:{label:'장기 기억',chars:memLen,tok:tok(mems.map(m=>m.title+': '+m.content).join(''))},
+    keyword:{label:'키워드',chars:kwLen,tok:tok(kws.map(k=>k.name+': '+k.ctx).join(''))},
+    history:{label:'대화 히스토리',chars:histLen,tok:tok(hist.slice(-16).map(m=>m.content||'').join(''))},
+  };
 }
 function calcCostKRW(outputTokens, model){
   const KRW=1380;
