@@ -111,7 +111,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:
   #sb-toggle{display:flex}
   #main{width:100%!important}
 }
-.sb-top{padding:18px 14px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sb-top{padding:18px 14px 12px;padding-top:max(18px, calc(env(safe-area-inset-top) + 10px));border-bottom:1px solid var(--border);flex-shrink:0}
 .logo{font-family:'Gowun Batang',serif;font-size:20px;color:var(--accent);letter-spacing:0.5px;display:flex;align-items:center;gap:8px}
 .logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
 .logo-sub{font-size:10px;color:var(--t3);font-family:'Noto Sans KR',sans-serif;margin-top:2px;letter-spacing:1px}
@@ -292,6 +292,8 @@ body.light .msg-bub.model-gemini-2-5-lite{background:#fcec90!important;border-co
   background:var(--s1);flex-shrink:0;
   position:relative;z-index:10;
   transition:background 0.2s, border-color 0.2s;
+  padding-top:env(safe-area-inset-top);
+  height:calc(56px + env(safe-area-inset-top));
 }
 #topbar.home-mode{
   position:absolute;top:0;left:0;right:0;
