@@ -2480,7 +2480,7 @@ This is a dedicated creative roleplay space.
   if(relMems.length){sys+=`\n\n[장기 기억 — 관련 항목]\n`;relMems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
   sys+=buildKwPrompt(c);
 
-  let full='';
+  let full=''; let apiResult={};
   if(usingGemini){
     let gMsgs=buildContextMsgs(hist).map(m=>{
       if(m.role==='summary_note') return {role:'model',parts:[{text:`[스토리 요약]\n${m.content}`}]};
@@ -2507,7 +2507,7 @@ This is a dedicated creative roleplay space.
       }
     }
     if(!full) throw new Error('응답 비어있음');
-    return full;
+    return {full,cacheRead:0,cacheWrite:0,inputTok:0};
   } else {
     const rawMsgs=buildContextMsgs(hist).map(m=>{
       if(m.role==='summary_note')return{role:'assistant',content:`[스토리 요약]\n${m.content}`};
@@ -2547,13 +2547,7 @@ This is a dedicated creative roleplay space.
         }
       }
     }catch(e){if(!full)throw new Error('스트리밍 오류: '+e.message);}
-    // 캐시 통계 저장
-    if(_cacheRead||_cacheWrite){
-      if(!D.lastCacheStats)D.lastCacheStats={};
-      D.lastCacheStats[rid()]={read:_cacheRead,write:_cacheWrite,input:_inputTok,time:now()};
-      save();
-    }
-    return full;
+    return {full,cacheRead:_cacheRead,cacheWrite:_cacheWrite,inputTok:_inputTok};
   }
 }
 // ─── 세계관 로딩 문구 ───
@@ -2727,7 +2721,7 @@ ${genreGuide}
     setTimeout(()=>{if(phraseEl.parentNode)phraseEl.remove();},220);
   }
 
-  let full='';
+  let full=''; let gCacheRead=0,gCacheWrite=0,gInputTok=0;
   try{
     if(usingGemini){
       let geminiMsgs=buildContextMsgs(hist).map(m=>{
@@ -2778,6 +2772,7 @@ ${genreGuide}
       const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength()].tokens,system:[{type:"text",text:sys,cache_control:{type:"ephemeral"}}],messages,stream:true})});
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
       const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='';
+      let _cacheRead=0,_cacheWrite=0,_inputTok=0;
       while(true){
         const {done,value}=await reader.read(); if(done)break;
         buf+=decoder.decode(value,{stream:true});
@@ -2785,10 +2780,17 @@ ${genreGuide}
         for(const line of lines){
           if(!line.startsWith('data: '))continue;
           const d=line.slice(6).trim(); if(d==='[DONE]')break;
-          try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;removePhrase();bubText2.innerHTML=renderMsgContent(full);area.scrollTop=area.scrollHeight;}}catch(e){}
+          try{
+            const j=JSON.parse(d);
+            if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;removePhrase();bubText2.innerHTML=renderMsgContent(full);area.scrollTop=area.scrollHeight;}
+            if(j.type==='message_start'&&j.message?.usage){const u=j.message.usage;_cacheRead=u.cache_read_input_tokens||0;_cacheWrite=u.cache_creation_input_tokens||0;_inputTok=u.input_tokens||0;}
+            if(j.type==='message_delta'&&j.usage){if(j.usage.cache_read_input_tokens)_cacheRead=j.usage.cache_read_input_tokens;if(j.usage.cache_creation_input_tokens)_cacheWrite=j.usage.cache_creation_input_tokens;}
+          }catch(e){}
         }
       }
       if(!full)throw new Error('응답이 비어있어요.');
+      // 캐시 stats 저장
+      gCacheRead=_cacheRead; gCacheWrite=_cacheWrite; gInputTok=_inputTok;
     }
   }catch(e){
     removePhrase();
@@ -2800,9 +2802,10 @@ ${genreGuide}
   if(D.activeRoom){
     const bd=calcInputBreakdown(sys,hist,c);
     const _inTok=Object.values(bd).filter(v=>v&&v.tok).reduce((s,v)=>s+(v.tok||0),0);
-    const _cs=D.lastCacheStats&&D.lastCacheStats[D.activeRoom];
-    const _cR=_cs?_cs.read:0; const _cW=_cs?_cs.write:0;
-    const _realIn=_cs&&_cs.input?_cs.input:_inTok;
+    const _realIn=gInputTok||_inTok;
+    const _cR=gCacheRead||0;
+    const _cW=gCacheWrite||0;
+    if(_cR||_cW){if(!D.lastCacheStats)D.lastCacheStats={};D.lastCacheStats[D.activeRoom]={read:_cR,write:_cW,input:_realIn,time:now()};save();}
     logTurnCost(D.activeRoom, full, usingGemini?D.geminiModel:D.model, bd, _realIn, _cR, _cW);
   }
   _addActionsToRow(row2,bub2,newMsg);
