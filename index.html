@@ -1694,11 +1694,7 @@ function save(){
     Object.keys(D.histories||{}).forEach(k=>{
       const arr=D.histories[k];
       if(Array.isArray(arr)){
-        safeHistories[k]=arr.filter(m=>m&&typeof m.content==='string').map(m=>{
-          const o={role:m.role,content:m.content,time:m.time||''};
-          if(m._rh&&Array.isArray(m._rh))o._rh=m._rh; // 리롤 히스토리
-          return o;
-        });
+        safeHistories[k]=arr.filter(m=>m&&typeof m.content==='string').map(m=>({role:m.role,content:m.content,time:m.time||''}));
       }
     });
     const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,activeApi:D.activeApi,
@@ -1712,6 +1708,9 @@ function save(){
     catch(e){console.warn('이미지 저장 실패');}
   }catch(e){
     console.warn('저장 실패',e);
+    if(e&&e.name==='QuotaExceededError'){
+      alert('저장 공간이 부족해요!\n대화가 너무 많아서 일부가 저장되지 않았어요.\n오래된 방의 대화를 지워보세요.');
+    }
   }
 }
 const $=id=>document.getElementById(id);
@@ -2069,7 +2068,7 @@ function deleteStory(id){
 }
 function renderTopbar(){
   const tb=$('topbar'), iw=$('input-wrap'), nk=$('nokey'), cab=$('chat-action-bar');
-  if(!D.activeChar){
+  if(!D.activeChar||!D.activeRoom){
     // 홈: topbar 투명하게 배경 위에 띄움
     tb.style.display='flex';
     tb.classList.add('home-mode');
@@ -4489,10 +4488,22 @@ function handleImportFile(input){
         Object.assign(D, importD);
         if(keepKey&&!D.key) D.key=keepKey;
         if(keepGeminiKey&&!D.geminiKey) D.geminiKey=keepGeminiKey;
+        // histories가 너무 크면 _rh 제거 후 재시도
+        try{
+          localStorage.setItem('cc9_test', JSON.stringify(D.histories||{}));
+          localStorage.removeItem('cc9_test');
+        }catch(e){
+          // 너무 크면 histories 정리
+          Object.keys(D.histories||{}).forEach(k=>{
+            (D.histories[k]||[]).forEach(m=>{delete m._rh;});
+          });
+        }
         save();
         renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
         closeModal('backup-modal');
-        alert('불러오기 완료!');
+        const charCount=(importD.chars||[]).length;
+        const histCount=Object.values(D.histories||{}).reduce((s,h)=>s+(h||[]).length,0);
+        alert('불러오기 완료!\n스토리 '+charCount+'개, 메시지 '+histCount+'개');
       });
     }catch(err){alert('파일을 읽을 수 없어요: '+err.message);}
   };
