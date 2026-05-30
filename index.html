@@ -1689,12 +1689,12 @@ function save(){
       if(c.emoImg)imgMap[c.id]=c.emoImg;
       const copy=Object.assign({},c); copy.emoImg=null; return copy;
     });
-    // histories 정제: content가 string인 것만, rerollHistory도 저장
+    // histories 정제: content를 string으로 강제 변환해서 저장
     const safeHistories={};
     Object.keys(D.histories||{}).forEach(k=>{
       const arr=D.histories[k];
       if(Array.isArray(arr)){
-        safeHistories[k]=arr.filter(m=>m&&typeof m.content==='string').map(m=>({role:m.role,content:m.content,time:m.time||''}));
+        safeHistories[k]=arr.filter(m=>m&&m.role&&(m.content!=null)).map(m=>({role:m.role,content:String(m.content),time:m.time||''}));
       }
     });
     const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,activeApi:D.activeApi,
@@ -4502,8 +4502,11 @@ function handleImportFile(input){
         const charCount=(importD.chars||[]).length;
         const histCount=Object.values(importD.histories||{}).reduce((s,h)=>s+(Array.isArray(h)?h.length:0),0);
         save();
+        // 저장 후 실제 저장된 histories 확인
+        const saved=JSON.parse(localStorage.getItem('cc9')||'{}');
+        const savedHistCount=Object.values(saved.histories||{}).reduce((s,h)=>s+(Array.isArray(h)?h.length:0),0);
         closeModal('backup-modal');
-        alert('불러오기 완료!\n스토리 '+charCount+'개, 메시지 '+histCount+'개');
+        alert('불러오기 완료!\n스토리 '+charCount+'개, 메시지 '+histCount+'개\n(저장확인: '+savedHistCount+'개)');
         location.reload();
       });
     }catch(err){alert('파일을 읽을 수 없어요: '+err.message);}
