@@ -1767,8 +1767,8 @@ function init(){
   renderTopbar();
   renderChat();
   updateApiToggleBtns();
-  // 앱 시작 시 activeChar 있으면 뷰2로
-  if(D.activeChar) sbShowRooms(D.activeChar);
+  // 앱 시작 시 항상 스토리 목록으로
+  sbShowStories();
 
   $('key-inp').addEventListener('input',updateKeySt);
   $('gemini-key-inp').addEventListener('input',updateGeminiKeySt);
@@ -4483,9 +4483,11 @@ function handleImportFile(input){
       const importD=(parsed.version===1||parsed.version===2)?parsed.data:parsed;
       if(!importD||!importD.chars){alert('올바른 백업 파일이 아니에요.');return;}
       showConfirm('불러오면 현재 데이터가 덮어써져요.\n계속할까요?', function(){
-        // API 키는 유지, 나머지 덮어쓰기
+        // API 키는 유지
         const keepKey=D.key; const keepGeminiKey=D.geminiKey;
-        Object.assign(D, importD);
+        // D 전체 초기화 후 importD로 교체 (Object.assign 부분합산 버그 방지)
+        Object.keys(D).forEach(k=>delete D[k]);
+        Object.assign(D, JSON.parse(JSON.stringify(importD)));
         if(keepKey&&!D.key) D.key=keepKey;
         if(keepGeminiKey&&!D.geminiKey) D.geminiKey=keepGeminiKey;
         // histories가 너무 크면 _rh 제거 후 재시도
@@ -4493,17 +4495,16 @@ function handleImportFile(input){
           localStorage.setItem('cc9_test', JSON.stringify(D.histories||{}));
           localStorage.removeItem('cc9_test');
         }catch(e){
-          // 너무 크면 histories 정리
           Object.keys(D.histories||{}).forEach(k=>{
             (D.histories[k]||[]).forEach(m=>{delete m._rh;});
           });
         }
-        save();
-        renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
-        closeModal('backup-modal');
         const charCount=(importD.chars||[]).length;
-        const histCount=Object.values(D.histories||{}).reduce((s,h)=>s+(h||[]).length,0);
+        const histCount=Object.values(importD.histories||{}).reduce((s,h)=>s+(Array.isArray(h)?h.length:0),0);
+        save();
+        closeModal('backup-modal');
         alert('불러오기 완료!\n스토리 '+charCount+'개, 메시지 '+histCount+'개');
+        location.reload();
       });
     }catch(err){alert('파일을 읽을 수 없어요: '+err.message);}
   };
