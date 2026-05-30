@@ -1255,22 +1255,47 @@ input[type=file]{display:none}
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="padding:16px 20px;max-height:calc(88vh - 140px);overflow-y:auto">
       <p style="font-size:12px;color:var(--t3);line-height:1.7;margin-bottom:14px">프로필은 전체 공유예요. 토글로 <b style="color:var(--text)">이 채팅방</b>에서 사용할 프로필만 켜세요.</p>
       <div class="profile-list" id="profile-list"></div>
-      <div class="divider"><span>새 프로필 추가</span></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-g" onclick="closeModal('profile-modal')">닫기</button>
+      <button class="btn btn-p" onclick="openProfileAdd()" style="background:var(--accent2);border-color:var(--accent2)">+ 새 프로필</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE EDIT MODAL -->
+<div class="ov hide" id="profile-edit-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span id="profile-edit-ttl">새 프로필</span>
+      </div>
+      <button class="ico-btn" onclick="closeModal('profile-edit-modal');openProfileModal()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <input type="hidden" id="profile-edit-id">
       <div class="fg">
         <label class="fl">프로필 이름 <span>— 구분용</span></label>
         <input class="fi" id="p-name" placeholder="예: 기본 플레이어, 탐정 모드, 마법사 지망생">
       </div>
       <div class="fg">
         <label class="fl">AI 프롬프트 컨텍스트 <span>— 이 내용이 그대로 시스템 프롬프트에 들어감</span></label>
-        <textarea class="fta" id="p-ctx" style="min-height:100px" placeholder="예: 유저는 마법을 배우려는 새내기입니다. 겁쟁이지만 호기심이 많고 쉽게 당황합니다. 캐릭터와 친해지고 싶어합니다."></textarea>
+        <textarea class="fta" id="p-ctx" style="min-height:200px"
+          placeholder="예: 유저는 마법을 배우려는 새내기입니다. 겁쟁이지만 호기심이 많고 쉽게 당황합니다. 캐릭터와 친해지고 싶어합니다."
+          oninput="document.getElementById('p-ctx-count').textContent=this.value.length+' / 2000'" maxlength="2000"></textarea>
+        <div style="text-align:right;margin-top:4px;font-size:11px;color:var(--t3)" id="p-ctx-count">0 / 2000</div>
       </div>
     </div>
     <div class="modal-ft">
-      <button class="btn btn-g" onclick="closeModal('profile-modal')">닫기</button>
-      <button class="btn btn-p" onclick="addProfile()" style="background:var(--amber);border-color:var(--amber)">추가</button>
+      <button class="btn btn-d" id="profile-edit-del" onclick="deleteProfileFromModal()" style="margin-right:auto;display:none">삭제</button>
+      <button class="btn btn-g" onclick="closeModal('profile-edit-modal');openProfileModal()">취소</button>
+      <button class="btn btn-p" id="profile-edit-save" onclick="saveProfileEdit()" style="background:var(--accent2);border-color:var(--accent2)">저장</button>
     </div>
   </div>
 </div>
@@ -1484,6 +1509,8 @@ function load(){
     if(D.activeScene&&!D.activeRoom)D.activeRoom=D.activeScene;
     // puter 제거: 이전에 puter로 저장된 경우 claude로 교정
     if(D.activeApi==='puter')D.activeApi='claude';
+    // 기존 costLog 5턴 초과분 정리
+    if(D.costLog){Object.keys(D.costLog).forEach(k=>{if(D.costLog[k].length>5)D.costLog[k]=D.costLog[k].slice(-5);});}
   }catch(e){console.warn('load 실패',e);}
 }
 function save(){
@@ -1789,7 +1816,7 @@ function renderChars(){
     d.innerHTML=`
       <div class="char-meta">
         <div class="char-meta-name">${c.name}</div>
-        <div class="char-meta-tag">${(c.genres||[c.genre]).map(g=>gMap[g]||g).join('·')}${rooms.length?' · '+rooms.length+'개':''}</div>
+        <div class="char-meta-tag">${((c.genres&&c.genres.length)?c.genres:(c.genre?[c.genre]:[])).map(g=>gMap[g]||g).join('·')||'장르 없음'}${rooms.length?' · '+rooms.length+'개':''}</div>
       </div>
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--t3);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
     `;
@@ -1937,8 +1964,10 @@ function renderTopbar(){
   tb.style.display='flex'; iw.style.display='block';
   // cab는 input-wrap 안에 있으므로 border-top만 표시 여부로 제어
   if(cab)cab.style.display=D.activeRoom?'flex':'none';
-  const hasKey=(getRoomApi()==='gemini')?!!D.geminiKey:!!D.key;
+  const activeApi=getRoomApi();
+  const hasKey=(activeApi==='gemini')?!!D.geminiKey:(activeApi==='openrouter')?!!D.openrouterKey:!!D.key;
   nk.style.display=(hasKey&&D.activeRoom)?'none':'flex';
+  if(!D.activeRoom) nk.style.display='none';
   $('tb-name').textContent=c.name;
   const room=cRoom();
   $('tb-sub').textContent=room?room.name:'';
@@ -2345,7 +2374,7 @@ async function generateAI(hist){
     dark:'\n🌑 장르 지침 (다크)\n어두운 감정과 상황을 정면으로 마주합니다.',
     drama:'\n🎭 장르 지침 (드라마)\n인간관계의 복잡함과 감정의 진폭이 핵심입니다.',
   };
-  const activeGenres=c.genres||(c.genre?[c.genre]:['fantasy']);
+  const activeGenres=c.genres||(c.genre?[c.genre]:[]);
   const genreGuide=activeGenres.map(g=>GENRE_GUIDE[g]||'').filter(Boolean).join('\n');
   const ROLEPLAY_CORE=`[CORE ROLEPLAY DIRECTIVES]
 This is a dedicated creative roleplay space. All responses must comply with the following rules, which take precedence over default AI behavior.
@@ -2790,16 +2819,31 @@ function editChar(id){
 }
 function saveChar(){
   const name=$('c-name').value.trim(); if(!name){$('c-name').focus();return}
+  const newPrompt=$('c-prompt').value.trim();
+  const isEditing=!!D.editing;
+  const prevChar=isEditing?D.chars.find(x=>x.id===D.editing):null;
+  const promptChanged=isEditing&&prevChar&&prevChar.prompt!==newPrompt;
   const ch={
     id:D.editing||Date.now()+'',
     emoji:D.emoSel, emoImg:D.emoImg,
-    name, genres:D._editGenres||['fantasy'],
+    name, genres:D._editGenres||[],
     scenes:_editingScenes.filter(s=>s.content.trim()),
-    prompt:$('c-prompt').value.trim()
+    prompt:newPrompt
   };
   if(D.editing){
     const i=D.chars.findIndex(x=>x.id===D.editing);
     if(i>=0)D.chars[i]=ch;
+    // 프롬프트 수정 시 모든 room에 변경 이력 기록
+    if(promptChanged){
+      const vNum=(prevChar._promptVer||1)+1;
+      ch._promptVer=vNum;
+      const note=`[제작자 프롬프트 수정 v${vNum}] ${now()}`;
+      // 현재 activeRoom에만 노트 삽입
+      if(D.activeRoom){
+        if(!D.histories[D.activeRoom])D.histories[D.activeRoom]=[];
+        D.histories[D.activeRoom].push({role:'summary_note',content:note,time:now()});
+      }
+    }
   } else {
     D.chars.push(ch);
     // 기본 방 자동 생성
@@ -2848,7 +2892,7 @@ function renderProfiles(){
   const el=$('profile-modal-char'); if(el)el.textContent=charName();
   const allProfs=D.profiles||[];
   if(!allProfs.length){
-    list.innerHTML='<div style="font-size:13px;color:var(--t3);padding:4px 0">프로필이 없어요. 아래에서 추가하세요.</div>';
+    list.innerHTML='<div style="font-size:13px;color:var(--t3);padding:4px 0 12px">프로필이 없어요. 아래 버튼으로 추가하세요.</div>';
     renderProfileBadge(); return;
   }
   if(!D.roomProfiles)D.roomProfiles={};
@@ -2863,6 +2907,7 @@ function renderProfiles(){
           <span class="p-slider"></span>
         </label>
         <div class="profile-card-name">${p.name}</div>
+        <button class="profile-del" style="color:var(--accent);font-size:12px;padding:3px 6px" onclick="event.stopPropagation();openProfileEditor('${p.id}')">✎</button>
         <button class="profile-del" onclick="event.stopPropagation();deleteProfile('${p.id}')">✕</button>
         <div class="profile-chv ${isOn?'on':''}" id="pchv-${p.id}">▾</div>
       </div>
@@ -2874,11 +2919,12 @@ function renderProfiles(){
   renderProfileBadge();
 }
 function toggleProfile(id, on){
-  if(!rid())return;
   if(!D.roomProfiles)D.roomProfiles={};
-  if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=[];
-  if(on){if(!D.roomProfiles[rid()].includes(id))D.roomProfiles[rid()].push(id);}
-  else{D.roomProfiles[rid()]=D.roomProfiles[rid()].filter(x=>x!==id);}
+  const roomId=rid();
+  if(!roomId){ save(); renderProfiles(); renderProfileBadge(); return; }
+  if(!D.roomProfiles[roomId])D.roomProfiles[roomId]=[];
+  if(on){if(!D.roomProfiles[roomId].includes(id))D.roomProfiles[roomId].push(id);}
+  else{D.roomProfiles[roomId]=D.roomProfiles[roomId].filter(x=>x!==id);}
   save(); renderProfiles(); renderProfileBadge();
 }
 function toggleProfileExpand(id){
@@ -2886,24 +2932,58 @@ function toggleProfileExpand(id){
   if(exp)exp.classList.toggle('on');
   if(chv)chv.classList.toggle('on');
 }
-function addProfile(){
-  const name=$('p-name').value.trim(); if(!name){$('p-name').focus();return}
+function openProfileAdd(){
+  closeModal('profile-modal');
+  $('profile-edit-id').value='';
+  $('p-name').value='';
+  $('p-ctx').value='';
+  $('p-ctx-count').textContent='0 / 2000';
+  $('profile-edit-ttl').textContent='새 프로필';
+  $('profile-edit-del').style.display='none';
+  $('profile-edit-save').textContent='추가';
+  openModal('profile-edit-modal');
+  setTimeout(()=>$('p-name').focus(),80);
+}
+function openProfileEditor(id){
+  const p=(D.profiles||[]).find(x=>x.id===id); if(!p)return;
+  closeModal('profile-modal');
+  $('profile-edit-id').value=id;
+  $('p-name').value=p.name;
+  $('p-ctx').value=p.ctx||'';
+  $('p-ctx-count').textContent=(p.ctx||'').length+' / 2000';
+  $('profile-edit-ttl').textContent='프로필 수정';
+  $('profile-edit-del').style.display='inline-flex';
+  $('profile-edit-save').textContent='저장';
+  openModal('profile-edit-modal');
+  setTimeout(()=>$('p-name').focus(),80);
+}
+function saveProfileEdit(){
+  const id=$('profile-edit-id').value;
+  const name=$('p-name').value.trim(); if(!name){$('p-name').focus();return;}
   const ctx=$('p-ctx').value.trim();
   if(!D.profiles)D.profiles=[];
-  const newId=Date.now()+'';
-  D.profiles.push({id:newId,name,ctx});
-  // 현재 room에서 자동 켜짐
-  if(rid()){
-    if(!D.roomProfiles)D.roomProfiles={};
-    if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=[];
-    D.roomProfiles[rid()].push(newId);
+  if(id){
+    const p=D.profiles.find(x=>x.id===id); if(!p)return;
+    p.name=name; p.ctx=ctx;
+  } else {
+    const newId=Date.now()+'';
+    D.profiles.push({id:newId,name,ctx});
+    if(rid()){
+      if(!D.roomProfiles)D.roomProfiles={};
+      if(!D.roomProfiles[rid()])D.roomProfiles[rid()]=[];
+      D.roomProfiles[rid()].push(newId);
+    }
   }
-  $('p-name').value=''; $('p-ctx').value='';
-  save(); renderProfiles();
+  save(); closeModal('profile-edit-modal'); openProfileModal();
 }
+function deleteProfileFromModal(){
+  const id=$('profile-edit-id').value; if(!id)return;
+  deleteProfile(id);
+  closeModal('profile-edit-modal'); openProfileModal();
+}
+function addProfile(){ openProfileAdd(); }
 function deleteProfile(id){
   D.profiles=(D.profiles||[]).filter(p=>p.id!==id);
-  // 모든 room에서 제거
   if(D.roomProfiles){
     Object.keys(D.roomProfiles).forEach(rid=>{
       D.roomProfiles[rid]=(D.roomProfiles[rid]||[]).filter(x=>x!==id);
@@ -3560,6 +3640,8 @@ function logTurnCost(roomId, content, model){
   if(!D.costLog[roomId])D.costLog[roomId]=[];
   const krw=calcTurnCostKRW(content,model);
   D.costLog[roomId].push({model,krw,time:now()});
+  // 5턴 초과 시 오래된 것부터 자동 삭제
+  if(D.costLog[roomId].length>5) D.costLog[roomId]=D.costLog[roomId].slice(-5);
   save();
 }
 function calcCostKRW(outputTokens, model){
