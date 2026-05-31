@@ -11,7 +11,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet"></noscript>
 <style id="embedded-fonts"></style>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 *:focus{outline:none!important}
 *:focus-visible{outline:none!important}
 /* 채팅 말풍선 텍스트만 선택/복사 허용 */
@@ -402,7 +402,7 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
   display:flex;flex-direction:column;gap:10px;
   background:var(--bg);
 }
-.msg-row{display:flex;gap:8px;width:100%;animation:fadeUp 0.2s ease}
+.msg-row{display:flex;gap:8px;width:100%;}
 .msg-row.me{align-self:flex-end;flex-direction:row-reverse}
 @keyframes ctxPop{from{opacity:0;transform:scale(0.93)}to{opacity:1;transform:scale(1)}}
 @keyframes ctxSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -1206,16 +1206,11 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:20px">
-      <!-- 글자 크기 -->
+    <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:20px;overflow-x:hidden">
+      <!-- 채팅 폰트 -->
       <div>
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">💬 채팅 글자 크기</div>
-        <div style="display:flex;gap:6px">
-          <button class="settings-font-btn" onclick="setChatFont(13)" data-size="13" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;transition:all 0.15s">작게</button>
-          <button class="settings-font-btn" onclick="setChatFont(14)" data-size="14" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12px;transition:all 0.15s">보통</button>
-          <button class="settings-font-btn" onclick="setChatFont(15)" data-size="15" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:13px;transition:all 0.15s">크게</button>
-          <button class="settings-font-btn" onclick="setChatFont(17)" data-size="17" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:14px;transition:all 0.15s">더 크게</button>
-        </div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">✦ 채팅 폰트</div>
+        <div id="font-list" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
     </div>
     <div class="modal-ft">
@@ -1528,12 +1523,6 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
           발급: <a href="https://aistudio.google.com/apikey" style="color:var(--teal)">aistudio.google.com/apikey</a>
           &nbsp;·&nbsp; <span style="color:var(--teal)">Flash 계열 무료 티어 있음</span>
         </div>
-      </div>
-
-      <!-- 폰트 섹션 -->
-      <div style="padding:16px 20px 14px;border-top:1px solid var(--border)">
-        <div style="font-size:13px;font-weight:600;margin-bottom:10px">✦ 채팅 폰트</div>
-        <div id="font-list" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
 
     </div>
@@ -2665,6 +2654,7 @@ function updateFontBtnUI(){
 }
 function openSettingsModal(){
   updateFontBtnUI();
+  renderFontList();
   openModal('settings-modal');
 }
 function openStoryInfo(){
@@ -6481,7 +6471,6 @@ document.addEventListener('click',function(e){
     if(iw) iw.style.marginBottom = kbHeight > 50 ? kbHeight + 'px' : '';
   }
   window.visualViewport.addEventListener('resize', onViewport);
-  window.visualViewport.addEventListener('scroll', onViewport);
 })();
 </script>
 </body>
