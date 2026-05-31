@@ -11,9 +11,11 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet"></noscript>
 <style id="embedded-fonts"></style>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 *:focus{outline:none!important}
 *:focus-visible{outline:none!important}
+/* 채팅 말풍선 텍스트만 선택/복사 허용 */
+.msg-bub{user-select:text!important;-webkit-user-select:text!important}
 :root{
   --bg:#0b0b12;
   --s1:#111119;
@@ -2601,7 +2603,9 @@ function openBookmarkModal(){
 
 // ─── 환경설정 ───
 function setChatFont(size){
-  document.querySelectorAll('.msg-bub,.bub-text').forEach(el=>el.style.fontSize=size+'px');
+  let st=document.getElementById('chat-font-override');
+  if(!st){st=document.createElement('style');st.id='chat-font-override';document.head.appendChild(st);}
+  st.textContent=`.msg-bub,.bub-text{font-size:${size}px!important}`;
   D.chatFontSize=size; save();
   updateFontBtnUI();
 }
@@ -3867,14 +3871,7 @@ function openModal(id){
     initLengthSlider();
   }
 }
-function closeModal(id){
-  $(id).classList.add('hide');
-  if(id==='search-modal'){
-    const sm=$(id);
-    sm.style.alignItems='';
-    sm.style.paddingTop='';
-  }
-}
+function closeModal(id){$(id).classList.add('hide')}
 
 // ─── KEY ───
 function updateKeySt(){
@@ -6173,19 +6170,7 @@ document.addEventListener('click',function(e){
   const iw = document.getElementById('input-wrap');
   function onViewport(){
     const kbHeight = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
-    // 채팅 입력창 키보드 대응
     if(iw) iw.style.marginBottom = kbHeight > 50 ? kbHeight + 'px' : '';
-    // 검색 모달 키보드 대응: 키보드가 올라오면 모달을 위로 밀어올림
-    const sm = document.getElementById('search-modal');
-    if(sm && !sm.classList.contains('hide')){
-      if(kbHeight > 50){
-        sm.style.alignItems = 'flex-start';
-        sm.style.paddingTop = Math.max(8, window.visualViewport.offsetTop + 8) + 'px';
-      } else {
-        sm.style.alignItems = '';
-        sm.style.paddingTop = '';
-      }
-    }
   }
   window.visualViewport.addEventListener('resize', onViewport);
   window.visualViewport.addEventListener('scroll', onViewport);
