@@ -3135,6 +3135,12 @@ This is a dedicated creative roleplay space.
   const relMems=pickRelevantMems(mems,hist);
   if(relMems.length){sys+=`\n\n[장기 기억 — 관련 항목]\n`;relMems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
   sys+=buildKnPrompt(c,hist);
+  // 시작 장면 컨텍스트 추가 (8턴 이내만)
+  const activeRoom=D.rooms[D.activeChar]?.find(r=>r.id===D.activeRoom);
+  if(activeRoom?.sceneId && hist.length <= 16){
+    const sc=(c.scenes||[]).find(s=>s.id===activeRoom.sceneId);
+    if(sc?.content) sys+=`\n\n[시작 장면 설정]\n${sc.content}`;
+  }
 
   // ⚡ 명령어 감지 (reroll에도 동일 적용)
   const _lastUserContentR=(hist.filter(m=>m.role==='user').slice(-1)[0]?.content||'').trim();
@@ -3380,6 +3386,12 @@ ${genreGuide}
     const relMems=pickRelevantMems(mems,hist);
     if(relMems.length){sys+='\n\n[장기 기억 — 관련 항목]\n';relMems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
     sys+=buildKnPrompt(c,hist);
+    // 시작 장면 컨텍스트 추가 (8턴 이내만)
+    const activeRoomR=D.rooms[D.activeChar]?.find(r=>r.id===D.activeRoom);
+    if(activeRoomR?.sceneId && hist.length <= 16){
+      const scR=(c.scenes||[]).find(s=>s.id===activeRoomR.sceneId);
+      if(scR?.content) sys+=`\n\n[시작 장면 설정]\n${scR.content}`;
+    }
   }
   const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
   const welcome=area.querySelector('#welcome');if(welcome)welcome.remove();
