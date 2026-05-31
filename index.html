@@ -518,7 +518,7 @@ body.light .empty p{color:#85837D!important}
 /* ─── INPUT ─── */
 #input-wrap{
   padding:8px 10px;
-  padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
+  padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
   border-top:1px solid var(--border);
   background:var(--bg);flex-shrink:0;
 }
@@ -1178,7 +1178,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         </button>
       </div>
       <!-- 하단 액션 버튼 -->
-      <div id="chat-action-bar" style="display:none;gap:4px;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+      <div id="chat-action-bar" style="display:none;gap:4px;align-items:center;margin-top:6px;padding-top:6px;padding-bottom:4px;border-top:1px solid var(--border);overflow-x:auto;flex-wrap:nowrap">
         <button class="cab-btn" id="summary-btn" onclick="openSummaryModal()" title="이전 스토리 요약">📌</button>
         <button class="cab-btn" onclick="openExportModal()" title="대화 내보내기">💾</button>
         <button class="cab-btn" onclick="openStatsModal()" title="사용량 통계">ℹ️</button>
