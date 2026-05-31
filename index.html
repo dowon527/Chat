@@ -399,6 +399,7 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
   flex:1;overflow-y:auto;
   -webkit-overflow-scrolling:touch;
   padding:16px 12px;
+  padding-bottom:80px;
   display:flex;flex-direction:column;gap:10px;
   background:var(--bg);
 }
@@ -511,6 +512,10 @@ body.light .empty p{color:#85837D!important}
   padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
   border-top:1px solid var(--border);
   background:var(--bg);flex-shrink:0;
+  position:fixed;
+  bottom:0;
+  left:0;right:0;
+  z-index:50;
 }
 .input-box{
   background:var(--s2);border:1px solid transparent;
@@ -1207,16 +1212,6 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
       </button>
     </div>
     <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:20px;overflow-x:hidden">
-      <!-- 글자 크기 -->
-      <div>
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">💬 채팅 글자 크기</div>
-        <div style="display:flex;gap:6px">
-          <button class="settings-font-btn" onclick="setChatFont(13)" data-size="13" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;transition:all 0.15s">작게</button>
-          <button class="settings-font-btn" onclick="setChatFont(14)" data-size="14" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12px;transition:all 0.15s">보통</button>
-          <button class="settings-font-btn" onclick="setChatFont(15)" data-size="15" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:13px;transition:all 0.15s">크게</button>
-          <button class="settings-font-btn" onclick="setChatFont(17)" data-size="17" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:14px;transition:all 0.15s">더 크게</button>
-        </div>
-      </div>
       <!-- 채팅 폰트 -->
       <div>
         <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">✦ 채팅 폰트</div>
@@ -2648,14 +2643,9 @@ function openBookmarkModal(){
 // ─── 환경설정 ───
 function setChatFont(size){
   let st=document.getElementById('chat-font-override');
-  if(!st){
-    st=document.createElement('style');
-    st.id='chat-font-override';
-    document.head.appendChild(st);
-  }
-  st.textContent=`#chat .msg-bub{font-size:${size}px!important;line-height:1.75!important}#chat .bub-text{font-size:${size}px!important;line-height:1.75!important}`;
-  D.chatFontSize=size;
-  save();
+  if(!st){st=document.createElement('style');st.id='chat-font-override';document.head.appendChild(st);}
+  st.textContent=`.msg-bub,.bub-text{font-size:${size}px!important}`;
+  D.chatFontSize=size; save();
   updateFontBtnUI();
 }
 function updateFontBtnUI(){
@@ -6477,24 +6467,13 @@ document.addEventListener('click',function(e){
 });
 </script>
 
-
 <script>
 (function(){
   if(!window.visualViewport) return;
-  var iw = document.getElementById('input-wrap');
-  var chat = document.getElementById('chat');
+  const iw = document.getElementById('input-wrap');
   function onViewport(){
-    if(!iw) return;
-    var vv = window.visualViewport;
-    // visualViewport 하단이 window 하단보다 위에 있으면 키보드(+자동완성바) 올라온 것
-    var kbHeight = window.innerHeight - (vv.offsetTop + vv.height);
-    if(kbHeight > 10){
-      iw.style.transform = 'translateY(-' + kbHeight + 'px)';
-      if(chat) chat.style.paddingBottom = (iw.offsetHeight + kbHeight) + 'px';
-    } else {
-      iw.style.transform = '';
-      if(chat) chat.style.paddingBottom = '';
-    }
+    const kbHeight = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+    if(iw) iw.style.bottom = (kbHeight > 0 ? kbHeight : 0) + 'px';
   }
   window.visualViewport.addEventListener('resize', onViewport);
   window.visualViewport.addEventListener('scroll', onViewport);
