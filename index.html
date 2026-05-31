@@ -6486,10 +6486,11 @@ document.addEventListener('click',function(e){
   function onViewport(){
     if(!iw) return;
     var vv = window.visualViewport;
-    var offsetBottom = window.innerHeight - vv.height - vv.offsetTop;
-    if(offsetBottom > 10){
-      iw.style.transform = 'translateY(-' + offsetBottom + 'px)';
-      if(chat) chat.style.paddingBottom = iw.offsetHeight + 'px';
+    // visualViewport 하단이 window 하단보다 위에 있으면 키보드(+자동완성바) 올라온 것
+    var kbHeight = window.innerHeight - (vv.offsetTop + vv.height);
+    if(kbHeight > 10){
+      iw.style.transform = 'translateY(-' + kbHeight + 'px)';
+      if(chat) chat.style.paddingBottom = (iw.offsetHeight + kbHeight) + 'px';
     } else {
       iw.style.transform = '';
       if(chat) chat.style.paddingBottom = '';
