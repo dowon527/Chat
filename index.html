@@ -412,6 +412,22 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
   display:flex;flex-direction:column;gap:10px;
   background:var(--bg);
 }
+/* 스크롤 버튼 */
+#scroll-btns{
+  position:absolute;right:12px;bottom:130px;
+  display:flex;flex-direction:column;gap:6px;
+  z-index:50;pointer-events:none;
+}
+.scroll-btn{
+  width:34px;height:34px;border-radius:50%;
+  background:var(--s3);border:1px solid var(--border2);
+  color:var(--t2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;transition:opacity 0.25s,transform 0.25s;
+  opacity:0;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+.scroll-btn.show{opacity:1;pointer-events:auto;}
+.scroll-btn:hover{background:var(--s4);color:var(--text);}
 .msg-row{display:flex;gap:8px;width:100%;animation:fadeUp 0.2s ease}
 .msg-row.me{align-self:flex-end;flex-direction:row-reverse}
 @keyframes ctxPop{from{opacity:0;transform:scale(0.93)}to{opacity:1;transform:scale(1)}}
@@ -1164,6 +1180,11 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
   <!-- CHAT -->
   <div id="chat">
     <div id="welcome"></div>
+  </div>
+  <!-- 스크롤 버튼 -->
+  <div id="scroll-btns">
+    <button class="scroll-btn" id="scroll-top-btn" onclick="document.getElementById('chat').scrollTo({top:0,behavior:'smooth'})">↑</button>
+    <button class="scroll-btn" id="scroll-bot-btn" onclick="document.getElementById('chat').scrollTo({top:999999,behavior:'smooth'})">↓</button>
   </div>
 
   <!-- INPUT -->
@@ -6511,6 +6532,25 @@ window.onerror=function(msg,src,line,col,err){
   document.body.innerHTML='<div style="padding:40px;font-family:sans-serif;color:red"><h2>⚠️ 오류 발생</h2><pre>'+msg+'\n\n'+src+'\n줄: '+line+', 열: '+col+'\n\n'+(err&&err.stack?err.stack:'')+'</pre></div>';
   return true;
 };
+// 스크롤 버튼 표시/숨김
+(function(){
+  const chat=document.getElementById('chat');
+  const topBtn=document.getElementById('scroll-top-btn');
+  const botBtn=document.getElementById('scroll-bot-btn');
+  let hideTimer=null;
+  function updateBtns(){
+    const atTop=chat.scrollTop<100;
+    const atBot=chat.scrollHeight-chat.scrollTop-chat.clientHeight<100;
+    topBtn.classList.toggle('show',!atTop);
+    botBtn.classList.toggle('show',!atBot);
+    clearTimeout(hideTimer);
+    hideTimer=setTimeout(()=>{
+      topBtn.classList.remove('show');
+      botBtn.classList.remove('show');
+    },2000);
+  }
+  chat.addEventListener('scroll',updateBtns,{passive:true});
+})();
 window.addEventListener('unhandledrejection',function(e){
   document.body.innerHTML='<div style="padding:40px;font-family:sans-serif;color:red"><h2>⚠️ Promise 오류</h2><pre>'+(e.reason&&e.reason.stack?e.reason.stack:String(e.reason))+'</pre></div>';
 });
