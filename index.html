@@ -2393,7 +2393,7 @@ function renderRooms(charId){
     item.innerHTML=`
       <div style="font-size:13px;flex-shrink:0;line-height:1;${isActive?'filter:opacity(1)':'filter:opacity(0.6)'}">${room.dot||'🤍'}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:${isActive?'600':'400'};color:${isActive?'var(--accent)':'var(--text)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${room.pinned?'📌 ':''} ${room.name}</div>
+        <div style="font-size:13px;font-weight:${isActive?'600':'400'};color:${isActive?'var(--accent)':'var(--text)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${room.pinned?'📌 ':''}${room.locked?'🔒 ':''} ${room.name}</div>
         ${preview?`<div style="font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">${preview}</div>`:''}
       </div>
       ${cnt?`<div style="font-size:11px;color:var(--t3);flex-shrink:0">${cnt}턴</div>`:''}
@@ -2401,9 +2401,10 @@ function renderRooms(charId){
     item.onclick=()=>{selectRoom(charId,room.id);renderRooms(charId);};
     addLongPress(item,()=>showCtxMenu([
       {label:room.pinned?'고정 해제':'고정',action:()=>{room.pinned=!room.pinned;save();renderRooms(charId);}},
+      {label:room.locked?'🔓 잠금 해제':'🔒 잠금',action:()=>{room.locked=!room.locked;save();renderRooms(charId);}},
       {label:'이름 수정',action:()=>renameRoom(charId,room.id)},
       {label:'대화 초기화',action:()=>clearRoomChat(charId,room.id)},
-      {label:'삭제',action:()=>deleteRoom(charId,room.id),danger:true}
+      {label:'삭제',action:()=>room.locked?showToast('🔒 잠금 해제 후 삭제할 수 있어요'):deleteRoom(charId,room.id),danger:!room.locked}
     ]));
     list.appendChild(item);
   });
@@ -2432,7 +2433,7 @@ function renderChars(){
     av.className='char-emo'; renderAvatar(av,c);
     d.innerHTML=`
       <div class="char-meta">
-        <div class="char-meta-name" style="display:flex;align-items:center;gap:5px;">${c.pinned?'📌 ':''} ${c.name}${rooms.length?`<span style="font-size:10px;padding:1px 6px;border-radius:20px;background:var(--s4);color:var(--t2);font-weight:400;flex-shrink:0">${rooms.length}</span>`:''}</div>
+        <div class="char-meta-name" style="display:flex;align-items:center;gap:5px;">${c.pinned?'📌 ':''}${c.locked?'🔒 ':''} ${c.name}${rooms.length?`<span style="font-size:10px;padding:1px 6px;border-radius:20px;background:var(--s4);color:var(--t2);font-weight:400;flex-shrink:0">${rooms.length}</span>`:''}</div>
         <div class="char-meta-tag">${(()=>{const tags=(c.genres&&c.genres.length)?c.genres:(c.genre?[c.genre]:[]);const pills=tags.slice(0,2).map(g=>`<span class="char-tag-pill">#${gMap[g]||g}</span>`).join('');const more=tags.length>2?`<span class="char-tag-pill">+${tags.length-2}</span>`:'';return pills+more||'<span style="color:var(--t3);font-size:10px">장르 없음</span>';})()}</div>
       </div>
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--t3);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
@@ -2441,8 +2442,9 @@ function renderChars(){
     d.onclick=()=>sbShowRooms(c.id);
     addLongPress(d,()=>showCtxMenu([
       {label:c.pinned?'고정 해제':'고정',action:()=>{c.pinned=!c.pinned;save();renderChars();}},
+      {label:c.locked?'🔓 잠금 해제':'🔒 잠금',action:()=>{c.locked=!c.locked;save();renderChars();}},
       {label:'수정',action:()=>editChar(c.id)},
-      {label:'삭제',action:()=>deleteStory(c.id),danger:true}
+      {label:'삭제',action:()=>c.locked?showToast('🔒 잠금 해제 후 삭제할 수 있어요'):deleteStory(c.id),danger:!c.locked}
     ]));
     wrap.appendChild(d);
     list.appendChild(wrap);
