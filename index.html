@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>CharaChat ✦</title>
@@ -813,8 +813,8 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 }
 
 /* animations */
-@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
-.modal{animation:slideIn 0.2s ease}
+@keyframes slideIn{from{transform:translateY(6px)}to{transform:translateY(0)}}
+.modal{animation:slideIn 0.15s ease}
 
 /* ─── MSG ACTION BUTTONS ─── */
 .msg-actions{
@@ -4032,7 +4032,7 @@ function renderFontList(){
 }
 function fontCard(f,cur,isCustom=false){
   const sel=cur===f.id;
-  return `<div onclick="selectFont('${f.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r);border:1px solid ${sel?'var(--accent2)':'var(--border2)'};background:${sel?'var(--ag2)':'transparent'};cursor:pointer;transition:all 0.15s;margin-bottom:3px">
+  return `<div data-font-id="${f.id}" onclick="selectFont('${f.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r);border:1px solid ${sel?'var(--accent2)':'var(--border2)'};background:${sel?'var(--ag2)':'transparent'};cursor:pointer;transition:all 0.15s;margin-bottom:3px">
     <div style="flex:1;min-width:0">
       <div style="display:flex;align-items:center;gap:6px">
         <span style="font-size:13px;font-family:${f.css};font-weight:500">${f.label}</span>
@@ -4041,14 +4041,25 @@ function fontCard(f,cur,isCustom=false){
       <div style="font-size:11px;color:var(--t3);margin-top:1px">${f.sub||''}</div>
       <div style="font-size:12px;font-family:${f.css};color:var(--t2);margin-top:3px">안녕하세요. 오늘 날씨가 좋네요.</div>
     </div>
-    <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid ${sel?'var(--accent2)':'var(--border3)'};background:${sel?'var(--accent2)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
+    <div class="font-dot" style="width:16px;height:16px;border-radius:50%;border:1.5px solid ${sel?'var(--accent2)':'var(--border3)'};background:${sel?'var(--accent2)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
       ${sel?'<svg width="8" height="8" viewBox="0 0 10 10"><polyline points="1,5 4,8 9,2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':''}
     </div>
   </div>`;
 }
 function selectFont(id){
   applyFont(id);
-  renderFontList();
+  // 전체 재렌더 대신 카드 선택 상태만 업데이트
+  document.querySelectorAll('#font-list [data-font-id]').forEach(el=>{
+    const sel = el.dataset.fontId === id;
+    el.style.border = '1px solid '+(sel?'var(--accent2)':'var(--border2)');
+    el.style.background = sel?'var(--ag2)':'transparent';
+    const dot = el.querySelector('.font-dot');
+    if(dot){
+      dot.style.border = '1.5px solid '+(sel?'var(--accent2)':'var(--border3)');
+      dot.style.background = sel?'var(--accent2)':'transparent';
+      dot.innerHTML = sel?'<svg width="8" height="8" viewBox="0 0 10 10"><polyline points="1,5 4,8 9,2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':'';
+    }
+  });
 }
 
 // ─── 커스텀 폰트 추가 ───
