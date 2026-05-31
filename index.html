@@ -7,9 +7,22 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>CharaChat ✦</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
 <style id="embedded-fonts"></style>
+<script>
+(function(){
+  try{
+    var d=JSON.parse(localStorage.getItem('cc9')||'{}');
+    var size=d.chatFontSize;
+    if(size){
+      var st=document.createElement('style');
+      st.id='chat-font-override';
+      st.textContent='.msg-bub,.bub-text{font-size:'+size+'px!important}';
+      document.head.appendChild(st);
+    }
+  }catch(e){}
+})();
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 *:focus{outline:none!important}
@@ -1206,8 +1219,8 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:20px;overflow-x:hidden">
-      <!-- 채팅 폰트 -->
+    <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:20px">
+      <!-- 폰트 -->
       <div>
         <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">✦ 채팅 폰트</div>
         <div id="font-list" style="display:flex;flex-direction:column;gap:6px"></div>
@@ -2654,7 +2667,6 @@ function updateFontBtnUI(){
 }
 function openSettingsModal(){
   updateFontBtnUI();
-  renderFontList();
   openModal('settings-modal');
 }
 function openStoryInfo(){
@@ -3923,8 +3935,11 @@ function openModal(id){
     $('gemini-key-inp').value=D.geminiKey||'';
     updateKeySt(); updateGeminiKeySt();
     renderModelCards();
-    renderFontList();
     initLengthSlider();
+  }
+  if(id==='settings-modal'){
+    renderFontList();
+    updateFontBtnUI();
   }
 }
 function closeModal(id){$(id).classList.add('hide')}
@@ -4032,7 +4047,7 @@ function renderFontList(){
 }
 function fontCard(f,cur,isCustom=false){
   const sel=cur===f.id;
-  return `<div data-font-id="${f.id}" onclick="selectFont('${f.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r);border:1px solid ${sel?'var(--accent2)':'var(--border2)'};background:${sel?'var(--ag2)':'transparent'};cursor:pointer;transition:all 0.15s;margin-bottom:3px">
+  return `<div onclick="selectFont('${f.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r);border:1px solid ${sel?'var(--accent2)':'var(--border2)'};background:${sel?'var(--ag2)':'transparent'};cursor:pointer;transition:all 0.15s;margin-bottom:3px">
     <div style="flex:1;min-width:0">
       <div style="display:flex;align-items:center;gap:6px">
         <span style="font-size:13px;font-family:${f.css};font-weight:500">${f.label}</span>
@@ -4041,24 +4056,14 @@ function fontCard(f,cur,isCustom=false){
       <div style="font-size:11px;color:var(--t3);margin-top:1px">${f.sub||''}</div>
       <div style="font-size:12px;font-family:${f.css};color:var(--t2);margin-top:3px">안녕하세요. 오늘 날씨가 좋네요.</div>
     </div>
-    <div class="font-dot" style="width:16px;height:16px;border-radius:50%;border:1.5px solid ${sel?'var(--accent2)':'var(--border3)'};background:${sel?'var(--accent2)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
+    <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid ${sel?'var(--accent2)':'var(--border3)'};background:${sel?'var(--accent2)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
       ${sel?'<svg width="8" height="8" viewBox="0 0 10 10"><polyline points="1,5 4,8 9,2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':''}
     </div>
   </div>`;
 }
 function selectFont(id){
   applyFont(id);
-  document.querySelectorAll('#font-list [data-font-id]').forEach(el=>{
-    const sel=el.dataset.fontId===id;
-    el.style.border='1px solid '+(sel?'var(--accent2)':'var(--border2)');
-    el.style.background=sel?'var(--ag2)':'transparent';
-    const dot=el.querySelector('.font-dot');
-    if(dot){
-      dot.style.border='1.5px solid '+(sel?'var(--accent2)':'var(--border3)');
-      dot.style.background=sel?'var(--accent2)':'transparent';
-      dot.innerHTML=sel?'<svg width="8" height="8" viewBox="0 0 10 10"><polyline points="1,5 4,8 9,2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':'';
-    }
-  });
+  renderFontList();
 }
 
 // ─── 커스텀 폰트 추가 ───
