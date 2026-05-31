@@ -5823,7 +5823,7 @@ function addLongPress(el,cb){
   },{passive:true});
   el.addEventListener('touchcancel',function(){clearTimeout(timer);fired=false;},{passive:true});
   el.addEventListener('click',function(e){if(fired){e.stopPropagation();fired=false;}});
-  el.addEventListener('contextmenu',function(e){e.preventDefault();cb();});
+  el.addEventListener('contextmenu',function(e){e.preventDefault();});
 }
 
 // ─── 백업 모달 열기 ───
@@ -6143,6 +6143,8 @@ function handlePartialImportFile(input){
 }
 
 window.onerror=function(msg,src,line,col,err){
+  // 외부 스크립트(구글폰트 등) 에러는 줄:0 — 무시
+  if(!line && !col) return true;
   document.body.innerHTML='<div style="padding:40px;font-family:sans-serif;color:red"><h2>⚠️ 오류 발생</h2><pre>'+msg+'\n\n'+src+'\n줄: '+line+', 열: '+col+'\n\n'+(err&&err.stack?err.stack:'')+'</pre></div>';
   return true;
 };
