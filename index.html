@@ -76,7 +76,7 @@ body.light{
   --teal:#1aab94;
   --tg:rgba(26,171,148,0.08);
 }
-html{height:100%;height:-webkit-fill-available}body{height:100%;height:-webkit-fill-available;max-height:100%;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
+html{height:100dvh}body{height:100dvh;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:var(--text);display:flex;font-size:14px;line-height:1.6}
 
 /* ─── 라이트모드 ─── */
@@ -339,7 +339,7 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
 .sb-btn.red:hover{color:var(--danger)}
 
 /* ─── MAIN ─── */
-#main{flex:1;display:flex;flex-direction:column;min-width:0;height:100%;overflow:hidden;background:var(--bg);position:relative}
+#main{flex:1;display:flex;flex-direction:column;min-width:0;height:100dvh;overflow:hidden;background:var(--bg);position:relative}
 
 /* ─── TOPBAR ─── */
 #topbar{
@@ -6478,5 +6478,18 @@ document.addEventListener('click',function(e){
 </script>
 
 
+<script>
+(function(){
+  if(!window.visualViewport) return;
+  var main = document.getElementById('main');
+  function onViewport(){
+    if(!main) return;
+    main.style.height = window.visualViewport.height + 'px';
+  }
+  window.visualViewport.addEventListener('resize', onViewport);
+  window.visualViewport.addEventListener('scroll', onViewport);
+  onViewport();
+})();
+</script>
 </body>
 </html>
