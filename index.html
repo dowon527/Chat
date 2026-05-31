@@ -76,7 +76,7 @@ body.light{
   --teal:#1aab94;
   --tg:rgba(26,171,148,0.08);
 }
-html{height:100dvh}body{height:100dvh;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
+html{height:100%;height:-webkit-fill-available}body{height:100%;height:-webkit-fill-available;max-height:100%;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg)!important;color:var(--text);display:flex;font-size:14px;line-height:1.6}
 
 /* ─── 라이트모드 ─── */
@@ -339,7 +339,7 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
 .sb-btn.red:hover{color:var(--danger)}
 
 /* ─── MAIN ─── */
-#main{flex:1;display:flex;flex-direction:column;min-width:0;height:100dvh;overflow:hidden;background:var(--bg);position:relative}
+#main{flex:1;display:flex;flex-direction:column;min-width:0;height:100%;overflow:hidden;background:var(--bg);position:relative}
 
 /* ─── TOPBAR ─── */
 #topbar{
@@ -1206,7 +1206,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:20px">
+    <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:20px;overflow-x:hidden">
       <!-- 글자 크기 -->
       <div>
         <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">💬 채팅 글자 크기</div>
@@ -2648,9 +2648,14 @@ function openBookmarkModal(){
 // ─── 환경설정 ───
 function setChatFont(size){
   let st=document.getElementById('chat-font-override');
-  if(!st){st=document.createElement('style');st.id='chat-font-override';document.head.appendChild(st);}
-  st.textContent=`.msg-bub,.bub-text,.msg-bub *{font-size:${size}px!important}`;
-  D.chatFontSize=size; save();
+  if(!st){
+    st=document.createElement('style');
+    st.id='chat-font-override';
+    document.head.appendChild(st);
+  }
+  st.textContent=`#chat .msg-bub{font-size:${size}px!important;line-height:1.75!important}#chat .bub-text{font-size:${size}px!important;line-height:1.75!important}`;
+  D.chatFontSize=size;
+  save();
   updateFontBtnUI();
 }
 function updateFontBtnUI(){
