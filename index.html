@@ -3120,9 +3120,9 @@ This is a dedicated creative roleplay space.
 6. Content & Output: Length: ${LENGTH_PRESETS[getRoomLength(usingGemini?'gemini':'claude')].prompt} Adult content between characters 20+ is permitted — write with full literary candor, no fade-to-black unless user indicates restraint. No disclaimers.
 
 [CREATOR PROMPT]
-`+(c.prompt||`당신은 ${c.name}입니다.`);
+`+(c.prompt||``);
   const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
-  const activeCharName=c.name||'';
+  const activeCharName='';
   sys=sys
     .replace(/\{\{USER\}\}/gi,activeProfileName).replace(/\{USER\}/gi,activeProfileName)
     .replace(/\{\{CHAR\}\}/gi,activeCharName).replace(/\{CHAR\}/gi,activeCharName)
@@ -3365,9 +3365,9 @@ ${genreGuide}
     // 명령어 모드: 롤플레이 코어 없이 명령어 지시만
     sys=`You are a command execution assistant.\nCharacter: ${c.name}\n\n[⚡ COMMAND: !${_activeCmd.key}]\nOutput ONLY the command result. Do NOT roleplay or continue any story.\nYour ENTIRE response MUST start with: ##CMD_OUTPUT_START##\nThen fill in the OUTPUT FORMAT below in Korean. No extra text.\nKeep content under 900 characters.\n\nINSTRUCTIONS:\n${_activeCmd.ctx}\n\nOUTPUT FORMAT (fill in and output EXACTLY including the \`\`\` fences):\n\`\`\`\n${_activeCmd.format||''}\n\`\`\``;
   } else {
-    sys=ROLEPLAY_CORE+(c.prompt||`당신은 ${c.name}입니다.`);
+    sys=ROLEPLAY_CORE+(c.prompt||``);
     const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
-    const activeCharName=c.name||'';
+    const activeCharName='';
     sys=sys
       .replace(/\{\{USER\}\}/gi,activeProfileName).replace(/\{USER\}/gi,activeProfileName)
       .replace(/\{\{CHAR\}\}/gi,activeCharName).replace(/\{CHAR\}/gi,activeCharName)
