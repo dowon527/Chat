@@ -856,7 +856,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
   justify-content:flex-end;
 }
 .reroll-nav-btn{
-  background:transparent;border:1px solid var(--border2);
+  background:transparent;border:none;
   border-radius:20px;color:var(--t3);cursor:pointer;
   font-size:11px;padding:2px 8px;transition:all 0.12s;
   font-family:'Noto Sans KR',sans-serif;line-height:1.6;
@@ -2661,6 +2661,21 @@ function setChatFont(size){
   D.chatFontSize=size; save();
   updateFontBtnUI();
 }
+function updateRerollVisibility(){
+  const rows=[...$('chat').querySelectorAll('.msg-row:not(.me)')];
+  const lastAiRow=rows[rows.length-1];
+  rows.forEach(row=>{
+    const rerollBtn=row.querySelector('.msg-act-btn.reroll');
+    const nav=row.querySelector('.reroll-nav');
+    if(row===lastAiRow){
+      if(rerollBtn) rerollBtn.style.display='';
+      if(nav) nav.style.display='';
+    } else {
+      if(rerollBtn) rerollBtn.style.display='none';
+      if(nav) nav.style.display='none';
+    }
+  });
+}
 function updateFontBtnUI(){
   const size=D.chatFontSize||15;
   document.querySelectorAll('.settings-font-btn').forEach(btn=>{
@@ -2854,6 +2869,7 @@ function renderChat(){
     area.appendChild(empty); return;
   }
   hist.forEach((m,i)=>{ appendMsg(m,false,i); });
+  updateRerollVisibility();
   area.scrollTop=area.scrollHeight;
 }
 function getModelClass(model){
@@ -3103,6 +3119,7 @@ async function rerollMsg(row){
     _updateRerollNav(row,row._navEl,row._navCounter,row._prevBtn,row._nextBtn);
   }
   $('chat').scrollTop=$('chat').scrollHeight;
+  updateRerollVisibility();
 }
 async function generateAIReroll(hist, targetBub=null){
   const usingGemini=(getRoomApi()==='gemini');
@@ -3723,6 +3740,22 @@ async function sendMsg(){
     return;
   }
   inp.value=''; inp.style.height='auto';
+  // 유저 메시지 보내면 마지막 AI 답변을 현재 보이는 것으로 고정 (리롤 히스토리 정리)
+  const _lastAiRow=[...$('chat').querySelectorAll('.msg-row')].filter(r=>!r.classList.contains('me')).slice(-1)[0];
+  if(_lastAiRow){
+    const nav=_lastAiRow.querySelector('.reroll-nav');
+    if(nav) nav.style.display='none';
+    // 현재 보이는 답변으로 히스토리 고정, _rh 제거
+    const hi=parseInt(_lastAiRow.dataset.histIdx??'-1');
+    if(hi>=0&&cHist()[hi]){
+      const selectedContent=_lastAiRow._rerollHistory?.[_lastAiRow._rerollIdx]??cHist()[hi].content;
+      cHist()[hi].content=selectedContent;
+      delete cHist()[hi]._rh;
+      _lastAiRow._rerollHistory=[selectedContent];
+      _lastAiRow._rerollIdx=0;
+      save();
+    }
+  }
   const um={role:'user',content:text,time:now()};
   // 명령어(!xxx)이고 해당 명령어의 saveHistory가 false면 유저 메시지도 히스토리에 저장 안 함
   const _umCmdMatch=text.trim().match(/^!(\S+)/);
@@ -3755,6 +3788,7 @@ async function sendMsg(){
     errRow.appendChild(errBody); area.appendChild(errRow); area.scrollTop=area.scrollHeight;
   }
   $('send').disabled=false; $('inp').focus();
+  updateRerollVisibility();
 }
 async function retryLastMsg(btn){
   // 오류 말풍선 제거
