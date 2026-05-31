@@ -6481,14 +6481,22 @@ document.addEventListener('click',function(e){
 <script>
 (function(){
   if(!window.visualViewport) return;
-  var main = document.getElementById('main');
+  var iw = document.getElementById('input-wrap');
+  var chat = document.getElementById('chat');
   function onViewport(){
-    if(!main) return;
-    main.style.height = window.visualViewport.height + 'px';
+    if(!iw) return;
+    var vv = window.visualViewport;
+    var offsetBottom = window.innerHeight - vv.height - vv.offsetTop;
+    if(offsetBottom > 10){
+      iw.style.transform = 'translateY(-' + offsetBottom + 'px)';
+      if(chat) chat.style.paddingBottom = iw.offsetHeight + 'px';
+    } else {
+      iw.style.transform = '';
+      if(chat) chat.style.paddingBottom = '';
+    }
   }
   window.visualViewport.addEventListener('resize', onViewport);
   window.visualViewport.addEventListener('scroll', onViewport);
-  onViewport();
 })();
 </script>
 </body>
