@@ -399,7 +399,6 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
   flex:1;overflow-y:auto;
   -webkit-overflow-scrolling:touch;
   padding:16px 12px;
-  padding-bottom:80px;
   display:flex;flex-direction:column;gap:10px;
   background:var(--bg);
 }
@@ -512,10 +511,6 @@ body.light .empty p{color:#85837D!important}
   padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
   border-top:1px solid var(--border);
   background:var(--bg);flex-shrink:0;
-  position:fixed;
-  bottom:0;
-  left:0;right:0;
-  z-index:50;
 }
 .input-box{
   background:var(--s2);border:1px solid transparent;
@@ -6473,7 +6468,7 @@ document.addEventListener('click',function(e){
   const iw = document.getElementById('input-wrap');
   function onViewport(){
     const kbHeight = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
-    if(iw) iw.style.bottom = (kbHeight > 0 ? kbHeight : 0) + 'px';
+    if(iw) iw.style.marginBottom = kbHeight > 50 ? kbHeight + 'px' : '';
   }
   window.visualViewport.addEventListener('resize', onViewport);
   window.visualViewport.addEventListener('scroll', onViewport);
