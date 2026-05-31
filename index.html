@@ -856,7 +856,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
   justify-content:flex-end;
 }
 .reroll-nav-btn{
-  background:transparent;border:none;
+  background:transparent;border:1px solid var(--border2);
   border-radius:20px;color:var(--t3);cursor:pointer;
   font-size:11px;padding:2px 8px;transition:all 0.12s;
   font-family:'Noto Sans KR',sans-serif;line-height:1.6;
@@ -2661,21 +2661,6 @@ function setChatFont(size){
   D.chatFontSize=size; save();
   updateFontBtnUI();
 }
-function updateRerollVisibility(){
-  const rows=[...$('chat').querySelectorAll('.msg-row:not(.me)')];
-  const lastAiRow=rows[rows.length-1];
-  rows.forEach(row=>{
-    const rerollBtn=row.querySelector('.msg-act-btn.reroll');
-    const nav=row.querySelector('.reroll-nav');
-    if(row===lastAiRow){
-      if(rerollBtn) rerollBtn.style.display='';
-      if(nav) nav.style.display='';
-    } else {
-      if(rerollBtn) rerollBtn.style.display='none';
-      if(nav) nav.style.display='none';
-    }
-  });
-}
 function updateFontBtnUI(){
   const size=D.chatFontSize||15;
   document.querySelectorAll('.settings-font-btn').forEach(btn=>{
@@ -2871,6 +2856,15 @@ function renderChat(){
   hist.forEach((m,i)=>{ appendMsg(m,false,i); });
   updateRerollVisibility();
   area.scrollTop=area.scrollHeight;
+}
+// 마지막 AI 답변에만 리롤 버튼 표시
+function updateRerollVisibility(){
+  const rows=[...$('chat').querySelectorAll('.msg-row:not(.me):not(.summary-note)')];
+  const lastRow=rows[rows.length-1];
+  rows.forEach(row=>{
+    const rerollBtn=row.querySelector('.msg-act-btn.reroll');
+    if(rerollBtn) rerollBtn.style.display=(row===lastRow)?'':'none';
+  });
 }
 function getModelClass(model){
   if(!model) return '';
@@ -3740,18 +3734,17 @@ async function sendMsg(){
     return;
   }
   inp.value=''; inp.style.height='auto';
-  // 유저 메시지 보내면 마지막 AI 답변을 현재 보이는 것으로 고정 (리롤 히스토리 정리)
-  const _lastAiRow=[...$('chat').querySelectorAll('.msg-row')].filter(r=>!r.classList.contains('me')).slice(-1)[0];
+  // 마지막 AI 답변 리롤 고정 — 현재 보이는 답변으로 히스토리 확정, nav 즉시 숨기기
+  const _lastAiRow=[...$('chat').querySelectorAll('.msg-row:not(.me):not(.summary-note)')].slice(-1)[0];
   if(_lastAiRow){
     const nav=_lastAiRow.querySelector('.reroll-nav');
     if(nav) nav.style.display='none';
-    // 현재 보이는 답변으로 히스토리 고정, _rh 제거
     const hi=parseInt(_lastAiRow.dataset.histIdx??'-1');
-    if(hi>=0&&cHist()[hi]){
-      const selectedContent=_lastAiRow._rerollHistory?.[_lastAiRow._rerollIdx]??cHist()[hi].content;
-      cHist()[hi].content=selectedContent;
+    if(hi>=0&&cHist()[hi]&&_lastAiRow._rerollHistory?.length>1){
+      const selected=_lastAiRow._rerollHistory[_lastAiRow._rerollIdx??0];
+      cHist()[hi].content=selected;
       delete cHist()[hi]._rh;
-      _lastAiRow._rerollHistory=[selectedContent];
+      _lastAiRow._rerollHistory=[selected];
       _lastAiRow._rerollIdx=0;
       save();
     }
