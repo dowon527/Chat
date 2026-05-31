@@ -1242,13 +1242,6 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
       </div>
       <!-- 직접 선택 목록 -->
       <div id="capture-custom-list" style="display:none;max-height:220px;overflow-y:auto;border-radius:var(--r);border:1px solid var(--border2);background:var(--s3)">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
-          <span style="font-size:11px;color:var(--t3)">캡처할 말풍선을 선택하세요</span>
-          <div style="display:flex;gap:6px">
-            <button onclick="capSelectAll(true)" style="font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--t2);cursor:pointer">전체</button>
-            <button onclick="capSelectAll(false)" style="font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--t2);cursor:pointer">해제</button>
-          </div>
-        </div>
         <div id="capture-bubble-list" style="display:flex;flex-direction:column"></div>
       </div>
       <!-- 미리보기 -->
@@ -1256,13 +1249,16 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <div id="capture-preview-msg" style="font-size:12px;color:var(--t3);padding:12px">미리보기 버튼을 눌러주세요</div>
         <img id="capture-preview-img" style="display:none;width:100%">
       </div>
-      <!-- 이름 숨기기 토글 -->
-      <div style="display:flex;align-items:center;gap:10px">
-        <label for="capture-hide-chk" style="font-size:13px;color:var(--text);flex:1;cursor:pointer">페소 이름 숨기기</label>
-        <label class="p-toggle" style="cursor:pointer">
+      <!-- 이름 숨기기 토글 + 전체/해제 -->
+      <div style="display:flex;align-items:center;gap:8px">
+        <label for="capture-hide-chk" style="font-size:13px;color:var(--text);cursor:pointer;white-space:nowrap">이름 숨기기</label>
+        <label class="p-toggle" style="cursor:pointer;flex-shrink:0">
           <input type="checkbox" id="capture-hide-chk" style="opacity:0;width:0;height:0;position:absolute">
           <span class="p-slider"></span>
         </label>
+        <div style="flex:1"></div>
+        <button id="cap-sel-all-btn" onclick="capSelectAll(true)" style="display:none;font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--t2);cursor:pointer;white-space:nowrap">전체</button>
+        <button id="cap-sel-none-btn" onclick="capSelectAll(false)" style="display:none;font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--t2);cursor:pointer;white-space:nowrap">해제</button>
       </div>
     </div>
     <div class="modal-ft">
@@ -5887,15 +5883,21 @@ function setCaptureRange(range){
   const bA = document.getElementById('cap-range-all');
   const bC = document.getElementById('cap-range-custom');
   const list = document.getElementById('capture-custom-list');
+  const btnAll = document.getElementById('cap-sel-all-btn');
+  const btnNone = document.getElementById('cap-sel-none-btn');
   if(!bA || !bC) return;
   bA.style.cssText = 'flex:1;font-size:12px;padding:7px 0';
   bC.style.cssText = 'flex:1;font-size:12px;padding:7px 0';
   if(range === 'all'){
     bA.className='btn btn-p'; bC.className='btn btn-g';
     if(list) list.style.display='none';
+    if(btnAll) btnAll.style.display='none';
+    if(btnNone) btnNone.style.display='none';
   } else {
     bA.className='btn btn-g'; bC.className='btn btn-p';
     if(list) list.style.display='block';
+    if(btnAll) btnAll.style.display='';
+    if(btnNone) btnNone.style.display='';
     _buildBubbleList();
   }
   // 범위 바꾸면 미리보기 초기화
