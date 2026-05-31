@@ -1217,6 +1217,11 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
           <button class="settings-font-btn" onclick="setChatFont(17)" data-size="17" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:14px;transition:all 0.15s">더 크게</button>
         </div>
       </div>
+      <!-- 채팅 폰트 -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">✦ 채팅 폰트</div>
+        <div id="font-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
     </div>
     <div class="modal-ft">
       <button class="btn btn-g" onclick="closeModal('settings-modal')">닫기</button>
@@ -1528,12 +1533,6 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
           발급: <a href="https://aistudio.google.com/apikey" style="color:var(--teal)">aistudio.google.com/apikey</a>
           &nbsp;·&nbsp; <span style="color:var(--teal)">Flash 계열 무료 티어 있음</span>
         </div>
-      </div>
-
-      <!-- 폰트 섹션 -->
-      <div style="padding:16px 20px 14px;border-top:1px solid var(--border)">
-        <div style="font-size:13px;font-weight:600;margin-bottom:10px">✦ 채팅 폰트</div>
-        <div id="font-list" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
 
     </div>
@@ -2650,7 +2649,7 @@ function openBookmarkModal(){
 function setChatFont(size){
   let st=document.getElementById('chat-font-override');
   if(!st){st=document.createElement('style');st.id='chat-font-override';document.head.appendChild(st);}
-  st.textContent=`.msg-bub,.bub-text{font-size:${size}px!important}`;
+  st.textContent=`.msg-bub,.bub-text,.msg-bub *{font-size:${size}px!important}`;
   D.chatFontSize=size; save();
   updateFontBtnUI();
 }
@@ -2665,6 +2664,7 @@ function updateFontBtnUI(){
 }
 function openSettingsModal(){
   updateFontBtnUI();
+  renderFontList();
   openModal('settings-modal');
 }
 function openStoryInfo(){
@@ -6472,17 +6472,6 @@ document.addEventListener('click',function(e){
 });
 </script>
 
-<script>
-(function(){
-  if(!window.visualViewport) return;
-  const iw = document.getElementById('input-wrap');
-  function onViewport(){
-    const kbHeight = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
-    if(iw) iw.style.marginBottom = kbHeight > 50 ? kbHeight + 'px' : '';
-  }
-  window.visualViewport.addEventListener('resize', onViewport);
-  window.visualViewport.addEventListener('scroll', onViewport);
-})();
-</script>
+
 </body>
 </html>
