@@ -3666,7 +3666,11 @@ function editMsg(row,bub,msg){
   wrap.appendChild(ta); wrap.appendChild(actsRow);
   bub.style.display='none';
   bub.insertAdjacentElement('afterend',wrap);
+  // 수정 textarea 포커스 시 스크롤 이동 방지
+  const chat=$('chat');
+  const savedScroll=chat?chat.scrollTop:0;
   ta.focus(); ta.style.height=ta.scrollHeight+'px';
+  if(chat) requestAnimationFrame(()=>{ chat.scrollTop=savedScroll; });
 }
 
 // ─── SEND ───
@@ -6488,9 +6492,17 @@ document.addEventListener('click',function(e){
 (function(){
   if(!window.visualViewport) return;
   const iw = document.getElementById('input-wrap');
+  const chat = document.getElementById('chat');
+  let lastKb = 0;
   function onViewport(){
     const kbHeight = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
-    if(iw) iw.style.marginBottom = kbHeight > 50 ? kbHeight + 'px' : '';
+    const kb = kbHeight > 50 ? kbHeight : 0;
+    if(iw) iw.style.marginBottom = kb ? kb + 'px' : '';
+    // 키보드 열리는 순간(0→높이)에만 스크롤 내리기, 수정 중엔 제외
+    if(chat && lastKb === 0 && kb > 0 && !document.querySelector('.msg-edit-area')){
+      requestAnimationFrame(()=>{ chat.scrollTop = chat.scrollHeight; });
+    }
+    lastKb = kb;
   }
   window.visualViewport.addEventListener('resize', onViewport);
   window.visualViewport.addEventListener('scroll', onViewport);
