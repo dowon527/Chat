@@ -1514,14 +1514,14 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
       <!-- CLAUDE 섹션 -->
       <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <span style="font-size:13px;font-weight:600">🤖 Claude</span>
-          <span style="font-size:11px;color:var(--t3)">Anthropic</span>
-          <div style="flex:1;display:flex;align-items:center;gap:6px;margin-left:4px">
+          <span style="font-size:13px;font-weight:600;flex-shrink:0">🤖 Claude</span>
+          <span style="font-size:11px;color:var(--t3);flex-shrink:0">Anthropic</span>
+          <div style="flex:1;display:flex;align-items:center;gap:6px;margin-left:4px;min-width:0">
             <input type="range" id="length-slider" min="0" max="4" step="1" value="2"
               oninput="updateLengthSlider(this.value,'claude')"
               style="flex:1;accent-color:var(--accent);height:3px;cursor:pointer;min-width:0">
             <span id="length-label" style="font-size:10px;color:var(--accent);font-weight:600;min-width:28px;text-align:right;white-space:nowrap">보통</span>
-            <span id="cost-label" style="font-size:10px;color:var(--t3);white-space:nowrap"></span>
+            <span id="cost-label" style="font-size:10px;color:var(--t3);white-space:nowrap;flex-shrink:0"></span>
           </div>
         </div>
         <div class="key-wrap" style="margin-bottom:8px">
@@ -1541,14 +1541,14 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
       <!-- GEMINI 섹션 -->
       <div style="padding:16px 20px 12px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <span style="font-size:13px;font-weight:600">✨ Gemini</span>
-          <span style="font-size:11px;color:var(--t3)">Google</span>
-          <div style="flex:1;display:flex;align-items:center;gap:6px;margin-left:4px">
+          <span style="font-size:13px;font-weight:600;flex-shrink:0">✨ Gemini</span>
+          <span style="font-size:11px;color:var(--t3);flex-shrink:0">Google</span>
+          <div style="flex:1;display:flex;align-items:center;gap:6px;margin-left:4px;min-width:0">
             <input type="range" id="length-slider-gemini" min="0" max="4" step="1" value="2"
               oninput="updateLengthSlider(this.value,'gemini')"
               style="flex:1;accent-color:var(--teal);height:3px;cursor:pointer;min-width:0">
             <span id="length-label-gemini" style="font-size:10px;color:var(--teal);font-weight:600;min-width:28px;text-align:right;white-space:nowrap">보통</span>
-            <span id="cost-label-gemini" style="font-size:10px;color:var(--t3);white-space:nowrap"></span>
+            <span id="cost-label-gemini" style="font-size:10px;color:var(--t3);white-space:nowrap;flex-shrink:0"></span>
           </div>
         </div>
         <div class="key-wrap" style="margin-bottom:8px">
@@ -3175,6 +3175,8 @@ This is a dedicated creative roleplay space.
     const sc=(c.scenes||[]).find(s=>s.id===activeRoom.sceneId);
     if(sc?.content) sys+=`\n\n[시작 장면 설정]\n${sc.content}`;
   }
+  // 길이 제한 마지막 강조
+  sys+=`\n\n[출력 길이 엄수] ${LENGTH_PRESETS[getRoomLength(usingGemini?'gemini':'claude')].prompt}`;
 
   // ⚡ 명령어 감지 (reroll에도 동일 적용)
   const _lastUserContentR=(hist.filter(m=>m.role==='user').slice(-1)[0]?.content||'').trim();
@@ -3426,6 +3428,8 @@ ${genreGuide}
       const scR=(c.scenes||[]).find(s=>s.id===activeRoomR.sceneId);
       if(scR?.content) sys+=`\n\n[시작 장면 설정]\n${scR.content}`;
     }
+    // 길이 제한 마지막 강조
+    sys+=`\n\n[출력 길이 엄수] ${LENGTH_PRESETS[getRoomLength(usingGemini?'gemini':'claude')].prompt}`;
   }
   const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
   const welcome=area.querySelector('#welcome');if(welcome)welcome.remove();
@@ -5674,10 +5678,10 @@ function clearChat(){
 
 // ── 출력량 슬라이더 ──
 const LENGTH_PRESETS = [
-  { label:'짧게',   tokens:1024,  prompt:'1~2문단으로 짧게 응답합니다. 대사 위주, 묘사 최소화.' },
-  { label:'조금',   tokens:2048,  prompt:'2~3문단 내외로 응답합니다. 핵심 묘사와 대사 중심.' },
-  { label:'보통',   tokens:4096,  prompt:'4~5문단 내외로 응답합니다. 묘사와 대사의 균형.' },
-  { label:'길게',   tokens:8192,  prompt:'6~8문단 내외로 응답합니다. 풍부한 묘사와 감정선.' },
+  { label:'짧게',   tokens:1024,  prompt:'STRICT LENGTH LIMIT: 1~2문단. 절대 초과 금지. 대사 위주, 묘사 최소화.' },
+  { label:'조금',   tokens:2048,  prompt:'STRICT LENGTH LIMIT: 2~3문단. 절대 초과 금지. 핵심 묘사와 대사 중심.' },
+  { label:'보통',   tokens:4096,  prompt:'STRICT LENGTH LIMIT: 4~5문단. 절대 초과 금지. 묘사와 대사의 균형.' },
+  { label:'길게',   tokens:8192,  prompt:'STRICT LENGTH LIMIT: 6~8문단. 절대 초과 금지. 풍부한 묘사와 감정선.' },
   { label:'최대',   tokens:16000, prompt:'분량 제한 없이 충분히 깊고 길게 응답합니다.' },
 ];
 // 요약 있으면 요약+최근6개, 없으면 최근11개
