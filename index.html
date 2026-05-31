@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>CharaChat ✦</title>
@@ -11,7 +11,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet"></noscript>
 <style id="embedded-fonts"></style>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 *:focus{outline:none!important}
 *:focus-visible{outline:none!important}
 /* 채팅 말풍선 텍스트만 선택/복사 허용 */
@@ -402,7 +402,7 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
   display:flex;flex-direction:column;gap:10px;
   background:var(--bg);
 }
-.msg-row{display:flex;gap:8px;width:100%;}
+.msg-row{display:flex;gap:8px;width:100%;animation:fadeUp 0.2s ease}
 .msg-row.me{align-self:flex-end;flex-direction:row-reverse}
 @keyframes ctxPop{from{opacity:0;transform:scale(0.93)}to{opacity:1;transform:scale(1)}}
 @keyframes ctxSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -813,8 +813,8 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 }
 
 /* animations */
-@keyframes slideIn{from{transform:translateY(6px)}to{transform:translateY(0)}}
-.modal{animation:slideIn 0.15s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.modal{animation:slideIn 0.2s ease}
 
 /* ─── MSG ACTION BUTTONS ─── */
 .msg-actions{
@@ -4048,16 +4048,15 @@ function fontCard(f,cur,isCustom=false){
 }
 function selectFont(id){
   applyFont(id);
-  // 전체 재렌더 대신 카드 선택 상태만 업데이트
   document.querySelectorAll('#font-list [data-font-id]').forEach(el=>{
-    const sel = el.dataset.fontId === id;
-    el.style.border = '1px solid '+(sel?'var(--accent2)':'var(--border2)');
-    el.style.background = sel?'var(--ag2)':'transparent';
-    const dot = el.querySelector('.font-dot');
+    const sel=el.dataset.fontId===id;
+    el.style.border='1px solid '+(sel?'var(--accent2)':'var(--border2)');
+    el.style.background=sel?'var(--ag2)':'transparent';
+    const dot=el.querySelector('.font-dot');
     if(dot){
-      dot.style.border = '1.5px solid '+(sel?'var(--accent2)':'var(--border3)');
-      dot.style.background = sel?'var(--accent2)':'transparent';
-      dot.innerHTML = sel?'<svg width="8" height="8" viewBox="0 0 10 10"><polyline points="1,5 4,8 9,2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':'';
+      dot.style.border='1.5px solid '+(sel?'var(--accent2)':'var(--border3)');
+      dot.style.background=sel?'var(--accent2)':'transparent';
+      dot.innerHTML=sel?'<svg width="8" height="8" viewBox="0 0 10 10"><polyline points="1,5 4,8 9,2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':'';
     }
   });
 }
@@ -6482,6 +6481,7 @@ document.addEventListener('click',function(e){
     if(iw) iw.style.marginBottom = kbHeight > 50 ? kbHeight + 'px' : '';
   }
   window.visualViewport.addEventListener('resize', onViewport);
+  window.visualViewport.addEventListener('scroll', onViewport);
 })();
 </script>
 </body>
