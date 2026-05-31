@@ -4653,7 +4653,7 @@ function renderMsgContent(text){
     const idx=codeBlocks.length;
     const inner=code.trim();
     const safe=inner.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    codeBlocks.push(`<pre style="background:#0a0a0a;border-radius:8px;padding:10px 12px;overflow-x:auto;font-size:12px;line-height:1.6;margin:6px 0;font-family:monospace;white-space:pre-wrap;color:#e4e2f0">${safe}</pre>`);
+    codeBlocks.push(`<pre style="background:#0a0a0a;border-radius:8px;padding:10px 12px;overflow-x:auto;font-size:var(--chat-font-size,15px);line-height:1.6;margin:6px 0;font-family:monospace;white-space:pre-wrap;color:#e4e2f0">${safe}</pre>`);
     return `\x00CODE${idx}\x00`;
   });
 
@@ -4661,7 +4661,7 @@ function renderMsgContent(text){
   let t=text.trim().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
   // ③ 인라인 코드 `...`
-  t=t.replace(/`([^`]+)`/g,'<code style="background:rgba(255,255,255,0.06);border-radius:4px;padding:1px 5px;font-size:12px;font-family:monospace;color:var(--t2)">$1</code>');
+  t=t.replace(/`([^`]+)`/g,'<code style="background:rgba(255,255,255,0.06);border-radius:4px;padding:1px 5px;font-size:var(--chat-font-size,15px);font-family:monospace;color:var(--t2)">$1</code>');
   // **굵게**
   t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
   // *지문* → 회색 em
