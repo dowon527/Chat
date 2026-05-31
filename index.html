@@ -15,10 +15,7 @@
     var d=JSON.parse(localStorage.getItem('cc9')||'{}');
     var size=d.chatFontSize;
     if(size){
-      var st=document.createElement('style');
-      st.id='chat-font-override';
-      st.textContent='.msg-bub,.bub-text{font-size:'+size+'px!important}';
-      document.head.appendChild(st);
+      document.documentElement.style.setProperty('--chat-font-size', size+'px');
     }
   }catch(e){}
 })();
@@ -446,7 +443,7 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
 .msg-row .msg-av{display:none}
 .msg-bub{
   padding:10px 14px;border-radius:18px;
-  font-size:14px;line-height:1.75;white-space:pre-wrap;word-break:break-word;
+  font-size:var(--chat-font-size,15px);line-height:1.75;white-space:pre-wrap;word-break:break-word;
   cursor:pointer;
 }
 .msg-row:not(.me) .msg-bub{
@@ -1220,6 +1217,16 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
       </button>
     </div>
     <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:20px">
+      <!-- 글자 크기 -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">💬 채팅 글자 크기</div>
+        <div style="display:flex;gap:6px">
+          <button class="settings-font-btn" onclick="setChatFont(13)" data-size="13" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12px;transition:all 0.15s">작게</button>
+          <button class="settings-font-btn" onclick="setChatFont(15)" data-size="15" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:13px;transition:all 0.15s">보통</button>
+          <button class="settings-font-btn" onclick="setChatFont(17)" data-size="17" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:14px;transition:all 0.15s">크게</button>
+          <button class="settings-font-btn" onclick="setChatFont(19)" data-size="19" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:15px;transition:all 0.15s">더 크게</button>
+        </div>
+      </div>
       <!-- 폰트 -->
       <div>
         <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">✦ 채팅 폰트</div>
@@ -2650,14 +2657,12 @@ function openBookmarkModal(){
 
 // ─── 환경설정 ───
 function setChatFont(size){
-  let st=document.getElementById('chat-font-override');
-  if(!st){st=document.createElement('style');st.id='chat-font-override';document.head.appendChild(st);}
-  st.textContent=`.msg-bub,.bub-text{font-size:${size}px!important}`;
+  document.documentElement.style.setProperty('--chat-font-size', size+'px');
   D.chatFontSize=size; save();
   updateFontBtnUI();
 }
 function updateFontBtnUI(){
-  const size=D.chatFontSize||14;
+  const size=D.chatFontSize||15;
   document.querySelectorAll('.settings-font-btn').forEach(btn=>{
     const s=parseInt(btn.dataset.size);
     btn.style.background=s===size?'var(--accent)':'var(--s3)';
