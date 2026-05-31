@@ -214,6 +214,21 @@ body.light input[type="checkbox"]{accent-color:var(--accent2)}
 }
 .char-item:hover{background:var(--s2)}
 .char-item.active{background:var(--s2)}
+/* ── 폴더 ── */
+.folder-item{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 8px;border-radius:var(--r);
+  cursor:pointer;transition:all 0.15s;
+  user-select:none;-webkit-user-select:none;
+  margin-bottom:2px;
+}
+.folder-item:hover{background:var(--s2)}
+.folder-emoji{font-size:16px;flex-shrink:0}
+.folder-name{font-size:13px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.folder-count{font-size:10px;padding:1px 6px;border-radius:20px;background:var(--s4);color:var(--t2);flex-shrink:0}
+.folder-chv{font-size:11px;color:var(--t3);transition:transform 0.15s;flex-shrink:0}
+.folder-chv.open{transform:rotate(90deg)}
+.folder-children{padding-left:14px;border-left:1px solid var(--border);margin-left:10px;margin-bottom:4px}
 
 /* ── 대화방 아이템 ── */
 .scene-sb-item{
@@ -963,7 +978,10 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
           onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'">🌙</button>
       </div>
     </div>
-    <div class="sb-section">스토리</div>
+    <div class="sb-section" style="display:flex;align-items:center;justify-content:space-between">
+      <span>스토리</span>
+      <button onclick="createFolder()" title="폴더 추가" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:2px 4px;line-height:1" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--t3)'">🩷</button>
+    </div>
     <div class="char-scroll" id="char-list"></div>
     <button class="sb-add" onclick="openModal('char-modal')">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
@@ -2046,7 +2064,8 @@ let D={
   charMemories:{}, charNotes:{}, charProfiles:{}, roomProfiles:{}, roomSummaries:{}, roomNoteIds:{},
   roomMemories:{}, roomNotes:{}, roomProfileDefs:{}, roomApi:{}, roomLength:{}, notes:[],
   profiles:[],
-  costLog:{}, // costLog[roomId] = [{turn, model, krw, time}]
+  folders:[], // [{id, name, emoji, open}]
+  costLog:{},
   customFonts:[],
   editing:null,
   emoSel:EMOJIS[0], emoImg:null,
@@ -2372,6 +2391,51 @@ function loadTbEmoImg(e){
 
 // ─── SIDEBAR VIEW SWITCH ───
 let _sbStoriesScroll=0;
+function makeCharItem(c, gMap){
+  const wrap=document.createElement('div');
+  wrap.style.cssText='margin-bottom:1px';
+  const isActiveChar=c.id===D.activeChar;
+  const rooms=D.rooms[c.id]||[];
+  const d=document.createElement('div');
+  d.className='char-item'+(isActiveChar?' active':'');
+  const av=document.createElement('div');
+  av.className='char-emo'; renderAvatar(av,c);
+  d.innerHTML=`
+    <div class="char-meta">
+      <div class="char-meta-name" style="display:flex;align-items:center;gap:5px;">${c.pinned?'📌 ':''}${c.locked?'🔒 ':''} ${c.name}${rooms.length?`<span style="font-size:10px;padding:1px 6px;border-radius:20px;background:var(--s4);color:var(--t2);font-weight:400;flex-shrink:0">${rooms.length}</span>`:''}</div>
+      <div class="char-meta-tag">${(()=>{const tags=(c.genres&&c.genres.length)?c.genres:(c.genre?[c.genre]:[]);const pills=tags.slice(0,2).map(g=>`<span class="char-tag-pill">#${gMap[g]||g}</span>`).join('');const more=tags.length>2?`<span class="char-tag-pill">+${tags.length-2}</span>`:'';return pills+more||'<span style="color:var(--t3);font-size:10px">장르 없음</span>';})()}</div>
+    </div>
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--t3);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
+  `;
+  d.insertBefore(av,d.firstChild);
+  d.onclick=()=>sbShowRooms(c.id);
+  const folderMenuItems=D.folders&&D.folders.length?[
+    {label:'폴더에 넣기',action:()=>{
+      const items=D.folders.map(f=>({label:f.emoji+' '+f.name,action:()=>{c.folderId=f.id;save();renderChars();}}));
+      if(c.folderId) items.push({label:'폴더에서 빼기',action:()=>{delete c.folderId;save();renderChars();}});
+      showCtxMenu(items);
+    }}
+  ]:[];
+  addLongPress(d,()=>showCtxMenu([
+    {label:c.pinned?'고정 해제':'고정',action:()=>{c.pinned=!c.pinned;save();renderChars();}},
+    {label:c.locked?'🔓 잠금 해제':'🔒 잠금',action:()=>{c.locked=!c.locked;save();renderChars();}},
+    ...folderMenuItems,
+    {label:'수정',action:()=>editChar(c.id)},
+    {label:'삭제',action:()=>c.locked?showToast('🔒 잠금 해제 후 삭제할 수 있어요'):deleteStory(c.id),danger:!c.locked}
+  ]));
+  wrap.appendChild(d);
+  return wrap;
+}
+function createFolder(){
+  const emojis=['🩷','🌸','✦','🌷','💜','🤍','🌙','⭐','🎀','🌿'];
+  const emoji=emojis[Math.floor(Math.random()*emojis.length)];
+  showPrompt('폴더 이름', '', function(name){
+    if(!name||!name.trim())return;
+    if(!D.folders)D.folders=[];
+    D.folders.push({id:'folder_'+Date.now(),name:name.trim(),emoji,open:true});
+    save(); renderChars();
+  });
+}
 function sbShowStories(){
   document.getElementById('sb-view-stories').style.display='flex';
   document.getElementById('sb-view-rooms').style.display='none';
@@ -2438,39 +2502,62 @@ function renderChars(){
   list.innerHTML='';
   if(!D.chars.length){
     list.innerHTML='<div style="padding:10px 14px;font-size:12px;color:var(--t3)">스토리를 추가하세요</div>';
-    return;
+    // 폴더는 있어도 표시
   }
   const gMap=Object.fromEntries(GENRES.map(g=>[g.id,g.l]));
-  // 고정된 스토리 먼저
-  const sortedChars=[...D.chars].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
-  sortedChars.forEach(c=>{
-    const wrap=document.createElement('div');
-    wrap.style.cssText='margin-bottom:1px';
-    const isActiveChar=c.id===D.activeChar;
-    const rooms=D.rooms[c.id]||[];
-    const d=document.createElement('div');
-    d.className='char-item'+(isActiveChar?' active':'');
-    const av=document.createElement('div');
-    av.className='char-emo'; renderAvatar(av,c);
-    d.innerHTML=`
-      <div class="char-meta">
-        <div class="char-meta-name" style="display:flex;align-items:center;gap:5px;">${c.pinned?'📌 ':''}${c.locked?'🔒 ':''} ${c.name}${rooms.length?`<span style="font-size:10px;padding:1px 6px;border-radius:20px;background:var(--s4);color:var(--t2);font-weight:400;flex-shrink:0">${rooms.length}</span>`:''}</div>
-        <div class="char-meta-tag">${(()=>{const tags=(c.genres&&c.genres.length)?c.genres:(c.genre?[c.genre]:[]);const pills=tags.slice(0,2).map(g=>`<span class="char-tag-pill">#${gMap[g]||g}</span>`).join('');const more=tags.length>2?`<span class="char-tag-pill">+${tags.length-2}</span>`:'';return pills+more||'<span style="color:var(--t3);font-size:10px">장르 없음</span>';})()}</div>
-      </div>
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--t3);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
+  const folders=D.folders||[];
+  const folderEmojis=['🩷','🌸','✦','🌷','💜','🤍','🌙','⭐','🎀','🌿'];
+
+  // 폴더 렌더
+  folders.forEach(folder=>{
+    const folderChars=D.chars.filter(c=>c.folderId===folder.id);
+    const folderWrap=document.createElement('div');
+    folderWrap.style.cssText='margin-bottom:2px';
+
+    // 폴더 헤더
+    const folderRow=document.createElement('div');
+    folderRow.className='folder-item';
+    folderRow.innerHTML=`
+      <span class="folder-emoji">${folder.emoji||'🩷'}</span>
+      <span class="folder-name">${folder.name}</span>
+      ${folderChars.length?`<span class="folder-count">${folderChars.length}</span>`:''}
+      <span class="folder-chv${folder.open?' open':''}">▶</span>
     `;
-    d.insertBefore(av,d.firstChild);
-    d.onclick=()=>sbShowRooms(c.id);
-    addLongPress(d,()=>showCtxMenu([
-      {label:c.pinned?'고정 해제':'고정',action:()=>{c.pinned=!c.pinned;save();renderChars();}},
-      {label:c.locked?'🔓 잠금 해제':'🔒 잠금',action:()=>{c.locked=!c.locked;save();renderChars();}},
-      {label:'수정',action:()=>editChar(c.id)},
-      {label:'삭제',action:()=>c.locked?showToast('🔒 잠금 해제 후 삭제할 수 있어요'):deleteStory(c.id),danger:!c.locked}
+    folderRow.onclick=()=>{folder.open=!folder.open;save();renderChars();};
+    addLongPress(folderRow,()=>showCtxMenu([
+      {label:'폴더 이름 수정',action:()=>{
+        showPrompt('폴더 이름', folder.name, function(name){
+          if(!name)return;
+          folder.name=name;save();renderChars();
+        });
+      }},
+      {label:'폴더 삭제 (스토리는 유지)',action:()=>{
+        D.chars.forEach(c=>{if(c.folderId===folder.id)delete c.folderId;});
+        D.folders=D.folders.filter(f=>f.id!==folder.id);
+        save();renderChars();
+      },danger:true}
     ]));
-    wrap.appendChild(d);
-    list.appendChild(wrap);
+    folderWrap.appendChild(folderRow);
+
+    // 폴더 내용 (열렸을 때)
+    if(folder.open){
+      const children=document.createElement('div');
+      children.className='folder-children';
+      const sortedFolderChars=[...folderChars].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
+      sortedFolderChars.forEach(c=>{ children.appendChild(makeCharItem(c,gMap)); });
+      if(!folderChars.length){
+        children.innerHTML='<div style="font-size:11px;color:var(--t3);padding:4px 0">비어있어요</div>';
+      }
+      folderWrap.appendChild(children);
+    }
+    list.appendChild(folderWrap);
   });
-  // 현재 activeChar가 있으면 뷰2 유지
+
+  // 폴더 없는 스토리
+  const sortedChars=[...D.chars.filter(c=>!c.folderId)].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
+  sortedChars.forEach(c=>{ list.appendChild(makeCharItem(c,gMap)); });
+
+  requestAnimationFrame(()=>{ if(list) list.scrollTop=savedScroll; });
   if(D.activeChar && document.getElementById('sb-view-rooms').style.display==='flex'){
     renderRooms(D.activeChar);
   }
