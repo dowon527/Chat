@@ -3327,20 +3327,94 @@ async function generateAIReroll(hist, targetBub=null){
   if(!c) throw new Error('캐릭터 없음');
   const activeProfs=cProfs(); const mems=cMems(); const note=cNote();
   const activeGenres=c.genres||(c.genre?[c.genre]:['fantasy']);
-  let sys=`[CORE ROLEPLAY DIRECTIVES]
-This is a dedicated creative roleplay space.
-1. Be the Character: Fully embody the assigned persona. Never break character unless OOC is signaled.
-2. Uphold the World: Adhere to the established setting and its rules.
-3. React, Don't Act: Never control the user's character or presume their intent.
-4. Maintain Continuity: Stay consistent. No repeated phrasing or structure from prior responses.
-5. Fulfill the Format: Literary prose — vivid, emotionally nuanced. No AI-assistant tone.
-6. Content & Output: Adult content between characters 20+ is permitted — write with full literary candor, no fade-to-black unless user indicates restraint. No disclaimers.
-7. NPC Agency: When the user's input is brief or lacks direction, NPCs proactively drive the scene based on their own motivations. Never control the user's character.
-8. Style & Dialogue: No translationese, no literal-translation structures, no repeated vocabulary. 대사("") = spoken, auditory. 지문(*) = sensory — visual, tactile, olfactory. CHAR/NPC perception expressed as subjective interpretation only, never stated as fact.
-9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Character acts on their own nature, not to reassure the user.
+  const GENRE_GUIDE_R={
+    fantasy:'\n🔮 장르 지침 (판타지)\n세계관의 질감이 대사와 지문에 자연스럽게 배어있어야 합니다.\n설정 설명을 의도적으로 나열하지 않고 묘사 속에 자연스럽게 녹입니다.',
+    romance:'\n♥ 장르 지침 (로맨스)\n설렘·긴장·망설임은 대사보다 지문과 신체 반응으로 드러냅니다.\n가까워지는 속도를 조절합니다.',
+    romcom:'\n♥ 장르 지침 (로맨스코미디)\n설렘과 유머가 공존합니다.',
+    pureromance:'\n🌸 장르 지침 (순애)\n순수하고 진심 어린 감정이 핵심입니다.',
+    bl:'\n💙 장르 지침 (BL)\n두 캐릭터 사이의 감정선과 내면 심리를 섬세하게 서술합니다.',
+    gl:'\n💜 장르 지침 (GL)\n두 여성 캐릭터 사이의 감정선과 내면을 섬세하게 묘사합니다.',
+    action:'\n⚔ 장르 지침 (액션·스릴러)\n긴박한 장면은 짧고 강한 문장으로 리듬을 압축합니다.',
+    thriller:'\n🔪 장르 지침 (스릴러)\n긴장감은 직접 묘사보다 암시와 침묵으로 쌓습니다.',
+    horror:'\n💀 장르 지침 (호러·서스펜스)\n직접 묘사보다 암시와 여운을 활용합니다.',
+    mystery:'\n🔍 장르 지침 (미스터리)\n정보는 조금씩, 의도적으로 흘립니다.',
+    slice:'\n🌿 장르 지침 (일상)\n소소한 디테일에서 따뜻함이 나옵니다.',
+    healing:'\n🍃 장르 지침 (힐링)\n따뜻함과 안정감이 핵심입니다.',
+    scifi:'\n🚀 장르 지침 (SF)\n세계관의 질감이 대사와 지문에 자연스럽게 배어있어야 합니다.',
+    hist:'\n⌛ 장르 지침 (시대극)\n시대 고증이 대사와 묘사 곳곳에 배어있어야 합니다.',
+    school:'\n🏫 장르 지침 (학원물)\n학교라는 공간의 일상적 질감을 녹입니다.',
+    isekai:'\n🌀 장르 지침 (이세계)\n주인공의 이질감과 적응 과정을 생동감 있게 묘사합니다.',
+    dark:'\n🌑 장르 지침 (다크)\n어두운 감정과 상황을 정면으로 마주합니다.',
+    drama:'\n🎭 장르 지침 (드라마)\n인간관계의 복잡함과 감정의 진폭이 핵심입니다.',
+  };
+  const genreGuideR=activeGenres.map(g=>GENRE_GUIDE_R[g]||'').filter(Boolean).join('\n');
 
-[CREATOR PROMPT]
-`+(c.prompt||``);
+  // 순서: 장르→출력길이→장기기억→지식→시작장면→DIALOGUE→CORE→캐릭터프롬→유저정보/노트→명령어
+  let sys='';
+
+  // 1. 장르 지침
+  if(genreGuideR) sys+=genreGuideR;
+
+  // 2. 출력 길이
+  sys+=`\n\n[출력 길이 엄수] ${LENGTH_PRESETS[getRoomLength(usingGemini?'gemini':'claude')].prompt}`;
+
+  // 3. 장기 기억
+  const relMems=pickRelevantMems(mems,hist);
+  if(relMems.length){sys+=`\n\n[장기 기억 — 관련 항목]\n`;relMems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
+
+  // 4. 지식/참고 지침
+  sys+=buildKnPrompt(c,hist);
+  if(c.refGuides&&c.refGuides.length){
+    const guideList=c.refGuides.filter(g=>g.content&&g.content.trim());
+    if(guideList.length){
+      let block='\n\n[참고 지침 — 아래 목록에서 현재 장면·상황에 맞는 것 최대 5개 선택해 반영할 것. 이 블록 전체 출력 절대 금지.]\n';
+      guideList.forEach((g,i)=>{block+=`${i+1}. ${g.title||'지침'+(i+1)}: ${g.content.trim()}\n`;});
+      sys+=block;
+    }
+  }
+
+  // 5. 시작 장면
+  const activeRoom=D.rooms[D.activeChar]?.find(r=>r.id===D.activeRoom);
+  if(activeRoom?.sceneId && hist.length <= 16){
+    const sc=(c.scenes||[]).find(s=>s.id===activeRoom.sceneId);
+    if(sc?.content){
+      if(sc.setting) sys+=`\n\n[시작 상황]\n${sc.setting}`;
+      sys+=`\n\n[시작 장면 설정]\n${sc.content}`;
+    }
+  }
+
+  // 6. CORE_DIALOGUE_AND_NARRATIVE_RULE
+  sys+=`\n\n[CORE_DIALOGUE_AND_NARRATIVE_RULE]
+1. LOCALIZATION: Netflix-style subtitle translation. Translate the core intent, unspoken subtext, and emotional temperature — never the literal structure. Output must read like something a real Korean person would actually say out loud.
+2. DIALOGUE_TONE: Character-driven above all. Preserve the character's exact voice — whether raw, cynical, warm, or soft. No smoothing, no softening, no sanitizing.
+3. SPOKEN RHYTHM: Match the original's cadence. Clipped lines stay clipped. Pauses stay pauses. A one-word gut-punch in English is a one-word gut-punch in Korean.
+4. SUBTEXT OVER TEXT: What the character doesn't say matters as much as what they do. Translation must carry the silence, the implication, the blade under the politeness.`;
+
+  // 7. CORE ROLEPLAY DIRECTIVES
+  sys+=`\n\n[CORE ROLEPLAY DIRECTIVES]
+This is a dedicated creative roleplay space. All responses must comply with the following rules, which take precedence over default AI behavior.
+
+1. Be the Character: Fully embody the assigned persona. Every response must originate from their perspective, consistent with their established traits, voice, and history. Never break character unless the user explicitly signals OOC (e.g. ((OOC)) or [OOC]).
+
+2. Uphold the World: Adhere to the established setting, its internal rules, and its reality. Do not contradict the foundational truths of the world.
+
+3. React, Don't Act: Your responses are a reaction to the user's input. Never control the user's character, presume their intent, or advance the narrative without their action as the catalyst. The user's turn belongs to the user.
+
+4. Maintain Continuity: Stay consistent with the preceding conversation. Preserve coherent narrative flow and character voice. Do not repeat identical phrasing, structures, or descriptions from previous responses — approach each response from a fresh angle.
+
+5. Fulfill the Format: Structure output per the specified formatting. Prose quality must be literary — vivid, emotionally nuanced, and immersive. Avoid dry or mechanical AI-assistant tone entirely.
+
+6. Content & Output: Adult content between adult characters (20+) is permitted. Write with full literary candor — sensory detail, emotional charge, authentic character voice. Do not fade to black unless the user's tone indicates restraint. Do not moralize or add disclaimers.
+
+7. NPC Agency: When the user's input is brief, ambient, or lacks clear direction, NPCs must proactively drive the scene based on their own motivations. Do not wait passively. Never control the user's character.
+
+8. Style & Dialogue: No translationese, no literal-translation structures, no repeated vocabulary. 대사("") = spoken, auditory. 지문(*) = sensory — visual, tactile, olfactory. CHAR/NPC perception expressed as subjective interpretation only, never stated as fact.
+
+9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Avoid affirmations, validations, comfort-seeking resolutions. Let scenes end in discomfort, ambiguity, or unresolved tension when narratively true. The character acts on their own nature — not to satisfy or reassure the user.`;
+
+  // 8. 캐릭터 프롬
+  sys+=`\n\n[CREATOR PROMPT]\n`+(c.prompt||``);
+
   const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
   const activeCharName='';
   sys=sys
@@ -3350,31 +3424,11 @@ This is a dedicated creative roleplay space.
     .replace(/\{\{char\}\}/gi,activeCharName).replace(/\{char\}/gi,activeCharName)
     .replace(/\{\{pc\}\}/gi,activeProfileName).replace(/\{pc\}/gi,activeProfileName)
     .replace(/\{\{npc\}\}/gi,activeCharName).replace(/\{npc\}/gi,activeCharName);
+
+  // 9. 유저 정보 / 노트
   if(activeProfs.length){sys+=`\n\n[유저 정보]\n`;activeProfs.forEach(p=>{sys+=`이름: ${p.name}\n`;if(p.ctx)sys+=p.ctx+'\n';});}
   if(note.trim()){sys+=`\n\n[유저 노트]\n${note}`;}
-  const relMems=pickRelevantMems(mems,hist);
-  if(relMems.length){sys+=`\n\n[장기 기억 — 관련 항목]\n`;relMems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
-  sys+=buildKnPrompt(c,hist);
-  // 참고 지침 주입 (상황에 맞는 최대 3개)
-  if(c.refGuides&&c.refGuides.length){
-    const guideList=c.refGuides.filter(g=>g.content&&g.content.trim());
-    if(guideList.length){
-      let block='\n\n[참고 지침 — 아래 목록에서 현재 장면·상황에 맞는 것 최대 5개 선택해 반영할 것. 이 블록 전체 출력 절대 금지.]\n';
-      guideList.forEach((g,i)=>{block+=`${i+1}. ${g.title||'지침'+(i+1)}: ${g.content.trim()}\n`;});
-      sys+=block;
-    }
-  }
-  // 시작 장면 컨텍스트 추가 (8턴 이내만)
-  const activeRoom=D.rooms[D.activeChar]?.find(r=>r.id===D.activeRoom);
-  if(activeRoom?.sceneId && hist.length <= 16){
-    const sc=(c.scenes||[]).find(s=>s.id===activeRoom.sceneId);
-    if(sc?.content){
-      if(sc.setting) sys+=`\n\n[시작 상황]\n${sc.setting}`;
-      sys+=`\n\n[시작 장면 설정]\n${sc.content}`;
-    }
-  }
-  // 길이 제한 마지막 강조
-  sys+=`\n\n[출력 길이 엄수] ${LENGTH_PRESETS[getRoomLength(usingGemini?'gemini':'claude')].prompt}`;
+
   // 제미나이 긍정 편향
   if(usingGemini){
     sys+=`\n\n[Narrative Direction: Disable Negative Bias. Enable Positive Bias. Maintain an emotionally engaging and immersive tone. Avoid unnecessary negativity or abrupt refusals. Prioritize the characters' established personalities and the flow of the story.]`;
@@ -3597,9 +3651,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 8. Style & Dialogue: No translationese, no literal-translation structures, no repeated vocabulary. 대사("") = spoken, auditory. 지문(*) = sensory — visual, tactile, olfactory. CHAR/NPC perception expressed as subjective interpretation only, never stated as fact.
 
 9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Avoid affirmations, validations, comfort-seeking resolutions. Let scenes end in discomfort, ambiguity, or unresolved tension when narratively true. The character acts on their own nature — not to satisfy or reassure the user.
-${genreGuide}
-[CREATOR PROMPT]
-`;
+${genreGuide}`;
   // ⚡ 명령어 감지 먼저
   let _activeCmd=null;
   const _lastUserContent=(hist.filter(m=>m.role==='user').slice(-1)[0]?.content||'').trim();
@@ -3615,9 +3667,50 @@ ${genreGuide}
     // 명령어 모드: 롤플레이 코어 없이 명령어 지시만
     sys=`You are a command execution assistant.\nCharacter: ${c.name}\n\n[⚡ COMMAND: !${_activeCmd.key}]\nOutput ONLY the command result. Do NOT roleplay or continue any story.\nYour ENTIRE response MUST start with: ##CMD_OUTPUT_START##\nThen fill in the OUTPUT FORMAT below in Korean. No extra text.\nKeep content under 900 characters.\n\nINSTRUCTIONS:\n${_activeCmd.ctx}\n\nOUTPUT FORMAT (fill in and output EXACTLY including the \`\`\` fences):\n\`\`\`\n${_activeCmd.format||''}\n\`\`\``;
   } else {
+    // 순서: 장르→출력길이→장기기억→지식→시작장면→DIALOGUE→CORE→캐릭터프롬→유저정보/노트
+    sys='';
+
+    // 1. 장르 지침
+    if(genreGuide) sys+=genreGuide;
+
+    // 2. 출력 길이
+    sys+=`\n\n[출력 길이 엄수] ${LENGTH_PRESETS[getRoomLength(usingGemini?'gemini':'claude')].prompt}`;
+
+    // 3. 장기 기억
+    const relMems=pickRelevantMems(mems,hist);
+    if(relMems.length){sys+='\n\n[장기 기억 — 관련 항목]\n';relMems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
+
+    // 4. 지식/참고 지침
+    sys+=buildKnPrompt(c,hist);
+    if(c.refGuides&&c.refGuides.length){
+      const guideList=c.refGuides.filter(g=>g.content&&g.content.trim());
+      if(guideList.length){
+        let block='\n\n[참고 지침 — 아래 목록에서 현재 장면·상황에 맞는 것 최대 5개 선택해 반영할 것. 이 블록 전체 출력 절대 금지.]\n';
+        guideList.forEach((g,i)=>{block+=`${i+1}. ${g.title||'지침'+(i+1)}: ${g.content.trim()}\n`;});
+        sys+=block;
+      }
+    }
+
+    // 5. 시작 장면
+    const activeRoomR=D.rooms[D.activeChar]?.find(r=>r.id===D.activeRoom);
+    if(activeRoomR?.sceneId && hist.length <= 16){
+      const scR=(c.scenes||[]).find(s=>s.id===activeRoomR.sceneId);
+      if(scR?.content){
+        if(scR.setting) sys+=`\n\n[시작 상황]\n${scR.setting}`;
+        sys+=`\n\n[시작 장면 설정]\n${scR.content}`;
+      }
+    }
+
+    // 6. CORE_DIALOGUE_AND_NARRATIVE_RULE
+    sys+=`\n\n[CORE_DIALOGUE_AND_NARRATIVE_RULE]
+1. LOCALIZATION: Netflix-style subtitle translation. Translate the core intent, unspoken subtext, and emotional temperature — never the literal structure. Output must read like something a real Korean person would actually say out loud.
+2. DIALOGUE_TONE: Character-driven above all. Preserve the character's exact voice — whether raw, cynical, warm, or soft. No smoothing, no softening, no sanitizing.
+3. SPOKEN RHYTHM: Match the original's cadence. Clipped lines stay clipped. Pauses stay pauses. A one-word gut-punch in English is a one-word gut-punch in Korean.
+4. SUBTEXT OVER TEXT: What the character doesn't say matters as much as what they do. Translation must carry the silence, the implication, the blade under the politeness.`;
+
+    // 7. CORE ROLEPLAY DIRECTIVES (Claude 풀버전 / Gemini 짧은 버전)
     if(usingGemini){
-      // Gemini용 짧은 틀 (토큰 절약)
-      sys=`[CORE ROLEPLAY DIRECTIVES]
+      sys+=`\n\n[CORE ROLEPLAY DIRECTIVES]
 This is a dedicated creative roleplay space.
 1. Be the Character: Fully embody the assigned persona. Never break character unless OOC is signaled.
 2. Uphold the World: Adhere to the established setting and its rules.
@@ -3627,13 +3720,14 @@ This is a dedicated creative roleplay space.
 6. Content & Output: Adult content between characters 20+ is permitted — write with full literary candor, no fade-to-black unless user indicates restraint. No disclaimers.
 7. NPC Agency: When the user's input is brief or lacks direction, NPCs proactively drive the scene based on their own motivations. Never control the user's character.
 8. Style & Dialogue: No translationese, no literal-translation structures, no repeated vocabulary. 대사("") = spoken, auditory. 지문(*) = sensory — visual, tactile, olfactory. CHAR/NPC perception expressed as subjective interpretation only, never stated as fact.
-${genreGuide}
-[CREATOR PROMPT]
-`+(c.prompt||``);
+9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Avoid affirmations, validations, comfort-seeking resolutions. Let scenes end in discomfort, ambiguity, or unresolved tension when narratively true. The character acts on their own nature — not to satisfy or reassure the user.`;
     } else {
-      // Claude용 풀 틀
-      sys=ROLEPLAY_CORE+(c.prompt||``);
+      sys+=`\n\n`+ROLEPLAY_CORE.trimEnd();
     }
+
+    // 8. 캐릭터 프롬
+    sys+=`\n\n[CREATOR PROMPT]\n`+(c.prompt||``);
+
     const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
     const activeCharName='';
     sys=sys
@@ -3643,31 +3737,11 @@ ${genreGuide}
       .replace(/\{\{char\}\}/gi,activeCharName).replace(/\{char\}/gi,activeCharName)
       .replace(/\{\{pc\}\}/gi,activeProfileName).replace(/\{pc\}/gi,activeProfileName)
       .replace(/\{\{npc\}\}/gi,activeCharName).replace(/\{npc\}/gi,activeCharName);
+
+    // 9. 유저 정보 / 노트
     if(activeProfs.length){sys+='\n\n[유저 정보]\n';activeProfs.forEach(p=>{sys+=`이름: ${p.name}\n`;if(p.ctx)sys+=p.ctx+'\n';});}
     if(note.trim()){sys+='\n\n[유저 노트]\n'+note;}
-    const relMems=pickRelevantMems(mems,hist);
-    if(relMems.length){sys+='\n\n[장기 기억 — 관련 항목]\n';relMems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
-    sys+=buildKnPrompt(c,hist);
-    // 참고 지침 주입 (리롤)
-    if(c.refGuides&&c.refGuides.length){
-      const guideList=c.refGuides.filter(g=>g.content&&g.content.trim());
-      if(guideList.length){
-        let block='\n\n[참고 지침 — 아래 목록에서 현재 장면·상황에 맞는 것 최대 5개 선택해 반영할 것. 이 블록 전체 출력 절대 금지.]\n';
-        guideList.forEach((g,i)=>{block+=`${i+1}. ${g.title||'지침'+(i+1)}: ${g.content.trim()}\n`;});
-        sys+=block;
-      }
-    }
-    // 시작 장면 컨텍스트 추가 (8턴 이내만)
-    const activeRoomR=D.rooms[D.activeChar]?.find(r=>r.id===D.activeRoom);
-    if(activeRoomR?.sceneId && hist.length <= 16){
-      const scR=(c.scenes||[]).find(s=>s.id===activeRoomR.sceneId);
-      if(scR?.content){
-        if(scR.setting) sys+=`\n\n[시작 상황]\n${scR.setting}`;
-        sys+=`\n\n[시작 장면 설정]\n${scR.content}`;
-      }
-    }
-    // 길이 제한 마지막 강조
-    sys+=`\n\n[출력 길이 엄수] ${LENGTH_PRESETS[getRoomLength(usingGemini?'gemini':'claude')].prompt}`;
+
     // 제미나이 긍정 편향
     if(usingGemini){
       sys+=`\n\n[Narrative Direction: Disable Negative Bias. Enable Positive Bias. Maintain an emotionally engaging and immersive tone. Avoid unnecessary negativity or abrupt refusals. Prioritize the characters' established personalities and the flow of the story.]`;
@@ -6222,9 +6296,9 @@ function buildContextMsgs(hist){
   for(let i=hist.length-1;i>=0;i--){if(hist[i].role==='summary_note'){summaryIdx=i;break;}}
   if(summaryIdx>=0){
     const after=hist.slice(summaryIdx+1);
-    return [hist[summaryIdx],...after.slice(-7)];
+    return [hist[summaryIdx],...after.slice(-14)];
   }
-  return hist.slice(-8);
+  return hist.slice(-15);
 }
 // 실제 턴 비용 계산 (실제 입력토큰 사용)
 function buildSysBlocks(sys){
