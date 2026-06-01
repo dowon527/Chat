@@ -1608,6 +1608,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <button class="tab" id="ctab-1" onclick="switchCharTab(1)">프롬프트</button>
         <button class="tab" id="ctab-2" onclick="switchCharTab(2)">트리거</button>
         <button class="tab" id="ctab-3" onclick="switchCharTab(3)">명령어</button>
+        <button class="tab" id="ctab-4" onclick="switchCharTab(4)">참고지침</button>
       </div>
 
       <!-- TAB 0 -->
@@ -1709,6 +1710,31 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         </div>
         <div id="cmd-inline-list"></div>
       </div>
+
+      <!-- TAB 4 : 참고 지침 -->
+      <div class="char-ed-body" id="ctab-body-4">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text)">📋 참고 지침</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:2px">매 턴 AI가 상황에 맞는 지침 최대 5개 자동 선택 · 출력 금지</div>
+          </div>
+          <div style="display:flex;gap:5px">
+            <button onclick="bulkImportRefGuides()" style="padding:3px 7px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--t2);cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">일괄추가</button>
+            <button onclick="addRefGuide()" style="padding:3px 7px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--accent);cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--ag2)'" onmouseout="this.style.background='transparent'">+ 추가</button>
+          </div>
+        </div>
+        <!-- 일괄 추가 패널 -->
+        <div id="ref-bulk-panel" style="display:none;margin-bottom:10px;padding:10px;background:var(--s2);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--t3);margin-bottom:6px">제목－내용 형식으로 한 줄씩 붙여넣으세요. (예: 섹스묘사지침1－전체과정...)</div>
+          <textarea id="ref-bulk-inp" style="width:100%;min-height:100px;background:var(--s4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:12px;font-family:'Noto Sans KR',sans-serif;padding:8px;resize:vertical;box-sizing:border-box;line-height:1.6" placeholder="여기에 붙여넣기..."></textarea>
+          <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px">
+            <button onclick="$('ref-bulk-panel').style.display='none'" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--t2);cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif">취소</button>
+            <button onclick="confirmBulkRefGuides()" style="padding:4px 10px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif">추가</button>
+          </div>
+        </div>
+        <div id="ref-guide-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+
     </div>
     <div id="prompt-log-wrap" style="display:none;padding:10px 20px 0">
       <div id="prompt-log-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
@@ -2004,9 +2030,15 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <input class="fi" id="scene-modal-title" placeholder="예: 시작 설정1, 도서관 첫 만남, 재회" style="font-size:14px">
       </div>
       <div class="fg">
+        <label class="fl">시작 상황 <span>— 배경·상황 설명 (AI에게만 전달, 화면엔 안 보여요)</span></label>
+        <textarea class="fta" id="scene-modal-setting"
+          style="min-height:100px;font-size:13px;line-height:1.85;resize:vertical"
+          placeholder="예: 두 사람은 오늘 처음 만났다. 장소는 심야의 편의점. 캐릭터는 피곤하고 예민한 상태다."></textarea>
+      </div>
+      <div class="fg">
         <label class="fl">내용 <span>— 캐릭터의 첫 지문·대사를 자유롭게</span></label>
         <textarea class="fta" id="scene-modal-body"
-          style="min-height:340px;font-size:13px;line-height:1.85;resize:vertical"
+          style="min-height:240px;font-size:13px;line-height:1.85;resize:vertical"
           placeholder="예:
 
 *브리핑룸 불빛이 꺼진 복도, 애셔는 벽에 등을 기댄 채 창밖을 내다보고 있었다. 인기척을 느끼고 천천히 고개를 돌린다.*
@@ -2130,7 +2162,7 @@ function load(){
     // puter 제거: 이전에 puter로 저장된 경우 claude로 교정
     if(D.activeApi==='puter')D.activeApi='claude';
     // 기존 costLog 5턴 초과분 정리
-    if(D.costLog){Object.keys(D.costLog).forEach(k=>{if(D.costLog[k].length>5)D.costLog[k]=D.costLog[k].slice(-5);});}
+    if(D.costLog){Object.keys(D.costLog).forEach(k=>{if(D.costLog[k].length>10)D.costLog[k]=D.costLog[k].slice(-10);});}
   }catch(e){console.warn('load 실패',e);}
 }
 function save(){
@@ -2847,6 +2879,8 @@ function openStoryInfo(){
   const body=document.getElementById('story-info-body');
   const createdStr=c.createdAt?new Date(c.createdAt).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'}):'';
   const ver=c._promptVer||1;
+  const pLog=c._promptLog||[];
+  const latestEdit=pLog.length?pLog[pLog.length-1]:null;
   body.innerHTML=`
     <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px">
       <div id="story-info-img" style="width:120px;height:200px;border-radius:10px;background:var(--s3);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer">${imgHtml}</div>
@@ -2854,12 +2888,14 @@ function openStoryInfo(){
         <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;line-height:1.3">${c.name}</div>
         <div style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical">${c.bio||'<span style="color:var(--t3)">스토리 정보 없음</span>'}</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;min-height:22px">${tagPills}</div>
-        <div style="margin-top:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button onclick="toggleStoryHeart('${c.id}')" style="background:none;border:none;cursor:pointer;font-size:20px;padding:0;line-height:1" id="story-heart-btn">${hearts>0?'❤️':'🤍'}</button>
-          <span style="font-size:11px;color:var(--t3)">${rooms.length}개 대화</span>
-          <div style="display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end">
-            ${createdStr?`<span style="font-size:10px;color:var(--t3);background:var(--s3);padding:2px 8px;border-radius:20px">✦ ${createdStr}</span>`:''}
-            <span style="font-size:10px;color:var(--t3);background:var(--s3);padding:2px 8px;border-radius:20px">v${ver}</span>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:5px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button onclick="toggleStoryHeart('${c.id}')" style="background:none;border:none;cursor:pointer;font-size:20px;padding:0;line-height:1" id="story-heart-btn">${hearts>0?'❤️':'🤍'}</button>
+            <span style="font-size:11px;color:var(--t3)">${rooms.length}개 대화</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            ${createdStr?`<div style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:4px"><span style="opacity:0.5">✦</span><span>생성 ${createdStr}</span><span style="opacity:0.5">· v${ver}</span></div>`:''}
+            ${latestEdit?`<div style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:4px"><span style="opacity:0.5">✎</span><span>수정 ${latestEdit.time}</span></div>`:''}
           </div>
         </div>
       </div>
@@ -3317,14 +3353,30 @@ This is a dedicated creative roleplay space.
   const relMems=pickRelevantMems(mems,hist);
   if(relMems.length){sys+=`\n\n[장기 기억 — 관련 항목]\n`;relMems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
   sys+=buildKnPrompt(c,hist);
+  // 참고 지침 주입 (상황에 맞는 최대 3개)
+  if(c.refGuides&&c.refGuides.length){
+    const guideList=c.refGuides.filter(g=>g.content&&g.content.trim());
+    if(guideList.length){
+      let block='\n\n[참고 지침 — 아래 목록에서 현재 장면·상황에 맞는 것 최대 5개 선택해 반영할 것. 이 블록 전체 출력 절대 금지.]\n';
+      guideList.forEach((g,i)=>{block+=`${i+1}. ${g.title||'지침'+(i+1)}: ${g.content.trim()}\n`;});
+      sys+=block;
+    }
+  }
   // 시작 장면 컨텍스트 추가 (8턴 이내만)
   const activeRoom=D.rooms[D.activeChar]?.find(r=>r.id===D.activeRoom);
   if(activeRoom?.sceneId && hist.length <= 16){
     const sc=(c.scenes||[]).find(s=>s.id===activeRoom.sceneId);
-    if(sc?.content) sys+=`\n\n[시작 장면 설정]\n${sc.content}`;
+    if(sc?.content){
+      if(sc.setting) sys+=`\n\n[시작 상황]\n${sc.setting}`;
+      sys+=`\n\n[시작 장면 설정]\n${sc.content}`;
+    }
   }
   // 길이 제한 마지막 강조
   sys+=`\n\n[출력 길이 엄수] ${LENGTH_PRESETS[getRoomLength(usingGemini?'gemini':'claude')].prompt}`;
+  // 제미나이 긍정 편향
+  if(usingGemini){
+    sys+=`\n\n[Narrative Direction: Disable Negative Bias. Enable Positive Bias. Maintain an emotionally engaging and immersive tone. Avoid unnecessary negativity or abrupt refusals. Prioritize the characters' established personalities and the flow of the story.]`;
+  }
 
   // ⚡ 명령어 감지 (reroll에도 동일 적용)
   const _lastUserContentR=(hist.filter(m=>m.role==='user').slice(-1)[0]?.content||'').trim();
@@ -3348,7 +3400,7 @@ This is a dedicated creative roleplay space.
     const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:D.geminiModel==='gemini-2.5-pro'?LENGTH_PRESETS[getRoomLength('gemini')].tokens*4:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2}})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini 오류');}
     if(targetBub){targetBub.style.opacity='1';}
-    const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='';
+    const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf=''; let _gIn=0,_gOut=0;
     while(true){
       const {done,value}=await reader.read(); if(done)break;
       buf+=decoder.decode(value,{stream:true});
@@ -3360,11 +3412,12 @@ This is a dedicated creative roleplay space.
           const j=JSON.parse(d);
           const parts=j.candidates?.[0]?.content?.parts||[];
           for(const p of parts){if(p.thought)continue;if(p.text){full+=p.text;if(targetBub){targetBub.innerHTML=renderMsgContent(full);const area=$('chat');area.scrollTop=area.scrollHeight;}}}
+          if(j.usageMetadata){if(j.usageMetadata.promptTokenCount)_gIn=j.usageMetadata.promptTokenCount;if(j.usageMetadata.candidatesTokenCount)_gOut=j.usageMetadata.candidatesTokenCount;}
         }catch(e){}
       }
     }
     if(!full) throw new Error('응답 비어있음');
-    return {full,cacheRead:0,cacheWrite:0,inputTok:0};
+    return {full,cacheRead:0,cacheWrite:0,inputTok:_gIn||0,outputTok:_gOut||0};
   } else {
     const rawMsgs=buildContextMsgs(hist).map(m=>{
       if(m.role==='summary_note')return{role:'assistant',content:`[스토리 요약]\n${m.content}`};
@@ -3570,14 +3623,30 @@ ${genreGuide}
     const relMems=pickRelevantMems(mems,hist);
     if(relMems.length){sys+='\n\n[장기 기억 — 관련 항목]\n';relMems.forEach((m,i)=>sys+=`${i+1}. ${m.title}: ${m.content}\n`);}
     sys+=buildKnPrompt(c,hist);
+    // 참고 지침 주입 (리롤)
+    if(c.refGuides&&c.refGuides.length){
+      const guideList=c.refGuides.filter(g=>g.content&&g.content.trim());
+      if(guideList.length){
+        let block='\n\n[참고 지침 — 아래 목록에서 현재 장면·상황에 맞는 것 최대 5개 선택해 반영할 것. 이 블록 전체 출력 절대 금지.]\n';
+        guideList.forEach((g,i)=>{block+=`${i+1}. ${g.title||'지침'+(i+1)}: ${g.content.trim()}\n`;});
+        sys+=block;
+      }
+    }
     // 시작 장면 컨텍스트 추가 (8턴 이내만)
     const activeRoomR=D.rooms[D.activeChar]?.find(r=>r.id===D.activeRoom);
     if(activeRoomR?.sceneId && hist.length <= 16){
       const scR=(c.scenes||[]).find(s=>s.id===activeRoomR.sceneId);
-      if(scR?.content) sys+=`\n\n[시작 장면 설정]\n${scR.content}`;
+      if(scR?.content){
+        if(scR.setting) sys+=`\n\n[시작 상황]\n${scR.setting}`;
+        sys+=`\n\n[시작 장면 설정]\n${scR.content}`;
+      }
     }
     // 길이 제한 마지막 강조
     sys+=`\n\n[출력 길이 엄수] ${LENGTH_PRESETS[getRoomLength(usingGemini?'gemini':'claude')].prompt}`;
+    // 제미나이 긍정 편향
+    if(usingGemini){
+      sys+=`\n\n[Narrative Direction: Disable Negative Bias. Enable Positive Bias. Maintain an emotionally engaging and immersive tone. Avoid unnecessary negativity or abrupt refusals. Prioritize the characters' established personalities and the flow of the story.]`;
+    }
   }
   const area=$('chat'); const empty=area.querySelector('.empty');if(empty)empty.remove();
   const welcome=area.querySelector('#welcome');if(welcome)welcome.remove();
@@ -3641,6 +3710,10 @@ ${genreGuide}
             const j=JSON.parse(d);
             const parts=j.candidates?.[0]?.content?.parts||[];
             for(const p of parts){if(p.thought)continue;if(p.text){full+=p.text;removePhrase();bubText2.innerHTML=renderMsgContent(full);area.scrollTop=area.scrollHeight;}}
+            if(j.usageMetadata){
+              if(j.usageMetadata.promptTokenCount) gInputTok=j.usageMetadata.promptTokenCount;
+              if(j.usageMetadata.candidatesTokenCount) gOutputTok=j.usageMetadata.candidatesTokenCount;
+            }
           }catch(e){}
         }
       }
@@ -3770,6 +3843,23 @@ function _addActionsToRow(row,bub,msg,cacheRead){
   // 말풍선 클릭 toggle
   bub.onclick=()=>row.classList.toggle('acts-open');
   bub.addEventListener('pointerdown',function(e){if(e.button!==2)return;e.preventDefault();e.stopPropagation();row.classList.add('acts-open');});  bub.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();});
+  // 꾹 누르기 복사 (모바일)
+  let _longPressTimer=null;
+  bub.addEventListener('touchstart',function(e){
+    _longPressTimer=setTimeout(()=>{
+      const bt=bub.querySelector('.bub-text')||bub;
+      const text=bt.innerText||bt.textContent||'';
+      navigator.clipboard.writeText(text).then(()=>{
+        const toast=document.createElement('div');
+        toast.textContent='복사됐어요 ✓';
+        toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--teal);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;z-index:9999;pointer-events:none;opacity:1;transition:opacity 0.4s';
+        document.body.appendChild(toast);
+        setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),400);},1500);
+      }).catch(()=>{});
+    },500);
+  },{ passive:true });
+  bub.addEventListener('touchend',()=>{clearTimeout(_longPressTimer);});
+  bub.addEventListener('touchmove',()=>{clearTimeout(_longPressTimer);});
   const acts=document.createElement('div'); acts.className='msg-actions';
   const rerollBtn=document.createElement('button');
   rerollBtn.className='msg-act-btn reroll';
@@ -3790,7 +3880,27 @@ function _addActionsToRow(row,bub,msg,cacheRead){
     if(idx>=0){hist.splice(idx,1);save();}
     row.remove(); renderChars();
   };
-  acts.appendChild(rerollBtn); acts.appendChild(editBtn); acts.appendChild(delBtn);
+  const copyBtn=document.createElement('button');
+  copyBtn.className='msg-act-btn copy-btn';
+  copyBtn.textContent='⎘'; copyBtn.title='복사';
+  copyBtn.onclick=(e)=>{
+    e.stopPropagation();
+    const bt=bub.querySelector('.bub-text')||bub;
+    const text=bt.innerText||bt.textContent||'';
+    navigator.clipboard.writeText(text).then(()=>{
+      copyBtn.textContent='✓';
+      setTimeout(()=>{copyBtn.textContent='⎘';},1500);
+    }).catch(()=>{
+      const ta=document.createElement('textarea');
+      ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      copyBtn.textContent='✓';
+      setTimeout(()=>{copyBtn.textContent='⎘';},1500);
+    });
+  };
+  acts.appendChild(rerollBtn); acts.appendChild(copyBtn); acts.appendChild(editBtn); acts.appendChild(delBtn);
   // 이전/다음 답변 네비게이터
   const nav=document.createElement('div'); nav.className='reroll-nav'; nav.style.display='none';
   const prevBtn=document.createElement('button'); prevBtn.className='reroll-nav-btn'; prevBtn.textContent='◀';
@@ -4355,7 +4465,7 @@ function deleteCustomFont(id){
 // ─── CHAR EDITOR ───
 let _charTabIdx=0;
 function switchCharTab(i){
-  for(let j=0;j<4;j++){
+  for(let j=0;j<5;j++){
     const t=$('ctab-'+j); if(t)t.classList.toggle('on',j===i);
     const b=$('ctab-body-'+j); if(b)b.classList.toggle('on',j===i);
   }
@@ -4364,6 +4474,109 @@ function switchCharTab(i){
   if(i===0){ renderPromptLog(); }
   if(i===2){ renderKnInlineList(); }
   if(i===3){ renderCmdInlineList(); }
+  if(i===4){ renderRefGuideList(); }
+}
+
+// ─── 참고 지침 ───
+let _editingRefGuides=[];
+let _refGuideOpenSet=new Set();
+
+function renderRefGuideList(){
+  const list=$('ref-guide-list'); if(!list)return;
+  list.innerHTML='';
+  if(!_editingRefGuides.length){
+    list.innerHTML='<div style="font-size:12px;color:var(--t3);padding:8px 0">지침이 없어요. + 추가 버튼으로 만들어보세요.</div>';
+    return;
+  }
+  _editingRefGuides.forEach((g,idx)=>{
+    const isOpen=_refGuideOpenSet.has(idx);
+    const card=document.createElement('div');
+    card.className='kn-card'+(isOpen?' on':'');
+    card.id='ref-card-'+idx;
+    const titleSafe=(g.title||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    const contentSafe=(g.content||'').replace(/</g,'&lt;');
+    const preview=(g.content||'').slice(0,40)+((g.content||'').length>40?'…':'');
+    card.innerHTML=`
+      <div class="kn-card-hd" onclick="toggleRefGuide(${idx})" style="cursor:pointer">
+        <div class="kn-title" style="flex:1">${titleSafe||'<span style="color:var(--t3);font-style:italic">(제목 없음)</span>'}</div>
+        ${!isOpen&&preview?`<span style="font-size:10px;color:var(--t3);margin-right:4px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:1">${preview}</span>`:''}
+        <button class="kn-del" onclick="event.stopPropagation();deleteRefGuide(${idx})" title="삭제">✕</button>
+        <div class="kn-chv${isOpen?' on':''}" id="refChv-${idx}">▾</div>
+      </div>
+      <div class="kn-body${isOpen?' on':''}" id="refBody-${idx}">
+        <div style="padding:6px 12px 10px 12px;display:flex;flex-direction:column;gap:6px">
+          <input
+            style="width:100%;background:var(--s4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;padding:6px 8px;box-sizing:border-box;outline:none;transition:border-color 0.15s"
+            placeholder="제목 (예: 감정묘사지침, 섹스묘사지침1...)"
+            value="${titleSafe}"
+            onfocus="this.style.borderColor='var(--accent)'"
+            onblur="this.style.borderColor='var(--border2)'"
+            oninput="_editingRefGuides[${idx}].title=this.value;(document.querySelector('#ref-card-${idx} .kn-title')||{}).innerHTML=this.value||'<span style=&quot;color:var(--t3);font-style:italic&quot;>(제목 없음)</span>'">
+          <textarea
+            style="width:100%;background:var(--s4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:12px;font-family:'Noto Sans KR',sans-serif;padding:8px;resize:vertical;min-height:80px;box-sizing:border-box;line-height:1.7;outline:none;transition:border-color 0.15s"
+            placeholder="지침 내용..."
+            onfocus="this.style.borderColor='var(--accent)'"
+            onblur="this.style.borderColor='var(--border2)'"
+            oninput="_editingRefGuides[${idx}].content=this.value">${contentSafe}</textarea>
+        </div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+function toggleRefGuide(idx){
+  if(_refGuideOpenSet.has(idx)){_refGuideOpenSet.delete(idx);}
+  else{_refGuideOpenSet.add(idx);}
+  const isOpen=_refGuideOpenSet.has(idx);
+  const body=$('refBody-'+idx);
+  const chv=$('refChv-'+idx);
+  const card=$('ref-card-'+idx);
+  if(body){body.classList.toggle('on',isOpen);}
+  if(chv){chv.classList.toggle('on',isOpen);}
+  if(card){card.classList.toggle('on',isOpen);}
+  if(isOpen&&body){const inp=body.querySelector('input');if(inp)setTimeout(()=>inp.focus(),80);}
+}
+function bulkImportRefGuides(){
+  const panel=$('ref-bulk-panel');
+  if(panel.style.display==='none'){panel.style.display='';$('ref-bulk-inp').focus();}
+  else panel.style.display='none';
+}
+function confirmBulkRefGuides(){
+  const raw=$('ref-bulk-inp').value;
+  const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  let added=0;
+  lines.forEach(line=>{
+    // 구분자: －(전각), -(반각), : 순으로 시도
+    const sep=line.indexOf('－')>=0?'－':line.indexOf('-')>=0?'-':':';
+    const idx=line.indexOf(sep);
+    if(idx<=0){
+      // 구분자 없으면 전체를 내용으로
+      _editingRefGuides.push({title:'지침'+(added+1),content:line});
+    } else {
+      const title=line.slice(0,idx).trim();
+      const content=line.slice(idx+sep.length).trim();
+      if(content) _editingRefGuides.push({title,content});
+    }
+    added++;
+  });
+  $('ref-bulk-inp').value='';
+  $('ref-bulk-panel').style.display='none';
+  renderRefGuideList();
+}
+function addRefGuide(){
+  const newIdx=_editingRefGuides.length;
+  _editingRefGuides.push({title:'',content:''});
+  _refGuideOpenSet.add(newIdx);
+  renderRefGuideList();
+  const body=$('refBody-'+newIdx);
+  if(body){const inp=body.querySelector('input');if(inp)setTimeout(()=>inp.focus(),80);}
+}
+function deleteRefGuide(idx){
+  _editingRefGuides.splice(idx,1);
+  // openSet 인덱스 재조정
+  const newSet=new Set();
+  _refGuideOpenSet.forEach(i=>{if(i<idx)newSet.add(i);else if(i>idx)newSet.add(i-1);});
+  _refGuideOpenSet=newSet;
+  renderRefGuideList();
 }
 function openCharModal(editing=false){
   if(!editing) D.editing=null;
@@ -4403,6 +4616,8 @@ function openCharModal(editing=false){
   renderPromptLog();
   if(D.editing){const ch=D.chars.find(x=>x.id===D.editing);if(ch&&ch.knowledge)D._editKn=JSON.parse(JSON.stringify(ch.knowledge));else D._editKn=[];}else{D._editKn=[];}
   if(D.editing){const ch=D.chars.find(x=>x.id===D.editing);if(ch&&ch.commands)D._editCmds=JSON.parse(JSON.stringify(ch.commands));else D._editCmds=[];}else{D._editCmds=[];}
+  if(D.editing){const ch=D.chars.find(x=>x.id===D.editing);if(ch&&ch.refGuides)_editingRefGuides=JSON.parse(JSON.stringify(ch.refGuides));else _editingRefGuides=[];}else{_editingRefGuides=[];}
+  _refGuideOpenSet=new Set();
   updateKnCountBadge();
   openModal('char-modal');
 }
@@ -4488,7 +4703,7 @@ function saveChar(){
   const newPrompt=$('c-prompt').value.trim();
   const isEditing=!!D.editing;
   const prevChar=isEditing?D.chars.find(x=>x.id===D.editing):null;
-  const promptChanged=isEditing&&prevChar&&prevChar.prompt!==newPrompt;
+  const promptChanged=isEditing&&prevChar;  // 저장할 때마다 무조건 버전 올림
   const ch={
     id:D.editing||Date.now()+'',
     createdAt:D.editing?(D.chars.find(x=>x.id===D.editing)||{}).createdAt||1780099200000:Date.now(),
@@ -4498,6 +4713,7 @@ function saveChar(){
     knowledge:D._editKn||[],
     commands:D._editCmds||[],
     scenes:_editingScenes.filter(s=>s.content.trim()),
+    refGuides:_editingRefGuides.filter(g=>g.content&&g.content.trim()),
     prompt:newPrompt
   };
   if(D.editing){
@@ -4506,9 +4722,8 @@ function saveChar(){
     if(promptChanged){
       const vNum=(prevChar._promptVer||1)+1;
       ch._promptVer=vNum;
-      if(!ch._promptLog)ch._promptLog=prevChar._promptLog||[];
-      ch._promptLog.push({v:vNum,time:now()});
-      if(ch._promptLog.length>10)ch._promptLog=ch._promptLog.slice(-10);
+      // 최신 1건으로 덮어쓰기
+      ch._promptLog=[{v:vNum,time:now()}];
     } else {
       ch._promptVer=prevChar._promptVer||1;
       ch._promptLog=prevChar._promptLog||[];
@@ -5053,7 +5268,7 @@ function renderKnInlineList(){
   const kns=getEditingKn();
   list.innerHTML='';
   if(!kns.length){
-    list.innerHTML='<div style="font-size:12px;color:var(--t3);padding:2px 0 8px">지식이 없어요. 위 버튼으로 추가하세요.</div>';
+    list.innerHTML='<div style="font-size:12px;color:var(--t3);padding:2px 0 8px">트리거가 없어요. 위 버튼으로 추가하세요.</div>';
     return;
   }
   kns.forEach((kn,i)=>{
@@ -5162,7 +5377,7 @@ function renderKnList(){
   const kns=getEditingKn();
   list.innerHTML='';
   if(!kns.length){
-    list.innerHTML='<div style="font-size:12px;color:var(--t3);padding:2px 0 8px">지식이 없어요. 위 버튼으로 추가하세요.</div>';
+    list.innerHTML='<div style="font-size:12px;color:var(--t3);padding:2px 0 8px">트리거가 없어요. 위 버튼으로 추가하세요.</div>';
     return;
   }
   kns.forEach((kn,i)=>{
@@ -5540,7 +5755,6 @@ function renderPromptLog(){
   if(!wrap||!list)return;
   const c=D.editing?D.chars.find(x=>x.id===D.editing):null;
   const log=(c&&c._promptLog)||[];
-  const isLight=document.body.classList.contains('light');
   list.innerHTML='';
   const ci=$('char-created-info');
   if(ci) ci.style.display='none';
@@ -5548,17 +5762,17 @@ function renderPromptLog(){
   const hasCreated=c&&c.createdAt;
   if(hasLog||hasCreated){
     const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:5px 10px;border-radius:20px;background:var(--s3);font-size:11px;color:var(--t3)';
+    row.style.cssText='display:inline-flex;align-items:center;gap:0;padding:4px 12px;border-radius:20px;background:var(--s3);font-size:11px;color:var(--t3)';
     let txt='';
     if(hasCreated){
       const cd=new Date(c.createdAt);
-      const cdStr=cd.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'})+' '+cd.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-      txt+='✦ 최초 생성 · '+cdStr;
+      const cdStr=cd.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'})+' '+cd.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      txt='✦ 생성 '+cdStr;
     }
     if(hasLog){
       const latest=log[log.length-1];
-      if(txt) txt+='　';
-      txt+='✦ 수정 v'+latest.v+' · '+latest.time;
+      if(txt) txt+='  ';
+      txt+='✎ v'+latest.v+' · '+latest.time;
     }
     row.textContent=txt;
     list.appendChild(row);
@@ -5602,6 +5816,7 @@ function openSceneModal(idx){
   const sc=_editingScenes[idx];
   if(!sc){return;}
   $('scene-modal-title').value=sc.title||'';
+  $('scene-modal-setting').value=sc.setting||'';
   $('scene-modal-body').value=sc.content||'';
   $('scene-modal-count').textContent=(sc.content||'').length+'자';
   $('scene-modal-del').style.display='inline-flex';
@@ -5616,9 +5831,10 @@ function closeSceneModal(){
 }
 function saveSceneFromModal(){
   const title=$('scene-modal-title').value.trim();
+  const setting=$('scene-modal-setting').value.trim();
   const content=$('scene-modal-body').value.trim();
   if(!content){$('scene-modal-body').focus();return;}
-  _editingScenes[_sceneModalIdx]={..._editingScenes[_sceneModalIdx],title:title||'시작 장면',content};
+  _editingScenes[_sceneModalIdx]={..._editingScenes[_sceneModalIdx],title:title||'시작 장면',setting,content};
   $('scene-modal').classList.add('hide');
   renderSceneList();
 }
@@ -5827,7 +6043,7 @@ function openStatsModal(){
       const cW=l.cacheWrite||0;
       const outIsReal=!isGemini&&outTok>0;
       const inIsReal=inTok>0;
-      // 토큰 상세 행
+      const turnNum=totalTurns-log.length+i+1;
       const tokRow=
         '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:5px">'+
           '<div style="background:var(--s4);border-radius:5px;padding:4px 6px;text-align:center">'+
@@ -5850,7 +6066,7 @@ function openStatsModal(){
         ((!outIsReal||!inIsReal)?'<div style="font-size:9px;color:var(--t3);margin-top:3px">* 추정값'+(isGemini?' (Gemini는 토큰 수를 반환하지 않아요)':'')+'</div>':'');
       return '<div style="padding:8px 10px;background:var(--s3);border-radius:8px;font-size:12px">'+
         '<div style="display:flex;align-items:center;gap:6px">'+
-          '<span style="color:var(--t3);flex-shrink:0;min-width:28px">'+(i+1)+'턴</span>'+
+          '<span style="color:var(--t3);flex-shrink:0;min-width:28px">'+turnNum+'턴</span>'+
           '<span style="background:var(--s4);padding:1px 6px;border-radius:10px;font-size:10px;color:var(--t2);flex-shrink:0">'+modelLabel(l.model)+'</span>'+
           '<span style="flex:1"></span>'+
           '<span style="color:var(--accent);font-weight:700">'+krwStr+'</span>'+
@@ -5859,8 +6075,14 @@ function openStatsModal(){
         tokRow+
       '</div>';
     }).join('');
+    const avgKRW=totalTurns>0?(totalKRW/totalTurns):0;
+    const avgStr=avgKRW<1?'<1원':avgKRW.toFixed(1)+'원';
     logHtml='<div style="font-size:11px;color:var(--t3);margin:12px 0 6px;font-weight:600;letter-spacing:0.5px">최근 턴별 상세</div>'+
-      '<div style="display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto">'+rows+'</div>';
+      '<div style="display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto">'+rows+'</div>'+
+      '<div style="margin-top:8px;padding:8px 12px;background:var(--s3);border-radius:10px;font-size:12px;color:var(--t2);display:flex;justify-content:space-between;align-items:center">'+
+        '<span>1턴 평균</span>'+
+        '<span style="color:var(--accent);font-weight:700">'+avgStr+'</span>'+
+      '</div>';
   } else {
     logHtml='<div style="font-size:12px;color:var(--t3);margin-top:10px;text-align:center">아직 대화 기록이 없어요</div>';
   }
@@ -5877,7 +6099,7 @@ function openStatsModal(){
     const KRW=1420;
     const activeModel=getRoomApi()==='gemini'?D.geminiModel:D.model;
     let pricePerMTok=3; // sonnet 기본
-    if(activeModel&&activeModel.includes('opus')) pricePerMTok=15;
+    if(activeModel&&activeModel.includes('opus')) pricePerMTok=5;
     else if(activeModel&&activeModel.includes('haiku')) pricePerMTok=0.8;
     else if(activeModel==='gemini-2.5-pro') pricePerMTok=1.25;
     else if(activeModel==='gemini-2.5-flash') pricePerMTok=0.075;
@@ -5955,8 +6177,8 @@ function clearChat(){
 // ── 출력량 슬라이더 ──
 const LENGTH_PRESETS = [
   { label:'짧게',   tokens:1024,  prompt:'STRICT LENGTH LIMIT: 1~2문단. 절대 초과 금지. 대사 위주, 묘사 최소화.' },
-  { label:'조금',   tokens:2048,  prompt:'STRICT LENGTH LIMIT: 2~3문단. 절대 초과 금지. 핵심 묘사와 대사 중심.' },
-  { label:'보통',   tokens:4096,  prompt:'STRICT LENGTH LIMIT: 4~5문단. 절대 초과 금지. 묘사와 대사의 균형.' },
+  { label:'조금',   tokens:2048,  prompt:'STRICT LENGTH LIMIT: 700~800자 이내. 절대 초과 금지. 핵심 묘사와 대사 중심.' },
+  { label:'보통',   tokens:2048,  prompt:'STRICT LENGTH LIMIT: 900자 이내. 절대 초과 금지. 묘사와 대사의 균형.' },
   { label:'길게',   tokens:8192,  prompt:'STRICT LENGTH LIMIT: 6~8문단. 절대 초과 금지. 풍부한 묘사와 감정선.' },
   { label:'최대',   tokens:16000, prompt:'분량 제한 없이 충분히 깊고 길게 응답합니다.' },
 ];
@@ -6017,11 +6239,11 @@ function calcTurnCostKRW(outputText, model, inTokOverride, cacheRead, cacheWrite
   } else if(model==='gemini-2.5-flash-lite'){
     costUSD=(plainIn/1e6)*0.01+(outTok/1e6)*0.04;
   } else if(model&&(model.includes('opus-4-8')||model.includes('opus-4-7'))){
-    costUSD=(plainIn/1e6)*15+(cR/1e6)*1.5+(cW/1e6)*18.75+(outTok/1e6)*75;
+    costUSD=(plainIn/1e6)*5+(cR/1e6)*0.5+(cW/1e6)*6.25+(outTok/1e6)*25;
   } else if(model&&model.includes('opus-4-6')){
-    costUSD=(plainIn/1e6)*15+(cR/1e6)*1.5+(cW/1e6)*18.75+(outTok/1e6)*75;
+    costUSD=(plainIn/1e6)*5+(cR/1e6)*0.5+(cW/1e6)*6.25+(outTok/1e6)*25;
   } else if(model&&model.includes('haiku')){
-    costUSD=(plainIn/1e6)*0.8+(cR/1e6)*0.08+(cW/1e6)*1.0+(outTok/1e6)*4;
+    costUSD=(plainIn/1e6)*1+(cR/1e6)*0.1+(cW/1e6)*1.25+(outTok/1e6)*5;
   } else {
     costUSD=(plainIn/1e6)*3+(cR/1e6)*0.3+(cW/1e6)*3.75+(outTok/1e6)*15;
   }
@@ -6034,7 +6256,7 @@ function logTurnCost(roomId, content, model, breakdown, inTok, cacheRead, cacheW
   const krw=calcTurnCostKRW(content,model,inTok,cacheRead||0,cacheWrite||0,outTok||0);
   D.costTotal[roomId]=(D.costTotal[roomId]||0)+krw;
   D.costLog[roomId].push({model,krw,time:now(),breakdown:breakdown||null,inTok:inTok||0,cacheRead:cacheRead||0,cacheWrite:cacheWrite||0,outTok:outTok||0});
-  if(D.costLog[roomId].length>5) D.costLog[roomId]=D.costLog[roomId].slice(-5);
+  if(D.costLog[roomId].length>10) D.costLog[roomId]=D.costLog[roomId].slice(-10);
   save();
 }
 // 입력 구성 계산 (켜진 것만)
