@@ -477,6 +477,8 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
   font-size:var(--chat-font-size,15px);line-height:1.75;white-space:pre-wrap;word-break:break-word;
   cursor:pointer;
 }
+/* bub-text: msg-bub 안 텍스트 컨테이너 — 폰트 크기 고정 상속 */
+.bub-text{font-size:var(--chat-font-size,15px);line-height:1.75}
 .msg-row:not(.me) .msg-bub{
   background:var(--ai-bub);border:none;
   border-top-left-radius:4px;color:var(--text);
@@ -6574,36 +6576,103 @@ function toggleParaMode(){
     btn.style.borderColor = _capParaMode ? 'var(--accent2)' : 'var(--border2)';
   }
   if(_capParaMode){
-    // 문단 선택 모드: 버블 클릭 핸들러 재설정
+    // 문단 선택 모드: <br> 기준으로 문단 쪼개기
+    const chat = document.getElementById('chat');
+    const savedScroll = chat ? chat.scrollTop : 0;
     document.querySelectorAll('#chat .msg-row').forEach((row, ri)=>{
       if(row._capHandler){ row.removeEventListener('click', row._capHandler); }
       const bub = row.querySelector('.bub-text') || row.querySelector('.msg-bub');
       if(!bub) return;
-      // 버블 내용을 문단으로 쪼개기
-      const html = bub.innerHTML;
-      const paras = html.split(/<br\s*\/?>/gi).filter(p=>p.trim());
-      if(paras.length <= 1){ return; } // 한 문단이면 문단 모드 의미없음
+      const origHTML = bub.innerHTML;
+      // <br> 기준 split — 각 조각은 HTML 그대로 보존
+      const pieces = origHTML.split(/<br\s*\/?>/gi);
+      // 실제 텍스트 있는 문단이 2개 이상일 때만 분할
+      const nonEmpty = pieces.filter(p => p.replace(/<[^>]+>/g,'').trim().length > 0);
+      if(nonEmpty.length <= 1) return;
+      bub._origHTML = origHTML;
       bub.innerHTML = '';
       if(!_capParaSelected.has(ri)) _capParaSelected.set(ri, new Set());
-      paras.forEach((p, pi)=>{
-        const span = document.createElement('div');
-        span.style.cssText = 'padding:2px 0;cursor:pointer;border-radius:4px;transition:background 0.1s';
-        span.innerHTML = p;
-        span.dataset.paraIdx = pi;
-        span.addEventListener('click', e=>{
+
+      // 선택 상태에 따라 인접 문단 테두리 합치기
+      const selDivs = []; // 실제 선택 가능한 div 목록 (순서대로)
+      function updateBorders(){
+        selDivs.forEach((d, i)=>{
+          const pi = parseInt(d.dataset.paraIdx);
+          const sel = _capParaSelected.get(ri);
+          if(!sel.has(pi)){ d.style.background=''; d.style.boxShadow=''; d.style.borderRadius='4px'; return; }
+          d.style.background='rgba(157,127,244,0.15)';
+          const prevSel = i>0 && sel.has(parseInt(selDivs[i-1].dataset.paraIdx));
+          const nextSel = i<selDivs.length-1 && sel.has(parseInt(selDivs[i+1].dataset.paraIdx));
+          // 위아래 인접 선택 시 해당 방향 radius 제거
+          const tl = prevSel?'0':'4px', tr = prevSel?'0':'4px';
+          const bl = nextSel?'0':'4px', br = nextSel?'0':'4px';
+          d.style.borderRadius = `${tl} ${tr} ${br} ${bl}`;
+          // boxShadow: 인접 선택된 쪽 border 숨기기
+          const top    = prevSel ? '0px' : '1px';
+          const bottom = nextSel ? '0px' : '1px';
+          d.style.boxShadow = `inset 1px ${top} 1px 0px var(--accent), inset -1px 0px 1px 0px var(--accent), inset 0px -${bottom} 1px 0px var(--accent)`;
+        });
+      }
+
+      let selectIdx = 0;
+      pieces.forEach((html)=>{
+        const isEmpty = html.replace(/<[^>]+>/g,'').trim().length === 0;
+        if(isEmpty){
+          bub.appendChild(document.createElement('br'));
+          return;
+        }
+        const pi = selectIdx++;
+        const div = document.createElement('div');
+        div.style.cssText = 'padding:0;cursor:pointer;display:block;border-radius:4px;transition:background 0.1s,box-shadow 0.1s';
+        div.innerHTML = html;
+        div.dataset.paraIdx = pi;
+        selDivs.push(div);
+        div.addEventListener('click', e=>{
           e.stopPropagation();
           const sel = _capParaSelected.get(ri);
-          if(sel.has(pi)){ sel.delete(pi); span.style.background=''; span.style.outline=''; }
-          else { sel.add(pi); span.style.background='rgba(157,127,244,0.15)'; span.style.outline='1px solid var(--accent)'; }
+          if(sel.has(pi)) sel.delete(pi);
+          else sel.add(pi);
+          updateBorders();
         });
-        bub.appendChild(span);
+        bub.appendChild(div);
       });
     });
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(chat) chat.scrollTop = savedScroll;
+    }));
     showToast('문단을 탭해서 선택하세요');
   } else {
     // 문단 모드 해제: 원래 버블로 복원
-    renderChat();
-    openCaptureMode();
+    const chat = document.getElementById('chat');
+    const savedScroll = chat ? chat.scrollTop : 0;
+    document.querySelectorAll('#chat .msg-row').forEach((row, i) => {
+      const bub = row.querySelector('.bub-text') || row.querySelector('.msg-bub');
+      if(bub && bub._origHTML != null){ bub.innerHTML = bub._origHTML; bub._origHTML = null; bub.style.minHeight = ''; }
+      // opacity/outline 강제 초기화 (cap-selected 유지)
+      row.style.opacity = row.classList.contains('cap-selected') ? '1' : '0.45';
+      row.style.outline = '';
+      // 버블 클릭 핸들러 재부착 (버블 선택 모드로 복귀)
+      if(row._capHandler) row.removeEventListener('click', row._capHandler);
+      row._capHandler = function(e){
+        if(!_capMode) return;
+        e.stopPropagation();
+        if(_capSelected.has(i)){ _capSelected.delete(i); row.classList.remove('cap-selected'); row.style.opacity='0.45'; }
+        else { _capSelected.add(i); row.classList.add('cap-selected'); row.style.opacity='1'; }
+        document.getElementById('cap-mode-count').textContent = _capSelected.size + '개 선택';
+      };
+      row.addEventListener('click', row._capHandler);
+    });
+    // cap-mode-style 확인 (없으면 추가)
+    if(!document.getElementById('cap-mode-style')){
+      const st = document.createElement('style');
+      st.id = 'cap-mode-style';
+      st.textContent = '#chat .msg-row{opacity:0.45;transition:opacity 0.15s} #chat .msg-row.cap-selected{opacity:1;outline:2px solid var(--accent);border-radius:12px}';
+      document.head.appendChild(st);
+    }
+    document.getElementById('cap-mode-count').textContent = _capSelected.size + '개 선택';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(chat) chat.scrollTop = savedScroll;
+    }));
   }
 }
 
@@ -6663,23 +6732,40 @@ function captureSelected(){
 
   // 문단 선택 모드: 선택된 문단으로 임시 row 만들어서 캡처
   if(_capParaMode){
-    let combined = '';
+    // 선택된 문단 div들을 수집 (순서 유지)
+    const selectedDivs = [];
     allRows.forEach((row, ri)=>{
       const sel = _capParaSelected.get(ri);
       if(!sel||!sel.size) return;
       const paras = [...row.querySelectorAll('div[data-para-idx]')];
-      paras.forEach((p,pi)=>{ if(sel.has(pi)) combined += p.innerHTML + '<br>'; });
+      const rowDivs = paras.filter((p,pi) => sel.has(pi));
+      if(rowDivs.length) selectedDivs.push(...rowDivs);
     });
-    if(!combined){ showToast('문단을 선택해주세요'); return; }
+    if(!selectedDivs.length){ showToast('문단을 선택해주세요'); return; }
+    // 원본 행 찾아서 말풍선 스타일 복사용 참조
+    const firstRow = allRows.find((row, ri)=>{
+      const sel = _capParaSelected.get(ri);
+      return sel && sel.size > 0;
+    });
     const tmpRow = document.createElement('div');
-    tmpRow.className = 'msg-row';
+    tmpRow.className = firstRow ? firstRow.className.replace(/\bcap-selected\b/,'').trim() : 'msg-row';
     const tmpBody = document.createElement('div'); tmpBody.className = 'msg-body';
-    const tmpBub = document.createElement('div'); tmpBub.className = 'msg-bub';
-    tmpBub.innerHTML = combined;
+    const tmpBub = document.createElement('div');
+    // 원본 버블의 클래스/배경색 복사
+    const origBub = firstRow && (firstRow.querySelector('.bub-text') || firstRow.querySelector('.msg-bub'));
+    tmpBub.className = origBub ? origBub.closest('.msg-bub').className : 'msg-bub';
+    if(origBub){
+      const cs = getComputedStyle(origBub.closest('.msg-bub') || origBub);
+      tmpBub.style.backgroundColor = cs.backgroundColor;
+      tmpBub.style.color = cs.color;
+      tmpBub.style.borderRadius = cs.borderRadius;
+      tmpBub.style.padding = cs.padding;
+    }
+    // 선택된 문단 innerHTML을 <br>로 구분해서 삽입
+    tmpBub.innerHTML = selectedDivs.map(d => d.innerHTML).join('<br>');
     tmpBody.appendChild(tmpBub); tmpRow.appendChild(tmpBody);
     document.getElementById('chat').appendChild(tmpRow);
     const rows = [tmpRow];
-    // 변수 선언 후 공통 캡처 로직으로
     _runCapture(rows, doHideName);
     setTimeout(()=>{ if(tmpRow.parentNode) tmpRow.remove(); }, 5000);
     return;
@@ -6731,9 +6817,7 @@ function _runCapture(rows, doHideName){
       if(!ce[i])return;
       const s=getComputedStyle(el);
       const bg=s.backgroundColor, col=s.color, br=s.borderRadius;
-      // 투명/흰색 배경은 스킵 (라이트모드에서 버블 색 날아가는 문제 방지)
-      const isWhite = bg==='rgb(255, 255, 255)'||bg==='rgba(255,255,255,1)';
-      if(bg&&bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent'&&!isWhite) ce[i].style.backgroundColor=bg;
+      if(bg&&bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent') ce[i].style.backgroundColor=bg;
       if(col&&col!=='rgb(0, 0, 0)') ce[i].style.color=col;
       if(br&&br!=='0px') ce[i].style.borderRadius=br;
     });
@@ -6804,20 +6888,30 @@ function _runCapture(rows, doHideName){
       canvas.toBlob(blob=>{
         const url=URL.createObjectURL(blob);
         exitCaptureMode();
-        // 이미지 오버레이로 표시 - 꾹 눌러서 저장
+        // 이미지 오버레이로 표시
         const ov=document.createElement('div');
-        ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px';
+        ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px';
         const img=document.createElement('img');
         img.src=url;
-        img.style.cssText='max-width:95vw;max-height:80vh;object-fit:contain;border-radius:10px';
+        img.style.cssText='max-width:95vw;max-height:72vh;object-fit:contain;border-radius:10px';
         const hint=document.createElement('div');
-        hint.style.cssText='font-size:13px;color:#fff;opacity:0.8';
-        hint.textContent='이미지를 꾹 눌러서 저장하세요';
+        hint.style.cssText='font-size:13px;color:#fff;opacity:0.85;text-align:center;line-height:1.6';
+        // iOS에서는 꾹 눌러서 저장, 다운로드 버튼도 제공
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        hint.textContent = isIOS ? '이미지를 꾹 눌러 → 사진 앱에 저장하세요' : '이미지를 꾹 눌러 저장하거나 아래 버튼을 사용하세요';
+        // 다운로드 버튼 (데스크톱 및 안드로이드용)
+        const dlBtn=document.createElement('a');
+        dlBtn.href=url;
+        const c=D.chars.find(x=>x.id===D.activeChar);
+        dlBtn.download=(c?c.name:'chat')+'_'+new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace(/\./g,'')+'.png';
+        dlBtn.style.cssText='padding:8px 22px;border-radius:20px;border:none;background:var(--accent2,#7c5ce8);color:#fff;font-size:13px;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block';
+        dlBtn.textContent='💾 다운로드';
+        dlBtn.onclick=()=>{ setTimeout(()=>{ ov.remove(); URL.revokeObjectURL(url); },500); };
         const closeBtn=document.createElement('button');
         closeBtn.textContent='닫기';
         closeBtn.style.cssText='padding:8px 24px;border-radius:20px;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#fff;font-size:13px;cursor:pointer;font-family:inherit';
         closeBtn.onclick=()=>{ ov.remove(); URL.revokeObjectURL(url); };
-        ov.appendChild(img); ov.appendChild(hint); ov.appendChild(closeBtn);
+        ov.appendChild(img); ov.appendChild(hint); ov.appendChild(dlBtn); ov.appendChild(closeBtn);
         document.body.appendChild(ov);
       },'image/png');
     }).catch(()=>{
@@ -6946,15 +7040,26 @@ function captureAndSave(){
       if(savingMsg) savingMsg.style.display='none';
       canvas.toBlob(blob => {
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
         const c = D.chars.find(x=>x.id===D.activeChar);
-        a.href = url;
-        a.download = (c?c.name:'chat')+'_'+new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','').replace(/ /g,'')+'.png';
-        document.body.appendChild(a); a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        closeModal('capture-modal');
-        showToast('저장됐어요 ✓');
+        const filename = (c?c.name:'chat')+'_'+new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','').replace(/ /g,'')+'.png';
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if(isIOS){
+          // iOS: 새 탭에서 열기 → 꾹 눌러서 저장
+          if(savingMsg) savingMsg.style.display='none';
+          closeModal('capture-modal');
+          showToast('탭에서 이미지 꾹 눌러 저장하세요');
+          setTimeout(()=>{ window.open(url, '_blank'); }, 300);
+        } else {
+          // Android / 데스크톱: a.click() 다운로드
+          const a = document.createElement('a');
+          a.href = url; a.download = filename;
+          document.body.appendChild(a); a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          if(savingMsg) savingMsg.style.display='none';
+          closeModal('capture-modal');
+          showToast('저장됐어요 ✓');
+        }
       }, 'image/png');
     }).catch(() => {
       if(document.body.contains(clone)) document.body.removeChild(clone);
