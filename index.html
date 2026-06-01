@@ -6609,9 +6609,10 @@ function captureSelected(){
   const chat = document.getElementById('chat');
   const chatW = chat.offsetWidth;
 
-  // 캡처 모드 스타일 임시 제거
+  // 캡처 모드 스타일 임시 제거 + 모든 row opacity 1로
   const st = document.getElementById('cap-mode-style');
   if(st) st.textContent = '';
+  document.querySelectorAll('#chat .msg-row').forEach(r=>r.style.opacity='1');
 
   const clone = document.createElement('div');
   clone.style.cssText = [
