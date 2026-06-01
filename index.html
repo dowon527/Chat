@@ -4246,7 +4246,7 @@ function renderModelCards(){
     card.className='model-card'+(D.model===m.value?' sel':'');
     const chk=D.model===m.value?'<svg width="9" height="9" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':'';
     card.innerHTML=`<div class="model-card-icon">${m.icon}</div><div class="model-card-info"><div class="model-card-name">${m.name}</div><div class="model-card-desc">${m.desc}</div></div><div class="model-card-check">${chk}</div>`;
-    card.onclick=()=>{D.model=m.value;renderModelCards();};
+    card.onclick=()=>{D.model=m.value;renderModelCards();updateCostHint();};
     cl.appendChild(card);
   });
   GEMINI_MODELS.forEach(m=>{
@@ -4254,7 +4254,7 @@ function renderModelCards(){
     card.className='model-card'+(D.geminiModel===m.value?' sel':'');
     const chk=D.geminiModel===m.value?'<svg width="9" height="9" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':'';
     card.innerHTML=`<div class="model-card-icon">${m.icon}</div><div class="model-card-info"><div class="model-card-name">${m.name}</div><div class="model-card-desc">${m.desc}</div></div><div class="model-card-check">${chk}</div>`;
-    card.onclick=()=>{D.geminiModel=m.value;renderModelCards();};
+    card.onclick=()=>{D.geminiModel=m.value;renderModelCards();updateCostHint();};
     gm.appendChild(card);
   });
 }
@@ -6296,7 +6296,7 @@ function calcCostKRW(outputTokens, model){
   const inTok=3000;
   let costUSD=0;
   if(model&&model.includes('gemini-3.5')){
-    costUSD=(plainIn/1e6)*1.5+(cR/1e6)*0.375+(cW/1e6)*1.875+(outTok/1e6)*9;
+    costUSD=(inTok/1e6)*1.5+(outputTokens/1e6)*9;
   } else if(model==='gemini-2.5-pro'){
     costUSD=(inTok/1e6)*1.25+(outputTokens/1e6)*10;
   } else if(model==='gemini-2.5-flash'){
