@@ -665,9 +665,9 @@ body.light .empty p{color:#85837D!important}
 /* ─── TABS ─── */
 .tabs{display:flex;gap:2px;background:var(--s3);border-radius:var(--r);padding:3px;margin-bottom:18px}
 .tab{
-  flex:1;padding:7px;text-align:center;font-size:13px;
+  flex:1;padding:6px 2px;text-align:center;font-size:11px;
   border-radius:8px;cursor:pointer;color:var(--t2);transition:all 0.15s;border:none;background:transparent;
-  font-family:'Noto Sans KR',sans-serif;
+  font-family:'Noto Sans KR',sans-serif;white-space:nowrap;
 }
 .tab.on{background:var(--s2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.3)}
 
@@ -780,12 +780,12 @@ body.light .empty p{color:#85837D!important}
 .emo-preview img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .emo-hint{font-size:11px;color:var(--t3);line-height:1.7}
 .emo-grid{
-  display:grid;grid-template-columns:repeat(9,1fr);gap:4px;
-  margin-top:6px;max-height:130px;overflow-y:auto;
+  display:grid;grid-template-columns:repeat(9,1fr);gap:3px;
+  margin-top:6px;max-height:88px;overflow-y:auto;
 }
 .emo-opt{
-  width:100%;aspect-ratio:1;border-radius:7px;border:1px solid transparent;
-  background:var(--s4);cursor:pointer;font-size:18px;display:flex;
+  width:100%;aspect-ratio:1;border-radius:6px;border:1px solid transparent;
+  background:var(--s4);cursor:pointer;font-size:15px;display:flex;
   align-items:center;justify-content:center;transition:all 0.12s;
 }
 .emo-opt:hover{background:var(--s3);border-color:var(--border2)}
@@ -804,7 +804,7 @@ body.light .empty p{color:#85837D!important}
 input[type=file]{display:none}
 
 /* genre tag */
-.genre-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.genre-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;max-height:72px;overflow-y:auto}
 .gtag{
   padding:5px 12px;border-radius:20px;font-size:12px;
   border:none;background:var(--s4);
@@ -929,7 +929,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 
 /* char editor tabs */
 .char-ed-body{display:none}
-.char-ed-body.on{display:block}
+.char-ed-body.on{display:block;min-height:380px;overflow-y:auto}
 
 /* 시작 장면 */
 .scene-card{
@@ -1604,11 +1604,11 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
     </div>
     <div class="modal-body">
       <div class="tabs">
-        <button class="tab on" id="ctab-0" onclick="switchCharTab(0)">기본 정보</button>
+        <button class="tab on" id="ctab-0" onclick="switchCharTab(0)">기본</button>
         <button class="tab" id="ctab-1" onclick="switchCharTab(1)">프롬프트</button>
         <button class="tab" id="ctab-2" onclick="switchCharTab(2)">트리거</button>
         <button class="tab" id="ctab-3" onclick="switchCharTab(3)">명령어</button>
-        <button class="tab" id="ctab-4" onclick="switchCharTab(4)">참고지침</button>
+        <button class="tab" id="ctab-4" onclick="switchCharTab(4)">지침</button>
       </div>
 
       <!-- TAB 0 -->
@@ -1626,6 +1626,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
           <label class="fl">스토리 이름</label>
           <input class="fi" id="c-name" placeholder="예: 해린, 시온, 루카스">
         </div>
+
         <div class="fg">
           <label class="fl">장르</label>
           <div class="genre-tags" id="genre-tags"></div>
@@ -1716,11 +1717,11 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <div>
             <div style="font-size:12px;font-weight:600;color:var(--text)">📋 참고 지침</div>
-            <div style="font-size:10px;color:var(--t3);margin-top:2px">매 턴 AI가 상황에 맞는 지침 최대 5개 자동 선택 · 출력 금지</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:2px">상황별 최대 5개 자동 선택 · 출력 금지</div>
           </div>
           <div style="display:flex;gap:5px">
-            <button onclick="bulkImportRefGuides()" style="padding:3px 7px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--t2);cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">일괄추가</button>
-            <button onclick="addRefGuide()" style="padding:3px 7px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--accent);cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--ag2)'" onmouseout="this.style.background='transparent'">+ 추가</button>
+            <button onclick="bulkImportRefGuides()" style="padding:3px 7px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--t2);cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s;white-space:nowrap" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">일괄추가</button>
+            <button onclick="addRefGuide()" style="padding:3px 7px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--accent);cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s;white-space:nowrap" onmouseover="this.style.background='var(--ag2)'" onmouseout="this.style.background='transparent'">+ 추가</button>
           </div>
         </div>
         <!-- 일괄 추가 패널 -->
@@ -2301,32 +2302,9 @@ function buildEmoGrid(){
   });
 }
 function buildGenreTags(){
-  const g=$('genre-tags'); g.innerHTML='';
+  const g=$('genre-tags'); if(!g)return; g.innerHTML='';
   const sel=Array.isArray(D._editGenres)?D._editGenres:(D._editGenres=[]);
   const builtinIds=GENRES.map(gn=>gn.id);
-
-  // 장르 태그 (#태그 형태, 클릭 선택 가능)
-  GENRES.forEach(gn=>{
-    const t=document.createElement('div');
-    t.className='gtag'+(sel.includes(gn.id)?' sel':'');
-    t.textContent='#'+gn.l;
-    let _touched=false;
-    t.addEventListener('touchend',function(e){
-      e.preventDefault();
-      _touched=true;
-      if(sel.includes(gn.id)){sel.splice(sel.indexOf(gn.id),1);}
-      else{sel.push(gn.id);}
-      t.classList.toggle('sel',sel.includes(gn.id));
-      setTimeout(function(){_touched=false;},400);
-    },{passive:false});
-    t.addEventListener('click',function(){
-      if(_touched)return;
-      if(sel.includes(gn.id)){sel.splice(sel.indexOf(gn.id),1);}
-      else{sel.push(gn.id);}
-      t.classList.toggle('sel',sel.includes(gn.id));
-    });
-    g.appendChild(t);
-  });
 
   // 기존 커스텀 장르 복원
   sel.filter(s=>!builtinIds.includes(s)).forEach(v=>{
