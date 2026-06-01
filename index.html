@@ -6873,7 +6873,8 @@ function _showCaptureOverlay(data){
   const { groups, bgColor, isLight } = data;
   const emColor = isLight ? '#85837D' : 'rgba(228,226,240,0.55)';
   const chatEl = document.getElementById('chat');
-  const chatW = chatEl ? chatEl.clientWidth : window.innerWidth;
+  const mainEl = document.getElementById('main');
+  const chatW = (mainEl || chatEl) ? (mainEl || chatEl).clientWidth : window.innerWidth;
   const fontFamily = getComputedStyle(document.body).fontFamily;
 
   const wrap = document.createElement('div');
