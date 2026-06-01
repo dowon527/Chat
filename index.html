@@ -6636,13 +6636,22 @@ function openCaptureMode(){
 
 function exitCaptureMode(){
   _capMode = false;
+  _capParaMode = false;
   _capSelected.clear();
+  _capParaSelected.clear();
   document.getElementById('capture-mode-bar').style.display = 'none';
   document.getElementById('input-wrap').style.display = D.activeRoom ? 'block' : 'none';
   const st = document.getElementById('cap-mode-style');
   if(st) st.remove();
   document.querySelectorAll('#chat .msg-row').forEach(row => {
     row.classList.remove('cap-selected');
+    row.style.opacity = '';
+    row.style.outline = '';
+    // 문단 선택 div 원복
+    row.querySelectorAll('div[data-para-idx]').forEach(p => {
+      p.style.background = '';
+      p.style.outline = '';
+    });
     if(row._capHandler){ row.removeEventListener('click', row._capHandler); delete row._capHandler; }
   });
 }
@@ -6794,9 +6803,22 @@ function _runCapture(rows, doHideName){
       document.body.removeChild(clone);
       canvas.toBlob(blob=>{
         const url=URL.createObjectURL(blob);
-        window.open(url,'_blank');
         exitCaptureMode();
-        showToast('길게 눌러서 사진 저장하세요 📷');
+        // 이미지 오버레이로 표시 - 꾹 눌러서 저장
+        const ov=document.createElement('div');
+        ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px';
+        const img=document.createElement('img');
+        img.src=url;
+        img.style.cssText='max-width:95vw;max-height:80vh;object-fit:contain;border-radius:10px';
+        const hint=document.createElement('div');
+        hint.style.cssText='font-size:13px;color:#fff;opacity:0.8';
+        hint.textContent='이미지를 꾹 눌러서 저장하세요';
+        const closeBtn=document.createElement('button');
+        closeBtn.textContent='닫기';
+        closeBtn.style.cssText='padding:8px 24px;border-radius:20px;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#fff;font-size:13px;cursor:pointer;font-family:inherit';
+        closeBtn.onclick=()=>{ ov.remove(); URL.revokeObjectURL(url); };
+        ov.appendChild(img); ov.appendChild(hint); ov.appendChild(closeBtn);
+        document.body.appendChild(ov);
       },'image/png');
     }).catch(()=>{
       if(document.body.contains(clone))document.body.removeChild(clone);
