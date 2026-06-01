@@ -6872,12 +6872,8 @@ function _collectCaptureData(doHideName){
 function _showCaptureOverlay(data){
   const { groups, bgColor, isLight } = data;
   const emColor = isLight ? '#85837D' : 'rgba(228,226,240,0.55)';
-  const chatEl = document.getElementById('chat');
-  const mainEl = document.getElementById('main');
-  const targetEl = mainEl || chatEl;
-  const rect = targetEl ? targetEl.getBoundingClientRect() : {left:0, width:window.innerWidth};
-  const chatW = Math.round(rect.width);
-  const chatLeft = Math.round(rect.left);
+  const chatW = window.innerWidth;
+  const chatLeft = 0;
   const fontFamily = getComputedStyle(document.body).fontFamily;
 
   const wrap = document.createElement('div');
@@ -6931,7 +6927,7 @@ function _showCaptureOverlay(data){
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;box-sizing:border-box;';
     const img = document.createElement('img');
     img.src = url;
-    img.style.cssText = 'max-width:95vw;max-height:65vh;object-fit:contain;border-radius:12px;display:block;';
+    img.style.cssText = 'width:100%;max-height:70vh;object-fit:contain;border-radius:12px;display:block;';
     const saveBtn = document.createElement('button');
     saveBtn.style.cssText = 'padding:10px 28px;border-radius:20px;border:none;background:var(--accent2,#7c5ce8);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'+fontFamily+';';
     if(isIOS && navigator.share){
