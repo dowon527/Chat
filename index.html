@@ -6873,7 +6873,7 @@ function _showCaptureOverlay(data){
   const { groups, bgColor, isLight } = data;
   const emColor = isLight ? '#85837D' : 'rgba(228,226,240,0.55)';
   const chatEl = document.getElementById('chat');
-  const chatW = chatEl ? chatEl.offsetWidth : window.innerWidth;
+  const chatW = chatEl ? chatEl.clientWidth : window.innerWidth;
   const fontFamily = getComputedStyle(document.body).fontFamily;
 
   const wrap = document.createElement('div');
@@ -6881,7 +6881,7 @@ function _showCaptureOverlay(data){
     'position:fixed','top:0','left:0',
     'width:'+chatW+'px',
     'background:'+bgColor,
-    'padding:16px 12px',
+    'padding:12px',
     'display:flex','flex-direction:column','gap:10px',
     'box-sizing:border-box',
     'font-family:'+fontFamily,
