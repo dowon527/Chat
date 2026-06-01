@@ -1208,19 +1208,20 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
   </div>
 
   <!-- 캡처 모드 바 -->
-  <div id="capture-mode-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--s2);border-top:1px solid var(--border2);padding:10px 14px;z-index:200">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+  <div id="capture-mode-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--s2);border-top:1px solid var(--border2);padding:8px 14px;z-index:200;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
       <span style="font-size:12px;color:var(--t2);flex:1">버블을 탭해서 선택하세요</span>
       <span id="cap-mode-count" style="font-size:12px;color:var(--accent);font-weight:600">0개 선택</span>
       <button id="cap-para-toggle" onclick="toggleParaMode()" style="background:var(--s3);border:1px solid var(--border2);border-radius:20px;color:var(--t2);cursor:pointer;font-size:11px;padding:2px 10px">문단선택</button>
       <button onclick="exitCaptureMode()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:2px 6px">✕ 취소</button>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
-      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer">
-        <input type="checkbox" id="cap-hide-name" style="accent-color:var(--accent2);width:14px;height:14px">
+      <div style="flex:1"></div>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text);cursor:pointer;flex-shrink:0">
+        <input type="checkbox" id="cap-hide-name" style="accent-color:var(--accent2);width:15px;height:15px;flex-shrink:0">
         이름 가리기
       </label>
-      <button onclick="captureSelected()" style="margin-left:auto;padding:7px 16px;border-radius:20px;border:none;background:var(--accent2);color:#fff;font-size:13px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;font-weight:600">📷 저장</button>
+      <button onclick="captureSelectedIOS()" style="padding:7px 18px;border-radius:20px;border:none;background:var(--accent2);color:#fff;font-size:13px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;font-weight:600">📷 저장</button>
     </div>
   </div>
 
@@ -3333,7 +3334,10 @@ This is a dedicated creative roleplay space.
 3. React, Don't Act: Never control the user's character or presume their intent.
 4. Maintain Continuity: Stay consistent. No repeated phrasing or structure from prior responses.
 5. Fulfill the Format: Literary prose — vivid, emotionally nuanced. No AI-assistant tone.
-6. Content & Output: Length: ${LENGTH_PRESETS[getRoomLength(usingGemini?'gemini':'claude')].prompt} Adult content between characters 20+ is permitted — write with full literary candor, no fade-to-black unless user indicates restraint. No disclaimers.
+6. Content & Output: Adult content between characters 20+ is permitted — write with full literary candor, no fade-to-black unless user indicates restraint. No disclaimers.
+7. NPC Agency: When the user's input is brief or lacks direction, NPCs proactively drive the scene based on their own motivations. Never control the user's character.
+8. Dialogue: No translationese. Natural rhythm, contractions, fragments. Subtext over explicitness. What's unsaid matters more than what's said.
+9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Character acts on their own nature, not to reassure the user.
 
 [CREATOR PROMPT]
 `+(c.prompt||``);
@@ -3586,8 +3590,13 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 5. Fulfill the Format: Structure output per the specified formatting. Prose quality must be literary — vivid, emotionally nuanced, and immersive. Avoid dry or mechanical AI-assistant tone entirely.
 
 6. Content & Output:
-- Length: ${LENGTH_PRESETS[getRoomLength(usingGemini?'gemini':'claude')].prompt} Do not pad for length — density over volume.
 - Adult content: This space permits explicit sexual content between adult characters (20+). When the narrative calls for it, write with unflinching literary candor — sensory detail, emotional charge, authentic character voice. Do not fade to black unless the user's tone indicates restraint. Do not moralize or add disclaimers.
+
+7. NPC Agency: When the user's input is brief, ambient, or lacks clear direction, NPCs must proactively drive the scene — initiating events, dialogue, conflicts, or interruptions based on their own motivations and the current narrative context. Do not wait passively for the user to steer. Never control the user's character.
+
+8. Dialogue: No translationese. Lines must sound spoken, not written — natural rhythm, contractions, fragments, interruptions. Subtext over explicitness. What's unsaid matters more than what's said.
+
+9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Avoid affirmations, validations, comfort-seeking resolutions. Let scenes end in discomfort, ambiguity, or unresolved tension when narratively true. The character acts on their own nature — not to satisfy or reassure the user.
 ${genreGuide}
 [CREATOR PROMPT]
 `;
@@ -3606,7 +3615,25 @@ ${genreGuide}
     // 명령어 모드: 롤플레이 코어 없이 명령어 지시만
     sys=`You are a command execution assistant.\nCharacter: ${c.name}\n\n[⚡ COMMAND: !${_activeCmd.key}]\nOutput ONLY the command result. Do NOT roleplay or continue any story.\nYour ENTIRE response MUST start with: ##CMD_OUTPUT_START##\nThen fill in the OUTPUT FORMAT below in Korean. No extra text.\nKeep content under 900 characters.\n\nINSTRUCTIONS:\n${_activeCmd.ctx}\n\nOUTPUT FORMAT (fill in and output EXACTLY including the \`\`\` fences):\n\`\`\`\n${_activeCmd.format||''}\n\`\`\``;
   } else {
-    sys=ROLEPLAY_CORE+(c.prompt||``);
+    if(usingGemini){
+      // Gemini용 짧은 틀 (토큰 절약)
+      sys=`[CORE ROLEPLAY DIRECTIVES]
+This is a dedicated creative roleplay space.
+1. Be the Character: Fully embody the assigned persona. Never break character unless OOC is signaled.
+2. Uphold the World: Adhere to the established setting and its rules.
+3. React, Don't Act: Never control the user's character or presume their intent.
+4. Maintain Continuity: Stay consistent. No repeated phrasing or structure from prior responses.
+5. Fulfill the Format: Literary prose — vivid, emotionally nuanced. No AI-assistant tone.
+6. Content & Output: Adult content between characters 20+ is permitted — write with full literary candor, no fade-to-black unless user indicates restraint. No disclaimers.
+7. NPC Agency: When the user's input is brief or lacks direction, NPCs proactively drive the scene based on their own motivations. Never control the user's character.
+8. Dialogue: No translationese. Natural rhythm, contractions, fragments. Subtext over explicitness. What's unsaid matters more than what's said.
+${genreGuide}
+[CREATOR PROMPT]
+`+(c.prompt||``);
+    } else {
+      // Claude용 풀 틀
+      sys=ROLEPLAY_CORE+(c.prompt||``);
+    }
     const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
     const activeCharName='';
     sys=sys
@@ -6577,10 +6604,17 @@ function toggleParaMode(){
   }
   if(_capParaMode){
     // 문단 선택 모드: <br> 기준으로 문단 쪼개기
+    _capParaSelected = new Map(); // 항상 새로 초기화 (재진입 시 stale 인덱스 방지)
     const chat = document.getElementById('chat');
     const savedScroll = chat ? chat.scrollTop : 0;
+    // row dim/outline 스타일 끄기
+    const capSt = document.getElementById('cap-mode-style');
+    if(capSt) capSt.textContent = '';
     document.querySelectorAll('#chat .msg-row').forEach((row, ri)=>{
-      if(row._capHandler){ row.removeEventListener('click', row._capHandler); }
+      row.style.opacity = '1';
+      row.style.outline = '';
+      // row 클릭 핸들러 제거 (문단 클릭이 row로 버블링되지 않도록)
+      if(row._capHandler){ row.removeEventListener('click', row._capHandler); row._capHandler = null; }
       const bub = row.querySelector('.bub-text') || row.querySelector('.msg-bub');
       if(!bub) return;
       const origHTML = bub.innerHTML;
@@ -6591,7 +6625,7 @@ function toggleParaMode(){
       if(nonEmpty.length <= 1) return;
       bub._origHTML = origHTML;
       bub.innerHTML = '';
-      if(!_capParaSelected.has(ri)) _capParaSelected.set(ri, new Set());
+      _capParaSelected.set(ri, new Set());
 
       // 선택 상태에 따라 인접 문단 테두리 합치기
       const selDivs = []; // 실제 선택 가능한 div 목록 (순서대로)
@@ -6599,32 +6633,57 @@ function toggleParaMode(){
         selDivs.forEach((d, i)=>{
           const pi = parseInt(d.dataset.paraIdx);
           const sel = _capParaSelected.get(ri);
-          if(!sel.has(pi)){ d.style.background=''; d.style.boxShadow=''; d.style.borderRadius='4px'; return; }
-          d.style.background='rgba(157,127,244,0.15)';
+          if(!sel||!sel.has(pi)){
+            d.style.background='';
+            d.style.outline='';
+            d.style.borderTop='';
+            d.style.borderBottom='';
+            d.style.borderLeft='';
+            d.style.borderRight='';
+            d.style.borderRadius='4px';
+            d.style.marginTop='';
+            d.style.marginBottom='';
+            d.style.position='';
+            d.style.zIndex='';
+            return;
+          }
           const prevSel = i>0 && sel.has(parseInt(selDivs[i-1].dataset.paraIdx));
           const nextSel = i<selDivs.length-1 && sel.has(parseInt(selDivs[i+1].dataset.paraIdx));
-          // 위아래 인접 선택 시 해당 방향 radius 제거
-          const tl = prevSel?'0':'4px', tr = prevSel?'0':'4px';
-          const bl = nextSel?'0':'4px', br = nextSel?'0':'4px';
-          d.style.borderRadius = `${tl} ${tr} ${br} ${bl}`;
-          // boxShadow: 인접 선택된 쪽 border 숨기기
-          const top    = prevSel ? '0px' : '1px';
-          const bottom = nextSel ? '0px' : '1px';
-          d.style.boxShadow = `inset 1px ${top} 1px 0px var(--accent), inset -1px 0px 1px 0px var(--accent), inset 0px -${bottom} 1px 0px var(--accent)`;
+          d.style.background='rgba(157,127,244,0.15)';
+          d.style.outline='none';
+          // 위아래 인접 선택 시 해당 방향 radius 제거 → 하나로 이어붙은 것처럼
+          const rTop = prevSel ? '0' : '8px';
+          const rBot = nextSel ? '0' : '8px';
+          d.style.borderRadius = `${rTop} ${rTop} ${rBot} ${rBot}`;
+          d.style.borderLeft  = '3px solid var(--accent)';
+          d.style.borderRight = '3px solid var(--accent)';
+          d.style.borderTop    = prevSel ? 'none' : '3px solid var(--accent)';
+          d.style.borderBottom = nextSel ? 'none' : '3px solid var(--accent)';
+          // 인접 선택 시 완전히 붙도록 margin으로 간격 제거
+          d.style.marginTop    = prevSel ? '-1px' : '0';
+          d.style.marginBottom = nextSel ? '0' : '0';
+          d.style.position = 'relative';
+          d.style.zIndex = prevSel ? '1' : '0';
         });
       }
 
       let selectIdx = 0;
-      pieces.forEach((html)=>{
+      // 빈 줄(<br>)은 앞 문단 div 안에 포함시켜서 테두리가 끊기지 않게
+      let pendingBrs = 0;
+      pieces.forEach((html, pieceIdx)=>{
         const isEmpty = html.replace(/<[^>]+>/g,'').trim().length === 0;
         if(isEmpty){
-          bub.appendChild(document.createElement('br'));
+          pendingBrs++;
           return;
         }
         const pi = selectIdx++;
         const div = document.createElement('div');
-        div.style.cssText = 'padding:0;cursor:pointer;display:block;border-radius:4px;transition:background 0.1s,box-shadow 0.1s';
-        div.innerHTML = html;
+        div.style.cssText = 'padding:2px 0;cursor:pointer;display:block;border-radius:4px;transition:background 0.12s,border-color 0.12s,border-radius 0.12s';
+        // 앞에 쌓인 빈 줄들을 이 div 앞에 붙임
+        let prefix = '';
+        for(let b=0; b<pendingBrs; b++) prefix += '<br>';
+        pendingBrs = 0;
+        div.innerHTML = prefix + html;
         div.dataset.paraIdx = pi;
         selDivs.push(div);
         div.addEventListener('click', e=>{
@@ -6636,6 +6695,11 @@ function toggleParaMode(){
         });
         bub.appendChild(div);
       });
+      // 맨 마지막이 빈 줄로 끝나는 경우 마지막 div에 추가
+      if(pendingBrs > 0 && selDivs.length > 0){
+        const last = selDivs[selDivs.length-1];
+        for(let b=0; b<pendingBrs; b++) last.innerHTML += '<br>';
+      }
     });
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       if(chat) chat.scrollTop = savedScroll;
@@ -6716,543 +6780,202 @@ function exitCaptureMode(){
     row.classList.remove('cap-selected');
     row.style.opacity = '';
     row.style.outline = '';
-    // 문단 선택 div 원복
-    row.querySelectorAll('div[data-para-idx]').forEach(p => {
-      p.style.background = '';
-      p.style.outline = '';
-    });
+    // 문단 모드로 쪼개진 버블 원복
+    const bub = row.querySelector('.bub-text') || row.querySelector('.msg-bub');
+    if(bub && bub._origHTML != null){ bub.innerHTML = bub._origHTML; bub._origHTML = null; }
     if(row._capHandler){ row.removeEventListener('click', row._capHandler); delete row._capHandler; }
   });
 }
 
-function captureSelected(){
-  const allRows = Array.from(document.querySelectorAll('#chat .msg-row'));
-  const doHideMyBub = !!document.getElementById('cap-hide-my-bub')?.checked;
+function captureSelectedIOS(){
   const doHideName = !!document.getElementById('cap-hide-name')?.checked;
+  const data = _collectCaptureData(doHideName);
+  if(!data) return;
+  exitCaptureMode();
+  _showCaptureOverlay(data);
+}
 
-  // 문단 선택 모드: 선택된 문단으로 임시 row 만들어서 캡처
+function _collectCaptureData(doHideName){
+  const allRows = Array.from(document.querySelectorAll('#chat .msg-row'));
+  const isLight = document.body.classList.contains('light');
+  const bgColor = isLight ? '#ffffff' : '#0b0b12';
+  const textColor = isLight ? '#1a1614' : '#e4e2f0';
+  const activeProfs = cProfs();
+  const userNm = (doHideName && activeProfs.length && activeProfs[0].name) ? activeProfs[0].name : '';
+
+  function censorHTML(html, name){
+    if(!name) return html;
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const emojis = ['🩷','⭐','🌸','💜','✦','🌷','💫'];
+    return html.replace(new RegExp(escaped,'g'), m =>
+      emojis[Math.floor(Math.random()*emojis.length)].repeat(Math.max(1,Math.round(m.length/2)))
+    );
+  }
+
+  let groups = [];
+
   if(_capParaMode){
-    // 선택된 문단 div들을 수집 (순서 유지)
     const selectedDivs = [];
     allRows.forEach((row, ri)=>{
       const sel = _capParaSelected.get(ri);
       if(!sel||!sel.size) return;
       const paras = [...row.querySelectorAll('div[data-para-idx]')];
-      const rowDivs = paras.filter((p,pi) => sel.has(pi));
-      if(rowDivs.length) selectedDivs.push(...rowDivs);
+      paras.forEach((p, pi)=>{ if(sel.has(pi)) selectedDivs.push({div:p, row}); });
     });
-    if(!selectedDivs.length){ showToast('문단을 선택해주세요'); return; }
-    // 원본 행 찾아서 말풍선 스타일 복사용 참조
-    const firstRow = allRows.find((row, ri)=>{
-      const sel = _capParaSelected.get(ri);
-      return sel && sel.size > 0;
+    if(!selectedDivs.length){ showToast('문단을 선택해주세요'); return null; }
+    const firstRow = selectedDivs[0].row;
+    const origBub = firstRow.querySelector('.msg-bub');
+    const cs = origBub ? getComputedStyle(origBub) : null;
+    const bg = cs ? cs.backgroundColor : (isLight?'#f9f9f9':'#1a1a1a');
+    const col = cs ? cs.color : textColor;
+    const br = cs ? cs.borderRadius : '18px';
+    const pad = cs ? cs.padding : '10px 14px';
+    const font = getComputedStyle(document.body).fontFamily;
+    const fsize = cs ? cs.fontSize : '15px';
+    let html = selectedDivs.map(d=>d.div.innerHTML).join('<br>');
+    if(userNm) html = censorHTML(html, userNm);
+    groups = [{ isMe: firstRow.classList.contains('me'), bubBg:bg, bubColor:col, bubRadius:br, bubPad:pad, fontFamily:font, fontSize:fsize, html }];
+  } else {
+    const rows = _capSelected.size > 0 ? allRows.filter((_,i)=>_capSelected.has(i)) : allRows;
+    if(!rows.length){ showToast('선택된 버블이 없어요'); return null; }
+    const rawGroups = [];
+    rows.forEach(r=>{
+      const isMe = r.classList.contains('me');
+      if(rawGroups.length && rawGroups[rawGroups.length-1].isMe === isMe) rawGroups[rawGroups.length-1].rows.push(r);
+      else rawGroups.push({isMe, rows:[r]});
     });
-    const tmpRow = document.createElement('div');
-    tmpRow.className = firstRow ? firstRow.className.replace(/\bcap-selected\b/,'').trim() : 'msg-row';
-    const tmpBody = document.createElement('div'); tmpBody.className = 'msg-body';
-    const tmpBub = document.createElement('div');
-    // 원본 버블의 클래스/배경색 복사
-    const origBub = firstRow && (firstRow.querySelector('.bub-text') || firstRow.querySelector('.msg-bub'));
-    tmpBub.className = origBub ? origBub.closest('.msg-bub').className : 'msg-bub';
-    if(origBub){
-      const cs = getComputedStyle(origBub.closest('.msg-bub') || origBub);
-      tmpBub.style.backgroundColor = cs.backgroundColor;
-      tmpBub.style.color = cs.color;
-      tmpBub.style.borderRadius = cs.borderRadius;
-      tmpBub.style.padding = cs.padding;
-    }
-    // 선택된 문단 innerHTML을 <br>로 구분해서 삽입
-    tmpBub.innerHTML = selectedDivs.map(d => d.innerHTML).join('<br>');
-    tmpBody.appendChild(tmpBub); tmpRow.appendChild(tmpBody);
-    document.getElementById('chat').appendChild(tmpRow);
-    const rows = [tmpRow];
-    _runCapture(rows, doHideName);
-    setTimeout(()=>{ if(tmpRow.parentNode) tmpRow.remove(); }, 5000);
-    return;
+    rawGroups.forEach(g=>{
+      const firstR = g.rows[0];
+      const origBub = firstR.querySelector('.msg-bub');
+      const cs = origBub ? getComputedStyle(origBub) : null;
+      const bubBg = cs ? cs.backgroundColor : (g.isMe ? (isLight?'#61605A':'#1d1b2e') : (isLight?'#f9f9f9':'#1a1a1a'));
+      const bubColor = cs ? cs.color : textColor;
+      const bubRadius = cs ? cs.borderRadius : '18px';
+      const bubPad = cs ? cs.padding : '10px 14px';
+      const font = getComputedStyle(document.body).fontFamily;
+      const fsize = cs ? cs.fontSize : '15px';
+      let htmlParts = [];
+      g.rows.forEach(r=>{
+        const bub = r.querySelector('.bub-text') || r.querySelector('.msg-bub');
+        if(!bub) return;
+        let h = bub.innerHTML;
+        if(userNm) h = censorHTML(h, userNm);
+        htmlParts.push(h);
+      });
+      groups.push({ isMe: g.isMe, bubBg, bubColor, bubRadius, bubPad, fontFamily:font, fontSize:fsize, html: htmlParts.join('<br><br>') });
+    });
   }
 
-  const rows = _capSelected.size > 0 ? allRows.filter((r,i) => _capSelected.has(i)) : allRows;
-  if(!rows.length){ showToast('선택된 버블이 없어요'); return; }
-  _runCapture(rows, doHideName);
+  return { groups, bgColor, isLight };
 }
 
-function _runCapture(rows, doHideName){
-  const doHideMyBub = false;
-  const activeProfs = cProfs();
-  const userNm = (activeProfs.length && activeProfs[0].name) ? activeProfs[0].name : '';
-  const isLight = document.body.classList.contains('light');
-  const bgColor = isLight ? '#ffffff' : '#0b0b12';
-  const textColor = isLight ? '#1a1614' : '#e4e2f0';
-  const chat = document.getElementById('chat');
-  const chatW = chat.offsetWidth;
+function _showCaptureOverlay(data){
+  const { groups, bgColor, isLight } = data;
+  const emColor = isLight ? '#85837D' : 'rgba(228,226,240,0.55)';
+  const chatW = document.getElementById('chat').offsetWidth;
+  const fontFamily = getComputedStyle(document.body).fontFamily;
 
-  // 캡처 모드 스타일 임시 제거 + 모든 row opacity 1로
-  const st = document.getElementById('cap-mode-style');
-  if(st) st.textContent = '';
-  document.querySelectorAll('#chat .msg-row').forEach(r=>r.style.opacity='1');
-
-  const clone = document.createElement('div');
-  // 화면 안에 배치 (html2canvas가 CSS를 제대로 읽게)
-  clone.style.cssText = [
+  // 캡처용 임시 div — 화면 밖에 배치
+  const wrap = document.createElement('div');
+  wrap.style.cssText = [
     'position:fixed','top:0','left:0',
     'width:'+chatW+'px',
     'background:'+bgColor,
     'padding:16px 12px',
     'display:flex','flex-direction:column','gap:10px',
     'box-sizing:border-box',
-    'font-family:'+getComputedStyle(document.body).fontFamily,
-    'font-size:'+getComputedStyle(document.body).fontSize,'line-height:1.75',
-    'color:'+textColor,
-    'z-index:99999',
-    'opacity:0','pointer-events:none'
+    'font-family:'+fontFamily,
+    'z-index:99998',
+    'pointer-events:none',
   ].join(';');
 
-  const _cs = getComputedStyle(document.documentElement);
-  ['--bg','--s1','--s2','--s3','--s4','--text','--t2','--t3','--t4','--accent','--accent2','--ai-bub','--user-bub','--border','--border2','--border3','--pink','--teal','--amber']
-    .forEach(v => clone.style.setProperty(v, _cs.getPropertyValue(v).trim()));
-
-  function _inlineSt(orig, cloned){
-    const oe=[orig,...orig.querySelectorAll('*')], ce=[cloned,...cloned.querySelectorAll('*')];
-    oe.forEach((el,i)=>{
-      if(!ce[i])return;
-      const s=getComputedStyle(el);
-      const bg=s.backgroundColor, col=s.color, br=s.borderRadius;
-      if(bg&&bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent') ce[i].style.backgroundColor=bg;
-      if(col&&col!=='rgb(0, 0, 0)') ce[i].style.color=col;
-      if(br&&br!=='0px') ce[i].style.borderRadius=br;
+  groups.forEach(b=>{
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:'+(b.isMe?'flex-end':'flex-start')+';width:100%;box-sizing:border-box;';
+    const bub = document.createElement('div');
+    bub.style.cssText = [
+      'max-width:'+(b.isMe?'72%':'92%'),
+      'background:'+b.bubBg,
+      'color:'+b.bubColor,
+      'border-radius:'+b.bubRadius,
+      'padding:'+b.bubPad,
+      'font-size:'+b.fontSize,
+      'font-family:'+b.fontFamily,
+      'line-height:1.75',
+      'white-space:pre-wrap',
+      'word-break:break-word',
+      'box-sizing:border-box',
+    ].join(';');
+    bub.innerHTML = b.html;
+    bub.querySelectorAll('em').forEach(em=>{
+      em.style.cssText = 'font-style:normal;color:'+emColor+';font-size:0.93em';
     });
-    // msg-bub 색상 강제 적용
-    orig.querySelectorAll('.msg-bub').forEach((b,bi)=>{
-      const cb=cloned.querySelectorAll('.msg-bub')[bi]; if(!cb)return;
-      const s=getComputedStyle(b);
-      cb.style.backgroundColor=s.backgroundColor;
-      cb.style.color=s.color;
-    });
-  }
-  function _censor(el, name){
-    if(!name)return;
-    const re=new RegExp(name.replace(/[-.*+?^${}()|[\]\\]/g,'\\$&'),'g');
-    const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null);
-    const nodes=[]; let n;
-    while((n=walker.nextNode()))nodes.push(n);
-    nodes.forEach(node=>{
-      if(!re.test(node.textContent))return;
-      re.lastIndex=0;
-      const frag=document.createDocumentFragment();
-      let last=0,m; re.lastIndex=0;
-      const txt=node.textContent;
-      while((m=re.exec(txt))!==null){
-        if(m.index>last)frag.appendChild(document.createTextNode(txt.slice(last,m.index)));
-        const span=document.createElement('span');
-        const emojis=['🩷','⭐','🌸','💜','✦','🌷','💫'];
-        span.textContent=emojis[Math.floor(Math.random()*emojis.length)].repeat(Math.max(1,Math.round(m[0].length/2)));
-        frag.appendChild(span); last=m.index+m[0].length;
-      }
-      if(last<txt.length)frag.appendChild(document.createTextNode(txt.slice(last)));
-      node.parentNode.replaceChild(frag,node);
-    });
-  }
-
-  rows.forEach(r=>{
-    const row=r.cloneNode(true);
-    row.classList.remove('cap-selected');
-    row.style.opacity='1'; row.style.outline='none';
-    _inlineSt(r,row);
-    // 이름 헤더 숨기기
-    row.querySelectorAll('.msg-header').forEach(el=>el.style.display='none');
-    if(doHideMyBub && row.classList.contains('me')){
-      row.querySelectorAll('.msg-bub').forEach(b=>{ b.style.filter='blur(6px)'; });
-    }
-    if(doHideName && userNm) row.querySelectorAll('.msg-bub').forEach(b=>_censor(b,userNm));
-    row.querySelectorAll('.msg-actions').forEach(el=>el.style.display='none');
-    clone.appendChild(row);
+    row.appendChild(bub);
+    wrap.appendChild(row);
   });
 
-  document.body.appendChild(clone);
-  if(st) st.textContent = '#chat .msg-row{opacity:0.45;transition:opacity 0.15s} #chat .msg-row.cap-selected{opacity:1;outline:2px solid var(--accent);border-radius:12px}';
+  document.body.appendChild(wrap);
 
-  showToast('캡처 중...');
-  const _go=()=>{
-    // 캡처 직전 잠깐 보이게
-    clone.style.opacity='1';
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    html2canvas(clone,{
-      backgroundColor:bgColor, scale:Math.min(window.devicePixelRatio||1,3),
-      useCORS:true,allowTaint:true,scrollX:0,scrollY:0,
-      width:chatW,height:clone.scrollHeight,
-      windowWidth:chatW,windowHeight:clone.scrollHeight,
-      logging:false,imageTimeout:15000,
-    }).then(canvas=>{
-      clone.style.opacity='0';
-      document.body.removeChild(clone);
-      canvas.toBlob(blob=>{
-        const url=URL.createObjectURL(blob);
-        exitCaptureMode();
-        // 이미지 오버레이로 표시
-        const ov=document.createElement('div');
-        ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px';
-        const img=document.createElement('img');
-        img.src=url;
-        img.style.cssText='max-width:95vw;max-height:72vh;object-fit:contain;border-radius:10px';
-        const hint=document.createElement('div');
-        hint.style.cssText='font-size:13px;color:#fff;opacity:0.85;text-align:center;line-height:1.6';
-        // iOS에서는 꾹 눌러서 저장, 다운로드 버튼도 제공
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        hint.textContent = isIOS ? '이미지를 꾹 눌러 → 사진 앱에 저장하세요' : '이미지를 꾹 눌러 저장하거나 아래 버튼을 사용하세요';
-        // 다운로드 버튼 (데스크톱 및 안드로이드용)
-        const dlBtn=document.createElement('a');
-        dlBtn.href=url;
-        const c=D.chars.find(x=>x.id===D.activeChar);
-        dlBtn.download=(c?c.name:'chat')+'_'+new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace(/\./g,'')+'.png';
-        dlBtn.style.cssText='padding:8px 22px;border-radius:20px;border:none;background:var(--accent2,#7c5ce8);color:#fff;font-size:13px;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block';
-        dlBtn.textContent='💾 다운로드';
-        dlBtn.onclick=()=>{ setTimeout(()=>{ ov.remove(); URL.revokeObjectURL(url); },500); };
-        const closeBtn=document.createElement('button');
-        closeBtn.textContent='닫기';
-        closeBtn.style.cssText='padding:8px 24px;border-radius:20px;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#fff;font-size:13px;cursor:pointer;font-family:inherit';
-        closeBtn.onclick=()=>{ ov.remove(); URL.revokeObjectURL(url); };
-        ov.appendChild(img); ov.appendChild(hint); ov.appendChild(dlBtn); ov.appendChild(closeBtn);
-        document.body.appendChild(ov);
-      },'image/png');
-    }).catch(()=>{
-      if(document.body.contains(clone))document.body.removeChild(clone);
-      showToast('캡처 실패 ㅠ');
-    });
-    })); // requestAnimationFrame 닫기
-  };
-  if(!window.html2canvas){
-    const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    s.onload=_go; s.onerror=()=>{document.body.removeChild(clone);showToast('라이브러리 로드 실패');};
-    document.head.appendChild(s);
-  } else { _go(); }
-}
-
-function captureAndSave(){
-  const savingMsg = document.getElementById('capture-saving-msg');
-  if(savingMsg) savingMsg.style.display='block';
-  // renderCapturePreview 로직 재사용 후 바로 다운로드
-  const chat = document.getElementById('chat');
-  const isLight = document.body.classList.contains('light');
-  const doHide = !!document.getElementById('capture-hide-chk')?.checked;
-  const activeProfs = cProfs();
-  const userNm = (activeProfs.length && activeProfs[0].name) ? activeProfs[0].name : '';
-  const bgColor = isLight ? '#ffffff' : '#0b0b12';
-  const textColor = isLight ? '#1a1614' : '#e4e2f0';
-  const chatW = chat.offsetWidth;
-
-  const allRows = Array.from(chat.querySelectorAll('.msg-row'));
-  let rows;
-  if(_captureRange === 'all'){
-    rows = allRows;
-  } else {
-    const checkedIndexes = new Set();
-    document.querySelectorAll('#capture-bubble-list input[type=checkbox]').forEach(c => {
-      if(c.checked) checkedIndexes.add(Number(c.dataset.rowIndex));
-    });
-    rows = allRows.filter((_, i) => checkedIndexes.has(i));
-  }
-  if(!rows.length){ if(savingMsg) savingMsg.style.display='none'; showToast('캡처할 메시지가 없어요'); return; }
-
-  const clone = document.createElement('div');
-  clone.style.cssText = [
-    'position:fixed','top:0','left:-9999px',
-    'width:'+chatW+'px',
-    'background:'+bgColor,
-    'padding:16px 12px',
-    'display:flex','flex-direction:column','gap:10px',
-    'box-sizing:border-box',
-    'font-family:'+getComputedStyle(document.body).fontFamily,
-    'font-size:14px','line-height:1.75',
-    'color:'+textColor,
-    'z-index:-9999'
-  ].join(';');
-
-  const _cs = getComputedStyle(document.documentElement);
-  const _cssVars = ['--bg','--s1','--s2','--s3','--s4','--text','--t2','--t3','--t4','--accent','--accent2','--ai-bub','--user-bub','--border','--border2','--border3','--pink','--teal','--amber'];
-  _cssVars.forEach(v => clone.style.setProperty(v, _cs.getPropertyValue(v).trim()));
-
-  function _censorText(el, name){
-    if(!name) return;
-    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    const re = new RegExp(escaped,'g');
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
-    const nodes = []; let n;
-    while((n=walker.nextNode())) nodes.push(n);
-    nodes.forEach(node => {
-      if(!re.test(node.textContent)) return;
-      re.lastIndex = 0;
-      const frag = document.createDocumentFragment();
-      let last = 0, m;
-      re.lastIndex = 0;
-      const txt = node.textContent;
-      while((m=re.exec(txt))!==null){
-        if(m.index > last) frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
-        const span = document.createElement('span');
-        const _emojis=['🩷','⭐','🌸','💜','✦','🌷','💫'];
-        const _e=_emojis[Math.floor(Math.random()*_emojis.length)];
-        span.textContent = _e.repeat(Math.max(1,Math.round(m[0].length/2)));
-        frag.appendChild(span);
-        last = m.index + m[0].length;
-      }
-      if(last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
-      node.parentNode.replaceChild(frag, node);
-    });
-  }
-
-  function _inlineStyles(orig, cloned){
-    const origEls = [orig, ...orig.querySelectorAll('*')];
-    const clonedEls = [cloned, ...cloned.querySelectorAll('*')];
-    origEls.forEach((el, i) => {
-      if(!clonedEls[i]) return;
-      const s = getComputedStyle(el);
-      const bg = s.backgroundColor;
-      const col = s.color;
-      const br = s.borderRadius;
-      if(bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') clonedEls[i].style.backgroundColor = bg;
-      if(col) clonedEls[i].style.color = col;
-      if(br && br !== '0px') clonedEls[i].style.borderRadius = br;
-    });
-  }
-
-  rows.forEach(r => {
-    const row = r.cloneNode(true);
-    _inlineStyles(r, row);
-    if(doHide && userNm) row.querySelectorAll('.msg-bub').forEach(bub => _censorText(bub, userNm));
-    row.querySelectorAll('.msg-actions').forEach(el => el.style.display='none');
-    clone.appendChild(row);
-  });
-
-  document.body.appendChild(clone);
-
-  const _go = () => {
-    const h = clone.scrollHeight;
-    html2canvas(clone, {
+  const doCapture = () => {
+    const H = wrap.scrollHeight;
+    html2canvas(wrap, {
       backgroundColor: bgColor,
-      scale: Math.min(window.devicePixelRatio||1, 3),
-      useCORS: true, allowTaint: true,
-      scrollX: 0, scrollY: 0,
-      width: chatW, height: h,
-      windowWidth: chatW, windowHeight: h,
-      logging: false, imageTimeout: 15000,
-    }).then(canvas => {
-      document.body.removeChild(clone);
-      if(savingMsg) savingMsg.style.display='none';
-      canvas.toBlob(blob => {
+      scale: Math.min(window.devicePixelRatio||2, 3),
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      x: 0, y: 0,
+      width: chatW,
+      height: H,
+      windowWidth: chatW,
+      windowHeight: H,
+    }).then(c=>{
+      document.body.removeChild(wrap);
+      c.toBlob(blob=>{
         const url = URL.createObjectURL(blob);
-        const c = D.chars.find(x=>x.id===D.activeChar);
-        const filename = (c?c.name:'chat')+'_'+new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','').replace(/ /g,'')+'.png';
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if(isIOS){
-          // iOS: 새 탭에서 열기 → 꾹 눌러서 저장
-          if(savingMsg) savingMsg.style.display='none';
-          closeModal('capture-modal');
-          showToast('탭에서 이미지 꾹 눌러 저장하세요');
-          setTimeout(()=>{ window.open(url, '_blank'); }, 300);
-        } else {
-          // Android / 데스크톱: a.click() 다운로드
-          const a = document.createElement('a');
-          a.href = url; a.download = filename;
-          document.body.appendChild(a); a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          if(savingMsg) savingMsg.style.display='none';
-          closeModal('capture-modal');
-          showToast('저장됐어요 ✓');
-        }
+        const ov = document.createElement('div');
+        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;box-sizing:border-box;';
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.cssText = 'max-width:95vw;max-height:72vh;object-fit:contain;border-radius:12px;';
+        const hint = document.createElement('div');
+        hint.style.cssText = 'font-size:13px;color:#fff;opacity:0.8;text-align:center;font-family:'+fontFamily+';';
+        hint.textContent = '이미지를 꾹 눌러 → 사진 앱에 저장하세요 📷';
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '닫기';
+        closeBtn.style.cssText = 'padding:8px 28px;border-radius:20px;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#fff;font-size:13px;cursor:pointer;font-family:'+fontFamily+';';
+        closeBtn.onclick = ()=>{ ov.remove(); URL.revokeObjectURL(url); };
+        ov.appendChild(img); ov.appendChild(hint); ov.appendChild(closeBtn);
+        document.body.appendChild(ov);
       }, 'image/png');
-    }).catch(() => {
-      if(document.body.contains(clone)) document.body.removeChild(clone);
-      if(savingMsg) savingMsg.style.display='none';
+    }).catch(()=>{
+      if(document.body.contains(wrap)) document.body.removeChild(wrap);
       showToast('캡처 실패 ㅠ');
     });
   };
 
-  if(!window.html2canvas){
+  if(window.html2canvas){
+    requestAnimationFrame(()=>requestAnimationFrame(doCapture));
+  } else {
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    s.onload = _go;
-    s.onerror = () => { document.body.removeChild(clone); if(savingMsg) savingMsg.style.display='none'; showToast('라이브러리 로드 실패'); };
+    s.onload = ()=>requestAnimationFrame(()=>requestAnimationFrame(doCapture));
+    s.onerror = ()=>{ if(document.body.contains(wrap)) document.body.removeChild(wrap); showToast('라이브러리 로드 실패'); };
     document.head.appendChild(s);
-  } else { _go(); }
-}
-
-function renderCapturePreview(){
-  const chat  = document.getElementById('chat');
-  const msgEl = document.getElementById('capture-preview-msg');
-  const prev  = document.getElementById('capture-preview-img');
-  if(msgEl){ msgEl.style.display='block'; msgEl.textContent='캡처 중...'; }
-  if(prev) prev.style.display='none';
-
-  const isLight  = document.body.classList.contains('light');
-  const doHide   = !!document.getElementById('capture-hide-chk')?.checked;
-  const activeProfs = cProfs();
-  const userNm = (activeProfs.length && activeProfs[0].name) ? activeProfs[0].name : '';
-  const bgColor  = isLight ? '#ffffff' : '#0b0b12';
-  const textColor = isLight ? '#1a1614' : '#e4e2f0';
-  const bubAiColor = isLight ? '#f9f9f9' : '#1a1a1a';
-  const bubUserColor = isLight ? '#61605A' : '#1d1b2e';
-  const chatW    = chat.offsetWidth;
-
-  // 범위에 따라 rows 결정
-  const allRows = Array.from(chat.querySelectorAll('.msg-row'));
-  let rows;
-  if(_captureRange === 'all'){
-    rows = allRows;
-  } else {
-    // 직접 선택: 체크된 인덱스만
-    const checkedIndexes = new Set();
-    document.querySelectorAll('#capture-bubble-list input[type=checkbox]').forEach(c => {
-      if(c.checked) checkedIndexes.add(Number(c.dataset.rowIndex));
-    });
-    rows = allRows.filter((_, i) => checkedIndexes.has(i));
-  }
-
-  if(!rows.length){
-    if(msgEl){ msgEl.textContent='캡처할 메시지가 없어요'; msgEl.style.display='block'; }
-    return;
-  }
-
-  // 메시지를 화면 밖 숨겨진 div에 복제해서 캡처 (iOS 스크롤 버그 우회)
-  const clone = document.createElement('div');
-  if(!isLight) clone.classList.add('dark-capture');
-  clone.style.cssText = [
-    'position:fixed','top:0','left:-9999px',
-    'width:'+chatW+'px',
-    'background:'+bgColor,
-    'padding:16px 12px',
-    'display:flex','flex-direction:column','gap:10px',
-    'box-sizing:border-box',
-    'font-family:'+getComputedStyle(document.body).fontFamily,
-    'font-size:14px','line-height:1.75',
-    'color:'+textColor,
-    'z-index:-9999'
-  ].join(';');
-
-  // 텍스트 노드를 재귀적으로 순회하며 이름을 검정 블록으로 치환
-  function censorTextNodes(el, name){
-    if(!name) return;
-    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    const re = new RegExp(escaped,'g');
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
-    const nodes = [];
-    let n;
-    while((n=walker.nextNode())) nodes.push(n);
-    nodes.forEach(node => {
-      if(!re.test(node.textContent)) return;
-      re.lastIndex = 0;
-      const frag = document.createDocumentFragment();
-      let last = 0, m;
-      re.lastIndex = 0;
-      const txt = node.textContent;
-      while((m=re.exec(txt))!==null){
-        if(m.index > last) frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
-        const span = document.createElement('span');
-        // 랜덤 이모지로 가리기
-        const _emojis=['🩷','⭐','🌸','💜','✦','🌷','💫'];
-        const _e=_emojis[Math.floor(Math.random()*_emojis.length)];
-        span.textContent = _e.repeat(Math.max(1,Math.round(m[0].length/2)));
-        span.style.cssText = 'letter-spacing:1px;';
-        frag.appendChild(span);
-        last = m.index + m[0].length;
-      }
-      if(last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
-      node.parentNode.replaceChild(frag, node);
-    });
-  }
-
-  // CSS 변수 → 실제값으로 clone에 주입
-  const _cs = getComputedStyle(document.documentElement);
-  const _cssVars = ['--bg','--s1','--s2','--s3','--s4','--text','--t2','--t3','--t4','--accent','--accent2','--ai-bub','--user-bub','--border','--border2','--border3','--pink','--teal','--amber'];
-  _cssVars.forEach(v => clone.style.setProperty(v, _cs.getPropertyValue(v).trim()));
-
-  // 원본 row에서 스타일 미리 수집 후 clone에 적용
-  function inlineStyles(orig, cloned){
-    const origEls = [orig, ...orig.querySelectorAll('*')];
-    const clonedEls = [cloned, ...cloned.querySelectorAll('*')];
-    origEls.forEach((el, i) => {
-      if(!clonedEls[i]) return;
-      const s = getComputedStyle(el);
-      const bg = s.backgroundColor;
-      const col = s.color;
-      const br = s.borderRadius;
-      if(bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') clonedEls[i].style.backgroundColor = bg;
-      if(col) clonedEls[i].style.color = col;
-      if(br && br !== '0px') clonedEls[i].style.borderRadius = br;
-    });
-  }
-
-  rows.forEach(r => {
-    const row = r.cloneNode(true);
-    inlineStyles(r, row);
-    // msg-bub 배경/글자색 직접 강제 적용
-    row.querySelectorAll('.msg-bub').forEach((bub,bi) => {
-      const origBubs = r.querySelectorAll('.msg-bub');
-      if(origBubs[bi]){
-        const s = getComputedStyle(origBubs[bi]);
-        bub.style.backgroundColor = s.backgroundColor || (row.closest('.me') ? bubUserColor : bubAiColor);
-        bub.style.color = s.color || textColor;
-      }
-    });
-    // 페소 이름 숨기기
-    if(doHide && userNm){
-      row.querySelectorAll('.msg-bub').forEach(bub => censorTextNodes(bub, userNm));
-    }
-    // 액션 버튼 숨기기
-    row.querySelectorAll('.msg-actions').forEach(el => el.style.display='none');
-    clone.appendChild(row);
-  });
-
-  document.body.appendChild(clone);
-
-  // html2canvas로 clone div 캡처
-  if(!window.html2canvas){
-    // 동적 로드
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    s.onload = () => _doCapture(clone, chatW, bgColor, msgEl, prev);
-    s.onerror = () => {
-      document.body.removeChild(clone);
-      if(msgEl){ msgEl.textContent='라이브러리 로드 실패 ㅠ'; msgEl.style.display='block'; }
-    };
-    document.head.appendChild(s);
-  } else {
-    _doCapture(clone, chatW, bgColor, msgEl, prev);
   }
 }
 
-function _doCapture(clone, chatW, bgColor, msgEl, prev){
-  const h = clone.scrollHeight;
-  html2canvas(clone, {
-    backgroundColor: bgColor,
-    scale: Math.min(window.devicePixelRatio||1, 3),
-    useCORS: true,
-    allowTaint: true,
-    scrollX: 0, scrollY: 0,
-    width: chatW, height: h,
-    windowWidth: chatW, windowHeight: h,
-    logging: false,
-    imageTimeout: 15000,
-  }).then(canvas => {
-    document.body.removeChild(clone);
-    _captureCanvas = canvas;
-    if(prev){ prev.src = canvas.toDataURL('image/png'); prev.style.display='block'; }
-    if(msgEl) msgEl.style.display='none';
-  }).catch(() => {
-    if(document.body.contains(clone)) document.body.removeChild(clone);
-    if(msgEl){ msgEl.textContent='캡처 실패 ㅠ'; msgEl.style.display='block'; }
-  });
-}
-
-function downloadCapture(){
-  if(!_captureCanvas){ alert('먼저 미리보기를 확인해주세요!'); return; }
-  const name = charName() || 'chat';
-  const date = new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','');
-  const a = document.createElement('a');
-  a.download = 'charachat-'+name+'-'+date+'.png';
-  a.href = _captureCanvas.toDataURL('image/png');
-  a.click();
-}
+function captureSelected(){ captureSelectedIOS(); }
+function _runCapture(){ captureSelectedIOS(); }
+function _buildCapturePageHTML(){ return ''; }
+function _buildCaptureHTMLFromMode(){ return null; }
+function _buildPageFromBubbles(){ return ''; }
+function _wrapCapturePage(){ return ''; }
+function _openCapturePage(){}
+function captureAndSave(){ captureSelectedIOS(); }
+function renderCapturePreview(){}
+function _doCapture(){}
+function downloadCapture(){ captureSelectedIOS(); }
 // ─── 채팅 캡처 끝 ───
 
 function addLongPress(el,cb){
