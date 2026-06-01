@@ -1783,9 +1783,9 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
       <!-- 이미지 설정 -->
       <div class="fg" id="kn-img-section">
         <label class="fl">이미지 <span>— 이 트리거 감지 시 말풍선에 삽입 (선택)</span></label>
-        <input class="fi" id="kn-img-tag-inp" placeholder="태그명 예: angry, happy, cry" style="margin-bottom:6px">
+        <input class="fi" id="kn-img-tag-inp" style="display:none">
         <input class="fi" id="kn-img-url-inp" placeholder="이미지 URL https://...">
-        <div style="font-size:11px;color:var(--t3);margin-top:5px">AI가 <code style="background:var(--s4);padding:1px 5px;border-radius:4px">[IMG:태그명]</code> 을 응답에 넣으면 이미지로 교체돼요</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:5px">키워드 감지 시 <code style="background:var(--s4);padding:1px 5px;border-radius:4px">![1](이미지주소)</code> 형식으로 말풍선에 삽입돼요</div>
       </div>
     </div>
     <div class="modal-ft">
@@ -2616,12 +2616,14 @@ function renderChars(){
 }
 function getRoomPreview(roomId){
   const hist=(D.histories[roomId]||[]);
+  if(!hist.length)return'';
   const last=hist[hist.length-1];
   if(!last)return'';
   const _marker='##CMD_OUTPUT_START##';
-  const _raw=last.content.includes(_marker)?last.content.slice(last.content.indexOf(_marker)+_marker.length).trim():last.content;
-  const _clean=_raw.replace(/\*[^*]+\*/g,'').replace(/`/g,'').trim();
-  return _clean.slice(0,28)+(_clean.length>28?'…':'');
+  let txt=last.content||last.full||'';
+  if(txt.includes(_marker)) txt=txt.slice(txt.indexOf(_marker)+_marker.length);
+  txt=txt.replace(/<[^>]+>/g,'').replace(/`/g,'').trim();
+  return txt.slice(0,30)+(txt.length>30?'\u2026':'');
 }
 function selectRoom(charId, roomId){
   D.activeChar=charId; D.activeRoom=roomId;
@@ -3073,6 +3075,7 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
     };
     acts.appendChild(editBtn); acts.appendChild(delBtn);
     bub.onclick=()=>row.classList.toggle('acts-open');
+    bub.addEventListener('pointerdown',function(e){if(e.button!==2)return;e.preventDefault();e.stopPropagation();row.classList.add('acts-open');});    bub.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();});
     body.appendChild(who); body.appendChild(bub); body.appendChild(acts);
     row.appendChild(body);
     area.appendChild(row);
@@ -3262,6 +3265,14 @@ async function rerollMsg(row){
   if(!newContent)return;
 
   if(streamTarget){streamTarget.style.opacity='';streamTarget.innerHTML=renderMsgContent(newContent);}
+  // 모델 클래스 업데이트
+  const newModel=getRoomApi()==='gemini'?D.geminiModel:(D.model||'claude-sonnet-4-6');
+  const bub=streamTarget;
+  if(bub){
+    bub.className=bub.className.replace(/\bmodel-\S+/g,'').trim();
+    const mc=getModelClass(newModel);
+    if(mc) bub.classList.add(mc);
+  }
   row._rerollHistory.push(newContent);
   row._rerollIdx=row._rerollHistory.length-1;
   const newMsg={role:'assistant',content:newContent,time:now(),model:getRoomApi()==='gemini'?D.geminiModel:(D.model||'claude-sonnet-4-6')};
@@ -3758,6 +3769,7 @@ function _addActionsToRow(row,bub,msg,cacheRead){
   if(!row._rerollIdx) row._rerollIdx=0;
   // 말풍선 클릭 toggle
   bub.onclick=()=>row.classList.toggle('acts-open');
+  bub.addEventListener('pointerdown',function(e){if(e.button!==2)return;e.preventDefault();e.stopPropagation();row.classList.add('acts-open');});  bub.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();});
   const acts=document.createElement('div'); acts.className='msg-actions';
   const rerollBtn=document.createElement('button');
   rerollBtn.className='msg-act-btn reroll';
@@ -4354,7 +4366,8 @@ function switchCharTab(i){
   if(i===3){ renderCmdInlineList(); }
 }
 function openCharModal(editing=false){
-  D.editing=editing?D.activeChar:null;
+  if(!editing) D.editing=null;
+  else if(!D.editing) D.editing=D.activeChar;
   $('char-modal-ttl').textContent=D.editing?'스토리 편집':'새 스토리';
   $('char-del-btn').style.display=D.editing?'block':'none';
   // 임시저장 버튼은 새 스토리 작성 시만
@@ -4934,12 +4947,22 @@ function renderMsgContent(text){
     const kns=(c&&c.knowledge)||[];
     text=text.replace(/\[IMG:([^\]]+)\]/g,(match,tag)=>{
       const kn=kns.find(k=>k.imgTag&&k.imgTag.toLowerCase()===tag.toLowerCase()&&k.imgUrl);
-      if(kn) return `<img src="${kn.imgUrl}" alt="${tag}" style="width:100%;max-width:320px;border-radius:10px;display:block;margin:6px 0">`;
+      if(kn) return `![1](${kn.imgUrl})`;
       return match;
     });
   }
 
-  // 스트리밍 중 미완성 코드블럭 보호: ``` 홀수개면 닫는 ``` 임시 추가
+  // 마크다운 주석 제거 [//]: # (...) 형식
+  text=text.replace(/^\[\/\/\]:[^\n]*/gm,'');
+
+  // ① 이미지 ![alt](url) 먼저 플레이스홀더로 추출
+  const imgBlocks=[];
+  text=text.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g,(_,alt,url)=>{
+    const idx=imgBlocks.length;
+    imgBlocks.push('<img src="'+url+'" alt="'+alt+'" style="max-width:100%;border-radius:10px;display:block;margin:6px 0">');
+    return '\x00IMG'+idx+'\x00';
+  });
+  // 스트리밍 중 미완성 코드블럭 보호  // 스트리밍 중 미완성 코드블럭 보호: ``` 홀수개면 닫는 ``` 임시 추가
   const backtickCount=(text.match(/```/g)||[]).length;
   if(backtickCount%2!==0) text=text+'```';
 
@@ -4969,6 +4992,8 @@ function renderMsgContent(text){
 
   // ④ 플레이스홀더를 실제 코드블록 HTML로 복원
   t=t.replace(/\x00CODE(\d+)\x00/g,(_,i)=>codeBlocks[+i]);
+  // ⑤ 이미지 플레이스홀더 복원
+  t=t.replace(/\x00IMG(\d+)\x00/g,(_,i)=>imgBlocks[+i]);
   return t;
 }
 
@@ -5287,11 +5312,12 @@ function saveKn(){
     if(!_knEditTags.includes(v))_knEditTags.push(v);
     rawInp.value='';
   }
-  const title=$('kn-title-inp').value.trim(); if(!title){$('kn-title-inp').focus();return;}
+  const title=$('kn-title-inp').value.trim();
   const ctx=$('kn-ctx-inp').value.trim();
   const tags=[..._knEditTags];
-  const imgTag=$('kn-img-tag-inp').value.trim();
   const imgUrl=$('kn-img-url-inp').value.trim();
+  const imgTag=imgUrl?'img':'';
+  if(!title&&!imgUrl){$('kn-title-inp').focus();return;}
   const idxStr=$('kn-edit-id').value;
   const kns=getEditingKn();
   if(idxStr!==''){
@@ -5300,6 +5326,7 @@ function saveKn(){
     kns.push({id:Date.now()+'',title,tags,ctx,imgTag:imgTag||undefined,imgUrl:imgUrl||undefined,on:true});
   }
   closeKnModal();
+  save();
   // kn-list-modal이 열려있으면 갱신, 아니면 인라인 리스트 갱신
   if(!$('kn-list-modal').classList.contains('hide')){
     openKnListModal();
@@ -5401,11 +5428,26 @@ function pickRelevantKnowledge(char, hist){
 
 function buildKnPrompt(char, hist){
   const matched=pickRelevantKnowledge(char, hist);
-  if(!matched.length)return'';
+  // 이미지 태그만 있는 트리거는 항상 포함
+  const allKns=(char&&char.knowledge)||[];
+  const imgOnlyKns=allKns.filter(kn=>kn.on!==false&&kn.imgTag&&kn.imgUrl&&!kn.ctx&&(!kn.tags||!kn.tags.length));
+  // 중복 제거
+  const imgOnlyNew=imgOnlyKns.filter(kn=>!matched.find(m=>m.id===kn.id));
+  const combined=[...matched,...imgOnlyNew];
+  if(!combined.length)return'';
   let block='\n\n## keyword output\nThe keywords below are printed only in situations that fit each description.\n\n';
-  matched.forEach(kn=>{
-    block+=`- ${kn.title}: ${kn.ctx}`;
-    if(kn.imgTag&&kn.imgUrl) block+=` [이미지 태그: 상황에 맞으면 응답 내 적절한 위치에 [IMG:${kn.imgTag}] 삽입]`;
+  combined.forEach(kn=>{
+    const hasContent=kn.ctx||(kn.tags&&kn.tags.length);
+    if(hasContent){
+      block+=`- ${kn.title}: ${kn.ctx}`;
+    }
+    if(kn.imgTag&&kn.imgUrl){
+      if(hasContent){
+        block+=` [상황에 맞으면 응답 내 적절한 위치에 ![1](${kn.imgUrl}) 삽입(제목 출력 금지)]`;
+      } else {
+        block+=`- [상황에 맞으면 응답 내 ![1](${kn.imgUrl}) 만 삽입(제목/텍스트 출력 절대 금지)]`;
+      }
+    }
     block+='\n';
   });
   block+='- ⚠여기에서부터下記모든내용은[상세프롬프트로만활용+답변內출력절대금지]';
@@ -6431,21 +6473,33 @@ function downloadCapture(){
 // ─── 채팅 캡처 끝 ───
 
 function addLongPress(el,cb){
-  var timer=null,moved=false,fired=false;
+  // ── 모바일 touch 꾹 누르기 ──
+  var tTimer=null,tMoved=false,tFired=false;
   el.addEventListener('touchstart',function(e){
-    moved=false;fired=false;
-    timer=setTimeout(function(){
-      if(!moved){fired=true;cb();}
-    },480);
+    tMoved=false;tFired=false;
+    tTimer=setTimeout(function(){if(!tMoved){tFired=true;cb();}},480);
   },{passive:true});
-  el.addEventListener('touchmove',function(){moved=true;clearTimeout(timer);},{passive:true});
+  el.addEventListener('touchmove',function(){tMoved=true;clearTimeout(tTimer);},{passive:true});
   el.addEventListener('touchend',function(e){
-    clearTimeout(timer);
-    if(fired){e.stopPropagation();}
+    clearTimeout(tTimer);
+    if(tFired){e.stopPropagation();}
   },{passive:true});
-  el.addEventListener('touchcancel',function(){clearTimeout(timer);fired=false;},{passive:true});
-  el.addEventListener('click',function(e){if(fired){e.stopPropagation();fired=false;}});
-  el.addEventListener('contextmenu',function(e){e.preventDefault();});
+  el.addEventListener('touchcancel',function(){clearTimeout(tTimer);tFired=false;},{passive:true});
+  el.addEventListener('click',function(e){if(tFired){e.stopPropagation();tFired=false;}});
+  // ── PC 마우스 좌클릭 꾹 누르기 ──
+  var mTimer=null,mMoved=false,mFired=false;
+  el.addEventListener('mousedown',function(e){
+    if(e.button!==0)return;
+    mMoved=false;mFired=false;
+    mTimer=setTimeout(function(){if(!mMoved){mFired=true;cb();}},480);
+  });
+  el.addEventListener('mousemove',function(){mMoved=true;clearTimeout(mTimer);});
+  el.addEventListener('mouseup',function(e){if(e.button===0)clearTimeout(mTimer);});
+  // ── PC 우클릭 → 액션창 or ctx메뉴 ──
+  el.addEventListener('contextmenu',function(e){
+    e.preventDefault();
+    cb();
+  });
 }
 
 // ─── 백업 모달 열기 ───
