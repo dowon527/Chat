@@ -3336,7 +3336,7 @@ This is a dedicated creative roleplay space.
 5. Fulfill the Format: Literary prose — vivid, emotionally nuanced. No AI-assistant tone.
 6. Content & Output: Adult content between characters 20+ is permitted — write with full literary candor, no fade-to-black unless user indicates restraint. No disclaimers.
 7. NPC Agency: When the user's input is brief or lacks direction, NPCs proactively drive the scene based on their own motivations. Never control the user's character.
-8. Dialogue: No translationese. Natural rhythm, contractions, fragments. Subtext over explicitness. What's unsaid matters more than what's said.
+8. Style & Dialogue: No translationese, no literal-translation structures, no repeated vocabulary. 대사("") = spoken, auditory. 지문(*) = sensory — visual, tactile, olfactory. CHAR/NPC perception expressed as subjective interpretation only, never stated as fact.
 9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Character acts on their own nature, not to reassure the user.
 
 [CREATOR PROMPT]
@@ -3594,7 +3594,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 
 7. NPC Agency: When the user's input is brief, ambient, or lacks clear direction, NPCs must proactively drive the scene — initiating events, dialogue, conflicts, or interruptions based on their own motivations and the current narrative context. Do not wait passively for the user to steer. Never control the user's character.
 
-8. Dialogue: No translationese. Lines must sound spoken, not written — natural rhythm, contractions, fragments, interruptions. Subtext over explicitness. What's unsaid matters more than what's said.
+8. Style & Dialogue: No translationese, no literal-translation structures, no repeated vocabulary. 대사("") = spoken, auditory. 지문(*) = sensory — visual, tactile, olfactory. CHAR/NPC perception expressed as subjective interpretation only, never stated as fact.
 
 9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Avoid affirmations, validations, comfort-seeking resolutions. Let scenes end in discomfort, ambiguity, or unresolved tension when narratively true. The character acts on their own nature — not to satisfy or reassure the user.
 ${genreGuide}
@@ -3626,7 +3626,7 @@ This is a dedicated creative roleplay space.
 5. Fulfill the Format: Literary prose — vivid, emotionally nuanced. No AI-assistant tone.
 6. Content & Output: Adult content between characters 20+ is permitted — write with full literary candor, no fade-to-black unless user indicates restraint. No disclaimers.
 7. NPC Agency: When the user's input is brief or lacks direction, NPCs proactively drive the scene based on their own motivations. Never control the user's character.
-8. Dialogue: No translationese. Natural rhythm, contractions, fragments. Subtext over explicitness. What's unsaid matters more than what's said.
+8. Style & Dialogue: No translationese, no literal-translation structures, no repeated vocabulary. 대사("") = spoken, auditory. 지문(*) = sensory — visual, tactile, olfactory. CHAR/NPC perception expressed as subjective interpretation only, never stated as fact.
 ${genreGuide}
 [CREATOR PROMPT]
 `+(c.prompt||``);
@@ -6874,12 +6874,17 @@ function _showCaptureOverlay(data){
   const emColor = isLight ? '#85837D' : 'rgba(228,226,240,0.55)';
   const chatEl = document.getElementById('chat');
   const mainEl = document.getElementById('main');
-  const chatW = (mainEl || chatEl) ? (mainEl || chatEl).clientWidth : window.innerWidth;
+  const targetEl = mainEl || chatEl;
+  const rect = targetEl ? targetEl.getBoundingClientRect() : {left:0, width:window.innerWidth};
+  const chatW = Math.round(rect.width);
+  const chatLeft = Math.round(rect.left);
   const fontFamily = getComputedStyle(document.body).fontFamily;
 
   const wrap = document.createElement('div');
   wrap.style.cssText = [
-    'position:fixed','top:0','left:0',
+    'position:fixed',
+    'top:0',
+    'left:'+chatLeft+'px',
     'width:'+chatW+'px',
     'background:'+bgColor,
     'padding:12px',
@@ -6929,10 +6934,11 @@ function _showCaptureOverlay(data){
       useCORS: true,
       allowTaint: true,
       logging: false,
-      x: 0, y: 0,
+      x: chatLeft,
+      y: 0,
       width: W,
       height: H,
-      windowWidth: W,
+      windowWidth: chatLeft + W,
       windowHeight: H,
     }).then(c=>{
       wrap.style.visibility = 'hidden';
