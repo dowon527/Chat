@@ -1210,6 +1210,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <span style="font-size:12px;color:var(--t2);flex:1">버블을 탭해서 선택하세요</span>
       <span id="cap-mode-count" style="font-size:12px;color:var(--accent);font-weight:600">0개 선택</span>
+      <button id="cap-para-toggle" onclick="toggleParaMode()" style="background:var(--s3);border:1px solid var(--border2);border-radius:20px;color:var(--t2);cursor:pointer;font-size:11px;padding:2px 10px">문단선택</button>
       <button onclick="exitCaptureMode()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:2px 6px">✕ 취소</button>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
@@ -6560,7 +6561,51 @@ function openCaptureModal(){
 
 // ─── 캡처 모드 ───
 let _capMode = false;
-let _capSelected = new Set();
+let _capSelected = new Set(); // 버블 단위
+let _capParaMode = false; // 문단 선택 모드
+let _capParaSelected = new Map(); // rowIdx → Set(paraIdx)
+
+function toggleParaMode(){
+  _capParaMode = !_capParaMode;
+  const btn = document.getElementById('cap-para-toggle');
+  if(btn){
+    btn.style.background = _capParaMode ? 'var(--accent2)' : 'var(--s3)';
+    btn.style.color = _capParaMode ? '#fff' : 'var(--t2)';
+    btn.style.borderColor = _capParaMode ? 'var(--accent2)' : 'var(--border2)';
+  }
+  if(_capParaMode){
+    // 문단 선택 모드: 버블 클릭 핸들러 재설정
+    document.querySelectorAll('#chat .msg-row').forEach((row, ri)=>{
+      if(row._capHandler){ row.removeEventListener('click', row._capHandler); }
+      const bub = row.querySelector('.bub-text') || row.querySelector('.msg-bub');
+      if(!bub) return;
+      // 버블 내용을 문단으로 쪼개기
+      const html = bub.innerHTML;
+      const paras = html.split(/<br\s*\/?>/gi).filter(p=>p.trim());
+      if(paras.length <= 1){ return; } // 한 문단이면 문단 모드 의미없음
+      bub.innerHTML = '';
+      if(!_capParaSelected.has(ri)) _capParaSelected.set(ri, new Set());
+      paras.forEach((p, pi)=>{
+        const span = document.createElement('div');
+        span.style.cssText = 'padding:2px 0;cursor:pointer;border-radius:4px;transition:background 0.1s';
+        span.innerHTML = p;
+        span.dataset.paraIdx = pi;
+        span.addEventListener('click', e=>{
+          e.stopPropagation();
+          const sel = _capParaSelected.get(ri);
+          if(sel.has(pi)){ sel.delete(pi); span.style.background=''; span.style.outline=''; }
+          else { sel.add(pi); span.style.background='rgba(157,127,244,0.15)'; span.style.outline='1px solid var(--accent)'; }
+        });
+        bub.appendChild(span);
+      });
+    });
+    showToast('문단을 탭해서 선택하세요');
+  } else {
+    // 문단 모드 해제: 원래 버블로 복원
+    renderChat();
+    openCaptureMode();
+  }
+}
 
 function openCaptureMode(){
   _capMode = true;
@@ -6604,11 +6649,40 @@ function exitCaptureMode(){
 
 function captureSelected(){
   const allRows = Array.from(document.querySelectorAll('#chat .msg-row'));
-  const rows = _capSelected.size > 0 ? allRows.filter((r,i) => _capSelected.has(i)) : allRows;
-  if(!rows.length){ showToast('선택된 버블이 없어요'); return; }
-
   const doHideMyBub = !!document.getElementById('cap-hide-my-bub')?.checked;
   const doHideName = !!document.getElementById('cap-hide-name')?.checked;
+
+  // 문단 선택 모드: 선택된 문단으로 임시 row 만들어서 캡처
+  if(_capParaMode){
+    let combined = '';
+    allRows.forEach((row, ri)=>{
+      const sel = _capParaSelected.get(ri);
+      if(!sel||!sel.size) return;
+      const paras = [...row.querySelectorAll('div[data-para-idx]')];
+      paras.forEach((p,pi)=>{ if(sel.has(pi)) combined += p.innerHTML + '<br>'; });
+    });
+    if(!combined){ showToast('문단을 선택해주세요'); return; }
+    const tmpRow = document.createElement('div');
+    tmpRow.className = 'msg-row';
+    const tmpBody = document.createElement('div'); tmpBody.className = 'msg-body';
+    const tmpBub = document.createElement('div'); tmpBub.className = 'msg-bub';
+    tmpBub.innerHTML = combined;
+    tmpBody.appendChild(tmpBub); tmpRow.appendChild(tmpBody);
+    document.getElementById('chat').appendChild(tmpRow);
+    const rows = [tmpRow];
+    // 변수 선언 후 공통 캡처 로직으로
+    _runCapture(rows, doHideName);
+    setTimeout(()=>{ if(tmpRow.parentNode) tmpRow.remove(); }, 5000);
+    return;
+  }
+
+  const rows = _capSelected.size > 0 ? allRows.filter((r,i) => _capSelected.has(i)) : allRows;
+  if(!rows.length){ showToast('선택된 버블이 없어요'); return; }
+  _runCapture(rows, doHideName);
+}
+
+function _runCapture(rows, doHideName){
+  const doHideMyBub = false;
   const activeProfs = cProfs();
   const userNm = (activeProfs.length && activeProfs[0].name) ? activeProfs[0].name : '';
   const isLight = document.body.classList.contains('light');
@@ -6623,16 +6697,19 @@ function captureSelected(){
   document.querySelectorAll('#chat .msg-row').forEach(r=>r.style.opacity='1');
 
   const clone = document.createElement('div');
+  // 화면 안에 배치 (html2canvas가 CSS를 제대로 읽게)
   clone.style.cssText = [
-    'position:fixed','top:0','left:-9999px',
+    'position:fixed','top:0','left:0',
     'width:'+chatW+'px',
     'background:'+bgColor,
     'padding:16px 12px',
     'display:flex','flex-direction:column','gap:10px',
     'box-sizing:border-box',
     'font-family:'+getComputedStyle(document.body).fontFamily,
-    'font-size:14px','line-height:1.75',
-    'color:'+textColor,'z-index:-9999'
+    'font-size:'+getComputedStyle(document.body).fontSize,'line-height:1.75',
+    'color:'+textColor,
+    'z-index:99999',
+    'opacity:0','pointer-events:none'
   ].join(';');
 
   const _cs = getComputedStyle(document.documentElement);
@@ -6645,9 +6722,18 @@ function captureSelected(){
       if(!ce[i])return;
       const s=getComputedStyle(el);
       const bg=s.backgroundColor, col=s.color, br=s.borderRadius;
-      if(bg&&bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent') ce[i].style.backgroundColor=bg;
-      if(col) ce[i].style.color=col;
+      // 투명/흰색 배경은 스킵 (라이트모드에서 버블 색 날아가는 문제 방지)
+      const isWhite = bg==='rgb(255, 255, 255)'||bg==='rgba(255,255,255,1)';
+      if(bg&&bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent'&&!isWhite) ce[i].style.backgroundColor=bg;
+      if(col&&col!=='rgb(0, 0, 0)') ce[i].style.color=col;
       if(br&&br!=='0px') ce[i].style.borderRadius=br;
+    });
+    // msg-bub 색상 강제 적용
+    orig.querySelectorAll('.msg-bub').forEach((b,bi)=>{
+      const cb=cloned.querySelectorAll('.msg-bub')[bi]; if(!cb)return;
+      const s=getComputedStyle(b);
+      cb.style.backgroundColor=s.backgroundColor;
+      cb.style.color=s.color;
     });
   }
   function _censor(el, name){
@@ -6694,6 +6780,9 @@ function captureSelected(){
 
   showToast('캡처 중...');
   const _go=()=>{
+    // 캡처 직전 잠깐 보이게
+    clone.style.opacity='1';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
     html2canvas(clone,{
       backgroundColor:bgColor, scale:Math.min(window.devicePixelRatio||1,3),
       useCORS:true,allowTaint:true,scrollX:0,scrollY:0,
@@ -6701,6 +6790,7 @@ function captureSelected(){
       windowWidth:chatW,windowHeight:clone.scrollHeight,
       logging:false,imageTimeout:15000,
     }).then(canvas=>{
+      clone.style.opacity='0';
       document.body.removeChild(clone);
       canvas.toBlob(blob=>{
         const url=URL.createObjectURL(blob);
@@ -6712,6 +6802,7 @@ function captureSelected(){
       if(document.body.contains(clone))document.body.removeChild(clone);
       showToast('캡처 실패 ㅠ');
     });
+    })); // requestAnimationFrame 닫기
   };
   if(!window.html2canvas){
     const s=document.createElement('script');
