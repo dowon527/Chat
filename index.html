@@ -3059,6 +3059,7 @@ function getModelClass(model){
   if(model.includes('opus-4-6')) return 'model-opus-4-6';
   if(model.includes('sonnet')) return 'model-sonnet-4-6';
   if(model.includes('haiku')) return 'model-haiku';
+  if(model.includes('gemini-3.5')) return 'model-gemini-3-1';
   if(model.includes('gemini-3.1')||model.includes('3.1-pro')) return 'model-gemini-3-1';
   if(model.includes('2.5-pro')) return 'model-gemini-2-5-pro';
   if(model.includes('2.5-flash-lite')||model.includes('flash-lite')) return 'model-gemini-2-5-lite';
@@ -4230,7 +4231,8 @@ const CLAUDE_MODELS=[
   {value:'claude-haiku-4-5-20251001',icon:'💧',name:'파워챗 (Haiku 4.5)',desc:'빠름 · 가벼운 대화용'},
 ];
 const GEMINI_MODELS=[
-  {value:'gemini-3.1-pro-preview',icon:'🌙',name:'프로챗 3.1 (Gemini 3.1 Pro)',desc:'최신 · 최고품질'},
+  {value:'gemini-3.5-flash',icon:'⚡',name:'플래쉬챗 3.5 (Gemini 3.5 Flash)',desc:'최신 · 프로급 성능'},
+  {value:'gemini-3.1-pro-preview',icon:'🌙',name:'프로챗 3.1 (Gemini 3.1 Pro)',desc:'고품질 · 추론특화'},
   {value:'gemini-2.5-pro',icon:'🌟',name:'프로챗 2.5 (Gemini 2.5 Pro)',desc:'고품질 · 풍부한 묘사'},
   {value:'gemini-2.5-flash',icon:'✦',name:'플래쉬챗 (Gemini 2.5 Flash)',desc:'추천 · 무료 티어 있음'},
   {value:'gemini-2.5-flash-lite',icon:'💚',name:'파워챗 (Gemini 2.5 Flash-Lite)',desc:'빠름 · 무료 티어 있음'},
@@ -6020,6 +6022,7 @@ function openStatsModal(){
   let logHtml='';
   if(log.length){
     const modelLabel=m=>{
+      if(m&&m.includes('gemini-3.5'))return'G3.5 Flash';
       if(m==='gemini-3.1-pro-preview')return'Gemini 3.1';
       if(m==='gemini-2.5-pro')return'G-Pro';
       if(m==='gemini-2.5-flash')return'G-Flash';
@@ -6098,7 +6101,8 @@ function openStatsModal(){
     // 모델 가격으로 절약 금액 계산
     const KRW=1420;
     const activeModel=getRoomApi()==='gemini'?D.geminiModel:D.model;
-    let pricePerMTok=3; // sonnet 기본
+    let pricePerMTok=3;
+    if(activeModel&&activeModel.includes('gemini-3.5')) pricePerMTok=1.5;
     if(activeModel&&activeModel.includes('opus')) pricePerMTok=5;
     else if(activeModel&&activeModel.includes('haiku')) pricePerMTok=0.8;
     else if(activeModel==='gemini-2.5-pro') pricePerMTok=1.25;
@@ -6232,7 +6236,9 @@ function calcTurnCostKRW(outputText, model, inTokOverride, cacheRead, cacheWrite
   const cR=cacheRead||0; const cW=cacheWrite||0;
   const plainIn=Math.max(0, inTok-cR-cW);
   let costUSD=0;
-  if(model==='gemini-2.5-pro'){
+  if(model&&model.includes('gemini-3.5')){
+    costUSD=(plainIn/1e6)*1.5+(cR/1e6)*0.375+(cW/1e6)*1.875+(outTok/1e6)*9;
+  } else if(model==='gemini-2.5-pro'){
     costUSD=(plainIn/1e6)*1.25+(cR/1e6)*0.31+(cW/1e6)*1.56+(outTok/1e6)*10;
   } else if(model==='gemini-2.5-flash'){
     costUSD=(plainIn/1e6)*0.075+(cR/1e6)*0.01875+(cW/1e6)*0.09375+(outTok/1e6)*0.30;
@@ -6289,7 +6295,9 @@ function calcCostKRW(outputTokens, model){
   const KRW=1420;
   const inTok=3000;
   let costUSD=0;
-  if(model==='gemini-2.5-pro'){
+  if(model&&model.includes('gemini-3.5')){
+    costUSD=(plainIn/1e6)*1.5+(cR/1e6)*0.375+(cW/1e6)*1.875+(outTok/1e6)*9;
+  } else if(model==='gemini-2.5-pro'){
     costUSD=(inTok/1e6)*1.25+(outputTokens/1e6)*10;
   } else if(model==='gemini-2.5-flash'){
     costUSD=(inTok/1e6)*0.075+(outputTokens/1e6)*0.30;
