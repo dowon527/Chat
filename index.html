@@ -6872,10 +6872,10 @@ function _collectCaptureData(doHideName){
 function _showCaptureOverlay(data){
   const { groups, bgColor, isLight } = data;
   const emColor = isLight ? '#85837D' : 'rgba(228,226,240,0.55)';
-  const chatW = document.getElementById('chat').offsetWidth;
+  const chatEl = document.getElementById('chat');
+  const chatW = chatEl ? chatEl.offsetWidth : window.innerWidth;
   const fontFamily = getComputedStyle(document.body).fontFamily;
 
-  // 캡처용 임시 div — 화면 밖에 배치
   const wrap = document.createElement('div');
   wrap.style.cssText = [
     'position:fixed','top:0','left:0',
@@ -6885,7 +6885,8 @@ function _showCaptureOverlay(data){
     'display:flex','flex-direction:column','gap:10px',
     'box-sizing:border-box',
     'font-family:'+fontFamily,
-    'z-index:99998',
+    'z-index:-1',
+    'visibility:hidden',
     'pointer-events:none',
   ].join(';');
 
@@ -6917,7 +6918,10 @@ function _showCaptureOverlay(data){
   document.body.appendChild(wrap);
 
   const doCapture = () => {
+    // 캡처 직전에만 visible로
+    wrap.style.visibility = 'visible';
     const H = wrap.scrollHeight;
+    const W = wrap.offsetWidth;
     html2canvas(wrap, {
       backgroundColor: bgColor,
       scale: Math.min(window.devicePixelRatio||2, 3),
@@ -6925,27 +6929,58 @@ function _showCaptureOverlay(data){
       allowTaint: true,
       logging: false,
       x: 0, y: 0,
-      width: chatW,
+      width: W,
       height: H,
-      windowWidth: chatW,
+      windowWidth: W,
       windowHeight: H,
     }).then(c=>{
+      wrap.style.visibility = 'hidden';
       document.body.removeChild(wrap);
       c.toBlob(blob=>{
         const url = URL.createObjectURL(blob);
         const ov = document.createElement('div');
-        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;box-sizing:border-box;';
+        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;box-sizing:border-box;';
+
         const img = document.createElement('img');
         img.src = url;
-        img.style.cssText = 'max-width:95vw;max-height:72vh;object-fit:contain;border-radius:12px;';
+        img.style.cssText = 'max-width:95vw;max-height:65vh;object-fit:contain;border-radius:12px;display:block;';
+
+        // iOS Share API로 사진 앱에 저장
+        const saveBtn = document.createElement('button');
+        saveBtn.style.cssText = 'padding:10px 28px;border-radius:20px;border:none;background:var(--accent2,#7c5ce8);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'+fontFamily+';';
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if(isIOS && navigator.share){
+          saveBtn.textContent = '📷 사진 앱에 저장';
+          saveBtn.onclick = async ()=>{
+            try{
+              const file = new File([blob], 'capture.png', {type:'image/png'});
+              await navigator.share({ files:[file] });
+            } catch(e){ /* 취소해도 무시 */ }
+          };
+        } else {
+          saveBtn.textContent = '💾 다운로드';
+          saveBtn.onclick = ()=>{
+            const a = document.createElement('a');
+            a.href = url;
+            const ch = D.chars.find(x=>x.id===D.activeChar);
+            a.download = (ch?ch.name:'chat')+'_'+Date.now()+'.png';
+            a.click();
+          };
+        }
+
         const hint = document.createElement('div');
-        hint.style.cssText = 'font-size:13px;color:#fff;opacity:0.8;text-align:center;font-family:'+fontFamily+';';
-        hint.textContent = '이미지를 꾹 눌러 → 사진 앱에 저장하세요 📷';
+        hint.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.5);text-align:center;font-family:'+fontFamily+';';
+        hint.textContent = isIOS ? '또는 이미지 꾹 눌러도 저장 가능' : '';
+
         const closeBtn = document.createElement('button');
         closeBtn.textContent = '닫기';
-        closeBtn.style.cssText = 'padding:8px 28px;border-radius:20px;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#fff;font-size:13px;cursor:pointer;font-family:'+fontFamily+';';
+        closeBtn.style.cssText = 'padding:8px 28px;border-radius:20px;border:1px solid rgba(255,255,255,0.25);background:transparent;color:#fff;font-size:13px;cursor:pointer;font-family:'+fontFamily+';';
         closeBtn.onclick = ()=>{ ov.remove(); URL.revokeObjectURL(url); };
-        ov.appendChild(img); ov.appendChild(hint); ov.appendChild(closeBtn);
+
+        ov.appendChild(img);
+        ov.appendChild(saveBtn);
+        if(isIOS) ov.appendChild(hint);
+        ov.appendChild(closeBtn);
         document.body.appendChild(ov);
       }, 'image/png');
     }).catch(()=>{
