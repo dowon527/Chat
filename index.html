@@ -384,7 +384,7 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
   #topbar{padding-left:max(10px, env(safe-area-inset-left, 10px));padding-right:max(10px, env(safe-area-inset-right, 10px))}
 }
 .tb-info{flex:1;min-width:0}
-.tb-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.tb-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
 .tb-sub{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .tb-acts{display:flex;gap:6px;align-items:center}
 .ico-btn{
@@ -1160,9 +1160,9 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
     </button>
     <input type="file" id="tb-emo-file" accept="image/*" style="display:none" onchange="loadTbEmoImg(event)">
     <div id="tb-emo" style="width:34px;height:34px;border-radius:8px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden;"></div>
-    <div class="tb-info" onclick="openStoryInfo()" style="cursor:pointer">
+    <div class="tb-info" onclick="openStoryInfo()" style="cursor:pointer;display:flex;align-items:center">
       <div class="tb-name" id="tb-name" style="color:var(--text)"></div>
-      <div class="tb-sub" id="tb-sub" style="color:var(--t3)"></div>
+      <div class="tb-sub" id="tb-sub" style="display:none"></div>
     </div>
     <div class="tb-acts">
       <div style="display:flex;gap:3px;align-items:center">
