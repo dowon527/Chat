@@ -3053,7 +3053,7 @@ function renderChat(){
   area.style.padding='16px 12px';
   area.style.position='';
   area.innerHTML='';
-  if(!hist.length){
+  if(!D.activeRoom || !hist.length){
     const empty=document.createElement('div'); empty.className='empty';
     const av=document.createElement('div');
     av.style.cssText='width:110px;height:110px;border-radius:18px;background:var(--s3);border:none;display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden';
@@ -4377,7 +4377,7 @@ function openNewRoomModal(charId){
     const opt=document.createElement('div');
     opt.style.cssText='padding:9px 12px;border-radius:var(--r2);border:none;cursor:pointer;transition:all 0.15s';
     const heart=HEARTS[Math.floor(Math.random()*HEARTS.length)];
-    opt.innerHTML=`<div style="font-size:12px;font-weight:500;color:#1a1614;margin-bottom:3px">${heart} ${sc.title||'장면'}</div><div style="font-size:12px;color:var(--t2);white-space:pre-wrap;word-break:break-word;line-height:1.5">${sc.content.slice(0,100)}${sc.content.length>100?'…':''}</div>`;
+    opt.innerHTML=`<div style="font-size:13px;font-weight:500;color:#1a1614">${heart} ${sc.title||'장면'}</div>`;
     opt.onclick=()=>{
       _newRoomSceneId=sc.id;
       sl.querySelectorAll('[data-sel]').forEach(x=>{x.removeAttribute('data-sel');x.style.background='transparent';});
@@ -5024,18 +5024,18 @@ function saveChar(){
       ch._promptVer=prevChar._promptVer||1;
       ch._promptLog=prevChar._promptLog||[];
     }
+    // 잠금 상태 유지
+    if(prevChar&&prevChar._locked){ch._locked=prevChar._locked;ch._enc=prevChar._enc;}
     if(i>=0)D.chars[i]=ch;
   } else {
     D.chars.push(ch);
-    // 기본 방 자동 생성
-    const roomId='room_'+Date.now();
     if(!D.rooms)D.rooms={};
-    if(!D.rooms[ch.id]||!D.rooms[ch.id].length){
-      D.rooms[ch.id]=[{id:roomId,name:'대화 1'}];
-      D.histories[roomId]=[];
-    }
+    if(!D.rooms[ch.id])D.rooms[ch.id]=[];
+    const roomId='room_'+Date.now();
+    D.rooms[ch.id]=[{id:roomId,name:'대화 1',sceneId:null,createdAt:Date.now(),dot:'🤍'}];
+    D.histories[roomId]=[];
     D.activeChar=ch.id;
-    D.activeRoom=D.rooms[ch.id][0].id;
+    D.activeRoom=roomId;
   }
   const wasNew=!D.editing;
   const newCharId=D.activeChar;
@@ -5048,8 +5048,7 @@ function saveChar(){
   delete D._charDraft;
   save(); closeModal('char-modal');
   renderChars(); renderTopbar(); renderChat();
-  if(wasNew) sbShowRooms(newCharId);
-}
+  if(wasNew) sbShowRooms(newCharId);}
 function deleteChar(){
   if(!D.editing)return;
   const id=D.editing;
@@ -7498,7 +7497,7 @@ function renderBackupStoryList(){
     hd.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s3);cursor:pointer;user-select:none';
     // 전체 선택 체크
     var storyChk=document.createElement('input');
-    storyChk.type='checkbox'; storyChk.id='bk-story-'+c.id;
+    storyChk.type='checkbox'; storyChk.id='bk-story-'+c.id; storyChk.className='bk-story-chk'; storyChk.dataset.charId=c.id;
     storyChk.style.cssText='width:15px;height:15px;accent-color:var(--accent2);cursor:pointer;flex-shrink:0';
     storyChk.checked=false;
     // 이모지
@@ -7571,8 +7570,8 @@ function onExportLockToggle(cb){
 
 function exportPartialConfirm(){
   // 선택 확인
-  var anySelected=document.querySelectorAll('.bk-room-chk:checked').length>0;
-  if(!anySelected){alert('내보낼 대화를 하나 이상 선택해주세요.');return;}
+  var anySelected=document.querySelectorAll('.bk-room-chk:checked').length>0||document.querySelectorAll('.bk-story-chk:checked').length>0;
+  if(!anySelected){alert('내보낼 스토리를 하나 이상 선택해주세요.');return;}
 
   // 잠금 여부 팝업
   var old=document.getElementById('ctx-overlay');if(old)old.remove();
