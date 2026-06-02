@@ -4235,6 +4235,7 @@ function editMsg(row,bub,msg){
   if(acts)acts.style.display='none';
   const wrap=document.createElement('div'); wrap.className='msg-edit-wrap';
   const ta=document.createElement('textarea'); ta.className='msg-edit-area';
+  const _editMarker='##CMD_OUTPUT_START##';
   // 현재 활성 리롤 내용 사용
   const activeContent=(row._rerollHistory&&row._rerollHistory.length)?row._rerollHistory[row._rerollIdx||0]:msg.content;
   const _editContent2=activeContent.includes(_editMarker)?activeContent.slice(activeContent.indexOf(_editMarker)+_editMarker.length).trim():activeContent;
