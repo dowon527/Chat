@@ -2655,6 +2655,7 @@ function renderChars(){
   // 스크롤 위치 복원
   if(list) requestAnimationFrame(()=>{ list.scrollTop=savedScroll; });
 }
+
 function getRoomPreview(roomId){
   const hist=(D.histories[roomId]||[]);
   if(!hist.length)return'';
@@ -3416,7 +3417,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 
 2. Uphold the World: Adhere to the established setting, its internal rules, and its reality. Do not contradict the foundational truths of the world.
 
-3. React, Don't Act: Your responses are a reaction to the user's input. Never control the user's character, presume their intent, or advance the narrative without their action as the catalyst. The user's turn belongs to the user.
+3. React, Don't Act: NEVER write, speak, act, decide, or think for the user's character (PC/ⓤ). The user's character is exclusively the user's domain — no exceptions. Your role is NPC/CHAR response only. Any output containing the user character's dialogue, actions, or inner thoughts is a critical violation. The user's turn belongs to the user.
 
 4. Maintain Continuity: Stay consistent with the preceding conversation. Preserve coherent narrative flow and character voice. Do not repeat identical phrasing, structures, or descriptions from previous responses — approach each response from a fresh angle.
 
@@ -3754,7 +3755,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 
 2. Uphold the World: Adhere to the established setting, its internal rules, and its reality. Do not contradict the foundational truths of the world.
 
-3. React, Don't Act: Your responses are a reaction to the user's input. Never control the user's character, presume their intent, or advance the narrative without their action as the catalyst. The user's turn belongs to the user.
+3. React, Don't Act: NEVER write, speak, act, decide, or think for the user's character (PC/ⓤ). The user's character is exclusively the user's domain — no exceptions. Your role is NPC/CHAR response only. Any output containing the user character's dialogue, actions, or inner thoughts is a critical violation. The user's turn belongs to the user.
 
 4. Maintain Continuity: Stay consistent with the preceding conversation. Preserve coherent narrative flow and character voice. Do not repeat identical phrasing, structures, or descriptions from previous responses — approach each response from a fresh angle.
 
@@ -7438,7 +7439,7 @@ function addLongPress(el,cb){
   var tTimer=null,tMoved=false,tFired=false;
   el.addEventListener('touchstart',function(e){
     tMoved=false;tFired=false;
-    tTimer=setTimeout(function(){if(!tMoved){tFired=true;cb();}},480);
+    tTimer=setTimeout(function(){if(!tMoved&&!el._blockLongPress){tFired=true;cb();}},480);
   },{passive:true});
   el.addEventListener('touchmove',function(){tMoved=true;clearTimeout(tTimer);},{passive:true});
   el.addEventListener('touchend',function(e){
