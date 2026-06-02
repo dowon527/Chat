@@ -1609,6 +1609,17 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <div id="gemini-key-st" style="margin-bottom:8px"></div>
         <!-- Gemini 모델 카드 -->
         <div id="gemini-model-list" style="display:flex;flex-direction:column;gap:4px"></div>
+        <!-- Thinking 토글 -->
+        <label style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;cursor:pointer;user-select:none">
+          <div>
+            <div style="font-size:12px;color:var(--t2)">Thinking 비활성화</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:1px">끄면 응답 빠름 · 퀄리티 소폭 감소</div>
+          </div>
+          <label class="p-toggle">
+            <input type="checkbox" id="gemini-no-thinking" onchange="D.geminiNoThinking=this.checked;save()">
+            <span class="p-slider"></span>
+          </label>
+        </label>
         <div style="font-size:11px;color:var(--t3);margin-top:8px">
           발급: <a href="https://aistudio.google.com/apikey" style="color:var(--teal)">aistudio.google.com/apikey</a>
           &nbsp;·&nbsp; <span style="color:var(--teal)">Flash 계열 무료 티어 있음</span>
@@ -3306,7 +3317,14 @@ async function rerollMsg(row){
   for(let i=allRows.length-1;i>domIdx;i--){if(allRows[i]?.parentNode)allRows[i].remove();}
 
   const streamTarget=row._bubText||row.querySelector('.bub-text')||row.querySelector('.msg-bub');
-  if(streamTarget) streamTarget.style.opacity='0.35';
+  if(streamTarget){
+    streamTarget.style.opacity='0.35';
+    // 로딩 표시
+    const loadEl=document.createElement('div');
+    loadEl.className='loading-phrase'; loadEl.id='reroll-loading-phrase';
+    loadEl.textContent='…';
+    streamTarget.appendChild(loadEl);
+  }
 
   $('send').disabled=true;
   let newContent='';
@@ -3474,7 +3492,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
     }).filter(m=>m.parts[0].text);
     while(gMsgs.length&&gMsgs[0].role!=='user')gMsgs.shift();
     if(!gMsgs.length) throw new Error('메시지 없음');
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2}})});
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2,...(D.geminiNoThinking?{thinkingConfig:{thinkingBudget:0}}:{})}})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini 오류');}
     if(targetBub){targetBub.style.opacity='1';}
     const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf=''; let _gIn=0,_gOut=0;
@@ -3668,7 +3686,7 @@ async function generateAI_OOC(hist){
       if(!geminiMsgs.length){row2.remove();return;}
       const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({system_instruction:{parts:[{text:oocSys}]},contents:geminiMsgs,generationConfig:{maxOutputTokens:800}}),
+        body:JSON.stringify({system_instruction:{parts:[{text:oocSys}]},contents:geminiMsgs,generationConfig:{maxOutputTokens:800,...(D.geminiNoThinking?{thinkingConfig:{thinkingBudget:0}}:{})}}),
         signal:_streamAbort?.signal
       });
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini 오류');}
@@ -3916,7 +3934,7 @@ This is a dedicated creative roleplay space.
       const geminiBody=JSON.stringify({
         system_instruction:{parts:[{text:sys}]},
         contents:geminiMsgs,
-        generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2}
+        generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2,...(D.geminiNoThinking?{thinkingConfig:{thinkingBudget:0}}:{})}
       });
       const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:geminiBody,signal:_streamAbort?.signal});
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini API 오류');}
@@ -4175,10 +4193,10 @@ function editMsg(row,bub,msg){
   if(acts)acts.style.display='none';
   const wrap=document.createElement('div'); wrap.className='msg-edit-wrap';
   const ta=document.createElement('textarea'); ta.className='msg-edit-area';
-  // ##CMD_OUTPUT_START## 마커 있으면 잘라서 표시
-  const _editMarker='##CMD_OUTPUT_START##';
-  const _editContent=msg.content.includes(_editMarker)?msg.content.slice(msg.content.indexOf(_editMarker)+_editMarker.length).trim():msg.content;
-  ta.value=_editContent; ta.rows=3;
+  // 현재 활성 리롤 내용 사용
+  const activeContent=(row._rerollHistory&&row._rerollHistory.length)?row._rerollHistory[row._rerollIdx||0]:msg.content;
+  const _editContent2=activeContent.includes(_editMarker)?activeContent.slice(activeContent.indexOf(_editMarker)+_editMarker.length).trim():activeContent;
+  ta.value=_editContent2; ta.rows=3;
   ta.oninput=()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px'};
   const actsRow=document.createElement('div'); actsRow.className='msg-edit-acts';
   const saveBtn=document.createElement('button'); saveBtn.className='msg-edit-save'; saveBtn.textContent='저장';
@@ -4187,10 +4205,16 @@ function editMsg(row,bub,msg){
   saveBtn.onclick=()=>{
     const newText=ta.value.trim(); if(!newText)return;
     const hist=cHist();
-    const idx=hist.findIndex(m=>m.content===msg.content&&m.role===msg.role);
-    if(idx>=0){hist[idx].content=newText; save();}
+    const hi=parseInt(row.dataset.histIdx??'-1');
+    if(hi>=0&&hist[hi]){hist[hi].content=newText;save();}
+    else{
+      const idx=hist.findIndex(m=>m.content===msg.content&&m.role===msg.role);
+      if(idx>=0){hist[idx].content=newText;save();}
+    }
     msg.content=newText;
-    bub.innerHTML=renderMsgContent(newText);
+    if(row._rerollHistory&&row._rerollHistory.length){row._rerollHistory[row._rerollIdx||0]=newText;}
+    const bubText=bub.querySelector('.bub-text')||bub;
+    bubText.innerHTML=renderMsgContent(newText);
     bub.style.display=''; wrap.remove();
     if(acts)acts.style.display='';
   };
@@ -4514,6 +4538,8 @@ function openModal(id){
   if(id==='key-modal'){
     $('key-inp').value=D.key;
     $('gemini-key-inp').value=D.geminiKey||'';
+    const noThinkChk=$('gemini-no-thinking');
+    if(noThinkChk) noThinkChk.checked=D.geminiNoThinking||false;
     updateKeySt(); updateGeminiKeySt();
     renderModelCards();
     initLengthSlider();
@@ -6253,7 +6279,7 @@ ${histText}`;
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         contents:[{role:'user',parts:[{text:summaryPrompt}]}],
-        generationConfig:{maxOutputTokens:2000}
+        generationConfig:{maxOutputTokens:2000,...(D.geminiNoThinking?{thinkingConfig:{thinkingBudget:0}}:{})}
       })
     });
     const data=await res.json();
