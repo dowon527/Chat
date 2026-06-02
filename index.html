@@ -2139,7 +2139,7 @@ const GENRES=[
 
 let D={
   key:'', model:'claude-sonnet-4-6',
-  geminiKey:'', geminiModel:'gemini-2.5-flash',
+  geminiKey:'', geminiModel:'gemini-2.5-flash', geminiNoThinking:false,
   activeApi:'claude', outputLength:2,
   chars:[], activeChar:null,
   rooms:{},
@@ -2223,7 +2223,7 @@ function save(){
         safeHistories[k]=arr.filter(m=>m&&m.role&&(m.content!=null)).map(m=>({role:m.role,content:String(m.content),time:m.time||'',model:m.model||''}));
       }
     });
-    const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,activeApi:D.activeApi,
+    const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,geminiNoThinking:D.geminiNoThinking||false,activeApi:D.activeApi,
       outputLength:D.outputLength, chatFontSize:D.chatFontSize, chatFontId:D.chatFontId,
       chars:liteChars,activeChar:D.activeChar,activeRoom:D.activeRoom,
       rooms:D.rooms,histories:safeHistories,
