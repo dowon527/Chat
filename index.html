@@ -1609,17 +1609,26 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <div id="gemini-key-st" style="margin-bottom:8px"></div>
         <!-- Gemini 모델 카드 -->
         <div id="gemini-model-list" style="display:flex;flex-direction:column;gap:4px"></div>
-        <!-- Thinking 토글 -->
-        <label style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;cursor:pointer;user-select:none">
-          <div>
-            <div style="font-size:12px;color:var(--t2)">Thinking 비활성화</div>
-            <div style="font-size:10px;color:var(--t3);margin-top:1px">끄면 응답 빠름 · 퀄리티 소폭 감소</div>
+        <!-- Thinking 토글 + Budget -->
+        <div style="margin-top:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div>
+              <div style="font-size:12px;color:var(--t2)">Thinking 비활성화</div>
+              <div style="font-size:10px;color:var(--t3);margin-top:1px">Flash만 적용 · Pro는 budget 조절</div>
+            </div>
+            <label class="p-toggle">
+              <input type="checkbox" id="gemini-no-thinking" onchange="D.geminiNoThinking=this.checked;save();updateThinkingBudgetUI()">
+              <span class="p-slider"></span>
+            </label>
           </div>
-          <label class="p-toggle">
-            <input type="checkbox" id="gemini-no-thinking" onchange="D.geminiNoThinking=this.checked;save()">
-            <span class="p-slider"></span>
-          </label>
-        </label>
+          <div id="thinking-budget-wrap" style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--t3);flex-shrink:0">Budget</span>
+            <input type="range" id="thinking-budget-slider" min="0" max="7" step="1" value="4"
+              style="flex:1;accent-color:var(--teal);height:3px;cursor:pointer"
+              oninput="updateThinkingBudgetLabel(this.value)">
+            <span id="thinking-budget-label" style="font-size:10px;color:var(--teal);min-width:40px;text-align:right">보통</span>
+          </div>
+        </div>
         <div style="font-size:11px;color:var(--t3);margin-top:8px">
           발급: <a href="https://aistudio.google.com/apikey" style="color:var(--teal)">aistudio.google.com/apikey</a>
           &nbsp;·&nbsp; <span style="color:var(--teal)">Flash 계열 무료 티어 있음</span>
@@ -2139,7 +2148,7 @@ const GENRES=[
 
 let D={
   key:'', model:'claude-sonnet-4-6',
-  geminiKey:'', geminiModel:'gemini-2.5-flash', geminiNoThinking:false,
+  geminiKey:'', geminiModel:'gemini-2.5-flash', geminiNoThinking:false, geminiThinkingBudget:4096,
   activeApi:'claude', outputLength:2,
   chars:[], activeChar:null,
   rooms:{},
@@ -2223,7 +2232,7 @@ function save(){
         safeHistories[k]=arr.filter(m=>m&&m.role&&(m.content!=null)).map(m=>({role:m.role,content:String(m.content),time:m.time||'',model:m.model||''}));
       }
     });
-    const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,geminiNoThinking:D.geminiNoThinking||false,activeApi:D.activeApi,
+    const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,geminiNoThinking:D.geminiNoThinking||false,geminiThinkingBudget:D.geminiThinkingBudget||4096,activeApi:D.activeApi,
       outputLength:D.outputLength, chatFontSize:D.chatFontSize, chatFontId:D.chatFontId,
       chars:liteChars,activeChar:D.activeChar,activeRoom:D.activeRoom,
       rooms:D.rooms,histories:safeHistories,
@@ -2667,6 +2676,39 @@ function renderChars(){
   if(list) requestAnimationFrame(()=>{ list.scrollTop=savedScroll; });
 }
 
+const THINKING_BUDGET_PRESETS=[
+  {label:'OFF',budget:0},
+  {label:'최소',budget:512},
+  {label:'낮음',budget:1024},
+  {label:'약간',budget:2048},
+  {label:'보통',budget:4096},
+  {label:'높음',budget:6144},
+  {label:'많음',budget:8192},
+  {label:'최대',budget:12288},
+];
+function updateThinkingBudgetLabel(val){
+  const p=THINKING_BUDGET_PRESETS[parseInt(val)];
+  const lbl=$('thinking-budget-label');
+  if(lbl) lbl.textContent=p.label;
+  D.geminiThinkingBudget=p.budget;
+  save();
+}
+function updateThinkingBudgetUI(){
+  const wrap=$('thinking-budget-wrap');
+  if(!wrap) return;
+  // Flash+비활성화면 budget 슬라이더 숨김
+  const isFlash=!D.geminiModel.includes('pro');
+  const noThink=D.geminiNoThinking;
+  wrap.style.opacity=(isFlash&&noThink)?'0.3':'1';
+  wrap.style.pointerEvents=(isFlash&&noThink)?'none':'auto';
+}
+function getThinkingConfig(){
+  if(!D.geminiModel) return {};
+  const isFlash=!D.geminiModel.includes('pro');
+  if(isFlash&&D.geminiNoThinking) return {thinkingConfig:{thinkingBudget:0}};
+  const budget=D.geminiThinkingBudget!=null?D.geminiThinkingBudget:4096;
+  return {thinkingConfig:{thinkingBudget:budget}};
+}
 function getRoomPreview(roomId){
   const hist=(D.histories[roomId]||[]);
   if(!hist.length)return'';
@@ -3492,7 +3534,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
     }).filter(m=>m.parts[0].text);
     while(gMsgs.length&&gMsgs[0].role!=='user')gMsgs.shift();
     if(!gMsgs.length) throw new Error('메시지 없음');
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2,...(D.geminiNoThinking?{thinkingConfig:{thinkingBudget:0}}:{})}})});
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2,...getThinkingConfig()}})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini 오류');}
     if(targetBub){targetBub.style.opacity='1';}
     const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf=''; let _gIn=0,_gOut=0;
@@ -3686,7 +3728,7 @@ async function generateAI_OOC(hist){
       if(!geminiMsgs.length){row2.remove();return;}
       const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({system_instruction:{parts:[{text:oocSys}]},contents:geminiMsgs,generationConfig:{maxOutputTokens:800,...(D.geminiNoThinking?{thinkingConfig:{thinkingBudget:0}}:{})}}),
+        body:JSON.stringify({system_instruction:{parts:[{text:oocSys}]},contents:geminiMsgs,generationConfig:{maxOutputTokens:800,...getThinkingConfig()}}),
         signal:_streamAbort?.signal
       });
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini 오류');}
@@ -3934,7 +3976,7 @@ This is a dedicated creative roleplay space.
       const geminiBody=JSON.stringify({
         system_instruction:{parts:[{text:sys}]},
         contents:geminiMsgs,
-        generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2,...(D.geminiNoThinking?{thinkingConfig:{thinkingBudget:0}}:{})}
+        generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2,...getThinkingConfig()}
       });
       const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:geminiBody,signal:_streamAbort?.signal});
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini API 오류');}
@@ -4540,6 +4582,14 @@ function openModal(id){
     $('gemini-key-inp').value=D.geminiKey||'';
     const noThinkChk=$('gemini-no-thinking');
     if(noThinkChk) noThinkChk.checked=D.geminiNoThinking||false;
+    const budgetSlider=$('thinking-budget-slider');
+    if(budgetSlider){
+      const budget=D.geminiThinkingBudget!=null?D.geminiThinkingBudget:4096;
+      const idx=THINKING_BUDGET_PRESETS.findIndex(p=>p.budget===budget);
+      budgetSlider.value=idx>=0?idx:4;
+      updateThinkingBudgetLabel(budgetSlider.value);
+    }
+    updateThinkingBudgetUI();
     updateKeySt(); updateGeminiKeySt();
     renderModelCards();
     initLengthSlider();
@@ -6279,7 +6329,7 @@ ${histText}`;
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         contents:[{role:'user',parts:[{text:summaryPrompt}]}],
-        generationConfig:{maxOutputTokens:2000,...(D.geminiNoThinking?{thinkingConfig:{thinkingBudget:0}}:{})}
+        generationConfig:{maxOutputTokens:2000,...getThinkingConfig()}
       })
     });
     const data=await res.json();
