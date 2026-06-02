@@ -1095,28 +1095,14 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 
       <!-- 유저 노트 / 프로필 -->
       <div style="border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden">
-        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
-          <div style="display:flex;align-items:center;gap:12px">
-            <span style="font-size:20px">📝</span>
-            <div style="flex:1">
-              <div style="font-size:13px;font-weight:600;color:var(--text)">유저 노트 / 프로필 내보내기</div>
-              <div style="font-size:11px;color:var(--t3);margin-top:2px">선택한 항목을 JSON으로 저장</div>
-            </div>
+        <button onclick="exportNotesProfiles()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:transparent;border:none;cursor:pointer;text-align:left;transition:background 0.15s;font-family:'Noto Sans KR',sans-serif" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:20px">📝</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">유저 노트 / 프로필 내보내기</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:2px">노트·프로필을 JSON으로 저장</div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:8px;padding-left:4px">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text)">
-              <input type="checkbox" id="exp-check-notes" checked style="accent-color:var(--accent2);width:15px;height:15px">
-              유저 노트
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text)">
-              <input type="checkbox" id="exp-check-profiles" checked style="accent-color:var(--accent2);width:15px;height:15px">
-              유저 프로필
-            </label>
-          </div>
-          <div style="display:flex;justify-content:flex-end">
-            <button onclick="exportNotesProfiles()" class="btn btn-p" style="font-size:13px">내보내기</button>
-          </div>
-        </div>
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-left:auto;color:var(--t3)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
       </div>
 
       <!-- 스토리별 내보내기 -->
@@ -1127,55 +1113,42 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
             <div style="font-size:13px;font-weight:600;color:var(--text)">스토리별 내보내기</div>
             <div style="font-size:11px;color:var(--t3);margin-top:2px">스토리와 대화방을 골라서 내보내기</div>
           </div>
+          <button onclick="exportPartialConfirm()" style="padding:0;background:transparent;border:none;cursor:pointer;color:var(--t3);flex-shrink:0">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
         </div>
-        <div id="backup-story-list" style="max-height:320px;overflow-y:auto;padding:8px"></div>
-        <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px">
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer;user-select:none">
-            <input type="checkbox" id="export-lock-chk" style="accent-color:var(--accent);width:13px;height:13px" onchange="onExportLockToggle(this)">
-            🔒 캐릭터 설정 잠금 (공유용 — 받는 사람이 설정 열람/수정 불가)
-          </label>
-          <div id="export-lock-pw-wrap" style="display:none;flex-direction:column;gap:6px">
-            <input id="export-lock-pw" type="password" class="fi" placeholder="잠금 비밀번호 설정" style="font-size:13px">
-            <div style="font-size:11px;color:var(--t3)">비밀번호를 알아야만 설정을 열람·수정할 수 있어요</div>
-          </div>
-          <div style="display:flex;justify-content:flex-end">
-            <button onclick="exportPartialData()" class="btn btn-p" style="font-size:13px">
-              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;margin-right:5px;vertical-align:-1px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              선택 내보내기
-            </button>
-          </div>
-        </div>
+        <div id="backup-story-list" style="max-height:280px;overflow-y:auto;padding:8px"></div>
       </div>
     </div>
 
     <!-- IMPORT 탭 내용 -->
     <div id="backup-import-panel" class="modal-body" style="padding:16px 20px;display:none;flex-direction:column;gap:12px">
-      <!-- 전체 불러오기 (덮어쓰기) -->
-      <div style="border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden">
-        <button onclick="importAllData()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:transparent;border:none;cursor:pointer;text-align:left;transition:background 0.15s;font-family:'Noto Sans KR',sans-serif" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">
-          <span style="font-size:20px">📦</span>
+      <!-- 스토리 추가 불러오기 (기본 추천) -->
+      <div style="border:2px solid var(--accent2);border-radius:var(--r2);overflow:hidden">
+        <button onclick="importPartialData()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:transparent;border:none;cursor:pointer;text-align:left;transition:background 0.15s;font-family:'Noto Sans KR',sans-serif" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:20px">📂</span>
           <div>
-            <div style="font-size:13px;font-weight:600;color:var(--text)">전체 불러오기</div>
-            <div style="font-size:11px;color:var(--t3);margin-top:2px">전체 백업 파일로 복원 <span style="color:var(--danger)">— 현재 데이터 덮어씀</span></div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">스토리 추가 불러오기 <span style="font-size:10px;background:var(--accent2);color:#fff;padding:1px 6px;border-radius:10px;margin-left:4px">추천</span></div>
+            <div style="font-size:11px;color:var(--teal);margin-top:2px">기존 데이터 유지 + 불러온 스토리 추가</div>
           </div>
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-left:auto;color:var(--t3)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </button>
       </div>
 
-      <!-- 스토리별 불러오기 (추가) -->
+      <!-- 전체 불러오기 (덮어쓰기) — 경고 강화 -->
       <div style="border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden">
-        <button onclick="importPartialData()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:transparent;border:none;cursor:pointer;text-align:left;transition:background 0.15s;font-family:'Noto Sans KR',sans-serif" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">
-          <span style="font-size:20px">📂</span>
+        <button onclick="importAllData()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:transparent;border:none;cursor:pointer;text-align:left;transition:background 0.15s;font-family:'Noto Sans KR',sans-serif" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:20px">📦</span>
           <div>
-            <div style="font-size:13px;font-weight:600;color:var(--text)">스토리 추가 불러오기</div>
-            <div style="font-size:11px;color:var(--t3);margin-top:2px">백업 파일의 스토리·대화를 <span style="color:var(--teal)">기존 데이터에 추가</span>로 합치기</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">전체 불러오기</div>
+            <div style="font-size:11px;color:var(--danger);margin-top:2px">⚠️ 현재 데이터 전부 삭제 후 덮어씀</div>
           </div>
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-left:auto;color:var(--t3)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </button>
       </div>
 
       <p style="font-size:11px;color:var(--t3);line-height:1.7;text-align:center;margin-top:4px">
-        💡 스토리 추가 불러오기는 현재 데이터를 유지한 채<br>불러온 스토리·대화를 하단에 추가해요
+        💡 공유받은 파일은 <b>스토리 추가 불러오기</b>를 써요
       </p>
     </div>
 
@@ -7527,7 +7500,7 @@ function renderBackupStoryList(){
     var storyChk=document.createElement('input');
     storyChk.type='checkbox'; storyChk.id='bk-story-'+c.id;
     storyChk.style.cssText='width:15px;height:15px;accent-color:var(--accent2);cursor:pointer;flex-shrink:0';
-    storyChk.checked=true;
+    storyChk.checked=false;
     // 이모지
     var emo=document.createElement('span');
     emo.style.cssText='font-size:16px;flex-shrink:0';
@@ -7556,7 +7529,7 @@ function renderBackupStoryList(){
       var roomChk=document.createElement('input');
       roomChk.type='checkbox'; roomChk.className='bk-room-chk'; roomChk.dataset.charId=c.id; roomChk.dataset.roomId=r.id;
       roomChk.style.cssText='width:14px;height:14px;accent-color:var(--accent2);cursor:pointer;flex-shrink:0';
-      roomChk.checked=true;
+      roomChk.checked=false;
       var dot=document.createElement('span');
       dot.style.cssText='width:5px;height:5px;border-radius:50%;background:var(--t4);flex-shrink:0;display:inline-block';
       var rname=document.createElement('span');
@@ -7596,6 +7569,53 @@ function onExportLockToggle(cb){
   if(wrap) wrap.style.display=cb.checked?'flex':'none';
 }
 
+function exportPartialConfirm(){
+  // 선택 확인
+  var anySelected=document.querySelectorAll('.bk-room-chk:checked').length>0;
+  if(!anySelected){alert('내보낼 대화를 하나 이상 선택해주세요.');return;}
+
+  // 잠금 여부 팝업
+  var old=document.getElementById('ctx-overlay');if(old)old.remove();
+  var overlay=document.createElement('div');
+  overlay.id='ctx-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px)';
+  var box=document.createElement('div');
+  box.style.cssText='background:var(--s2);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:300px;overflow:hidden;animation:ctxPop 0.15s ease;';
+  var inner=document.createElement('div'); inner.style.cssText='padding:20px;display:flex;flex-direction:column;gap:12px;';
+  var ttl=document.createElement('div');
+  ttl.style.cssText='font-size:14px;font-weight:600;color:var(--text);font-family:\'Noto Sans KR\',sans-serif;';
+  ttl.textContent='내보내기 옵션';
+  var lockRow=document.createElement('label');
+  lockRow.style.cssText='display:flex;align-items:center;gap:8px;font-size:13px;color:var(--t2);cursor:pointer;user-select:none;font-family:\'Noto Sans KR\',sans-serif;';
+  var lockCb=document.createElement('input'); lockCb.type='checkbox'; lockCb.style.cssText='accent-color:var(--accent);width:14px;height:14px;';
+  lockRow.appendChild(lockCb);
+  lockRow.appendChild(document.createTextNode('🔒 캐릭터 설정 잠금 (공유용)'));
+  var pwWrap=document.createElement('div'); pwWrap.style.cssText='display:none;flex-direction:column;gap:6px;';
+  var pwInp=document.createElement('input'); pwInp.type='password'; pwInp.placeholder='잠금 비밀번호 설정';
+  pwInp.style.cssText='width:100%;background:var(--s3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:\'Noto Sans KR\',sans-serif;font-size:13px;padding:8px 11px;outline:none;box-sizing:border-box;';
+  var pwDesc=document.createElement('div'); pwDesc.style.cssText='font-size:11px;color:var(--t3);font-family:\'Noto Sans KR\',sans-serif;';
+  pwDesc.textContent='비번 없이는 설정 열람·수정 불가';
+  pwWrap.appendChild(pwInp); pwWrap.appendChild(pwDesc);
+  lockCb.onchange=function(){pwWrap.style.display=lockCb.checked?'flex':'none';};
+  var btns=document.createElement('div'); btns.style.cssText='display:flex;gap:8px;';
+  var cancel=document.createElement('button');
+  cancel.style.cssText='flex:1;padding:10px;background:transparent;border:1px solid var(--border2);border-radius:8px;font-family:\'Noto Sans KR\',sans-serif;font-size:13px;color:var(--t2);cursor:pointer;';
+  cancel.textContent='취소'; cancel.onclick=function(){overlay.remove();};
+  var ok=document.createElement('button');
+  ok.style.cssText='flex:1;padding:10px;background:var(--accent2);border:none;border-radius:8px;font-family:\'Noto Sans KR\',sans-serif;font-size:14px;color:#fff;font-weight:600;cursor:pointer;';
+  ok.textContent='내보내기';
+  ok.onclick=function(){
+    const doLock=lockCb.checked;
+    const pw=pwInp.value.trim();
+    if(doLock&&!pw){pwInp.focus();pwInp.style.borderColor='var(--danger)';return;}
+    overlay.remove();
+    exportPartialData(doLock, pw);
+  };
+  btns.appendChild(cancel); btns.appendChild(ok);
+  inner.appendChild(ttl); inner.appendChild(lockRow); inner.appendChild(pwWrap); inner.appendChild(btns);
+  box.appendChild(inner); overlay.appendChild(box); document.body.appendChild(overlay);
+}
+
 // AES-GCM 암호화 (Web Crypto API)
 async function encryptData(data, password){
   const enc=new TextEncoder();
@@ -7621,15 +7641,8 @@ async function decryptData(encStr, password){
 }
 
 // ─── 선택 내보내기 ───
-async function exportPartialData(){
+async function exportPartialData(doLock=false, password=''){
   try{
-    // 잠금 옵션 확인
-    const lockChk=$('export-lock-chk');
-    const lockPw=$('export-lock-pw');
-    const doLock=lockChk&&lockChk.checked;
-    const password=lockPw?lockPw.value.trim():'';
-    if(doLock&&!password){alert('잠금 비밀번호를 입력해주세요.');return;}
-
     // 선택된 charId들과 각 선택된 roomId 수집
     var selected={}; // {charId: [roomId, ...]}
     document.querySelectorAll('.bk-room-chk:checked').forEach(function(x){
@@ -7711,7 +7724,7 @@ async function exportPartialData(){
     a.href=url; a.download='charachat-'+label+'-'+date+'.json';
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(url);
-    closeModal('backup-modal');
+    showToast('✓ 저장됐어요');
   }catch(e){alert('내보내기 실패: '+e.message);}
 }
 function filterKeys(obj,keys){
@@ -7734,7 +7747,7 @@ function exportNotesProfiles(){
     a.href=url; a.download=`charachat-notes-${date}.json`;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(url);
-    closeModal('backup-modal');
+    showToast('✓ 저장됐어요');
   }catch(e){alert('내보내기 실패: '+e.message);}
 }
 function exportAllData(){
@@ -7751,7 +7764,7 @@ function exportAllData(){
     a.href=url; a.download=`charachat-backup-${date}.json`;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(url);
-    closeModal('backup-modal');
+    showToast('✓ 백업 파일이 저장됐어요');
   }catch(e){alert('내보내기 실패: '+e.message);}
 }
 function importAllData(){
@@ -7812,49 +7825,66 @@ function handlePartialImportFile(input){
   reader.onload=function(e){
     try{
       var parsed=JSON.parse(e.target.result);
-      // version 1 전체백업도 추가 불러오기 가능
       var importD=(parsed.version===1||parsed.version===2)?parsed.data:parsed;
-      if(!importD||!importD.chars){alert('올바른 백업 파일이 아니에요.');return;}
+      if(!importD){alert('올바른 백업 파일이 아니에요.');return;}
 
-      var addedChars=0, addedRooms=0;
-      importD.chars.forEach(function(ic){
-        // 같은 id의 캐릭터가 이미 있는지 확인
-        var existing=D.chars.find(function(c){return c.id===ic.id;});
-        if(!existing){
-          // 새 캐릭터 추가
-          D.chars.push(JSON.parse(JSON.stringify(ic)));
-          if(importD.charMemories&&importD.charMemories[ic.id]) {if(!D.charMemories)D.charMemories={};D.charMemories[ic.id]=importD.charMemories[ic.id];}
-          if(importD.charNotes&&importD.charNotes[ic.id]) {if(!D.charNotes)D.charNotes={};D.charNotes[ic.id]=importD.charNotes[ic.id];}
-          addedChars++;
-        }
-        // rooms 병합 — 해당 char의 rooms
-        var importRooms=(importD.rooms&&importD.rooms[ic.id])||[];
-        if(!D.rooms)D.rooms={};
-        if(!D.rooms[ic.id])D.rooms[ic.id]=[];
-        importRooms.forEach(function(ir){
-          var existRoom=D.rooms[ic.id].find(function(r){return r.id===ir.id;});
-          if(!existRoom){
-            D.rooms[ic.id].push(JSON.parse(JSON.stringify(ir)));
-            // history
-            if(importD.histories&&importD.histories[ir.id]){
-              if(!D.histories)D.histories={};
-              D.histories[ir.id]=JSON.parse(JSON.stringify(importD.histories[ir.id]));
-            }
-            // 메타
-            ['roomMemories','roomSummaries','roomProfiles','roomNoteIds','roomNotes','roomApi','roomLength'].forEach(function(k){
-              if(importD[k]&&importD[k][ir.id]){
-                if(!D[k])D[k]={};
-                D[k][ir.id]=JSON.parse(JSON.stringify(importD[k][ir.id]));
-              }
-            });
-            addedRooms++;
-          }
+      var addedChars=0, addedRooms=0, addedNotes=0, addedProfiles=0;
+
+      // 유저 노트 병합 (중복 제외)
+      if(importD.notes&&importD.notes.length){
+        if(!D.notes)D.notes=[];
+        importD.notes.forEach(function(n){
+          var exists=D.notes.find(function(x){return x.id===n.id||x.title===n.title;});
+          if(!exists){D.notes.push(JSON.parse(JSON.stringify(n)));addedNotes++;}
         });
-      });
+      }
+
+      // 유저 프로필 병합 (중복 제외)
+      if(importD.profiles&&importD.profiles.length){
+        if(!D.profiles)D.profiles=[];
+        importD.profiles.forEach(function(p){
+          var exists=D.profiles.find(function(x){return x.id===p.id||x.name===p.name;});
+          if(!exists){D.profiles.push(JSON.parse(JSON.stringify(p)));addedProfiles++;}
+        });
+      }
+
+      // 캐릭터/스토리 병합
+      if(importD.chars&&importD.chars.length){
+        importD.chars.forEach(function(ic){
+          var existing=D.chars.find(function(c){return c.id===ic.id;});
+          if(!existing){
+            D.chars.push(JSON.parse(JSON.stringify(ic)));
+            if(importD.charMemories&&importD.charMemories[ic.id]){if(!D.charMemories)D.charMemories={};D.charMemories[ic.id]=importD.charMemories[ic.id];}
+            if(importD.charNotes&&importD.charNotes[ic.id]){if(!D.charNotes)D.charNotes={};D.charNotes[ic.id]=importD.charNotes[ic.id];}
+            addedChars++;
+          }
+          var importRooms=(importD.rooms&&importD.rooms[ic.id])||[];
+          if(!D.rooms)D.rooms={};
+          if(!D.rooms[ic.id])D.rooms[ic.id]=[];
+          importRooms.forEach(function(ir){
+            var existRoom=D.rooms[ic.id].find(function(r){return r.id===ir.id;});
+            if(!existRoom){
+              D.rooms[ic.id].push(JSON.parse(JSON.stringify(ir)));
+              if(importD.histories&&importD.histories[ir.id]){if(!D.histories)D.histories={};D.histories[ir.id]=JSON.parse(JSON.stringify(importD.histories[ir.id]));}
+              ['roomMemories','roomSummaries','roomProfiles','roomNoteIds','roomNotes','roomApi','roomLength'].forEach(function(k){
+                if(importD[k]&&importD[k][ir.id]){if(!D[k])D[k]={};D[k][ir.id]=JSON.parse(JSON.stringify(importD[k][ir.id]));}
+              });
+              addedRooms++;
+            }
+          });
+        });
+      }
+
       save();
       renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
       closeModal('backup-modal');
-      alert('추가 완료!\n스토리 '+addedChars+'개, 대화 '+addedRooms+'개가 추가됐어요.');
+      var msg='추가 완료!';
+      if(addedChars) msg+='\n스토리 '+addedChars+'개';
+      if(addedRooms) msg+=', 대화 '+addedRooms+'개';
+      if(addedNotes) msg+='\n유저 노트 '+addedNotes+'개';
+      if(addedProfiles) msg+='\n프로필 '+addedProfiles+'개';
+      msg+=' 추가됐어요.';
+      alert(msg);
     }catch(err){alert('파일을 읽을 수 없어요: '+err.message);}
   };
   reader.readAsText(file);
