@@ -5024,8 +5024,10 @@ function saveChar(){
       ch._promptVer=prevChar._promptVer||1;
       ch._promptLog=prevChar._promptLog||[];
     }
-    // 잠금 상태 유지
+    // 잠금/고정 상태 유지
     if(prevChar&&prevChar._locked){ch._locked=prevChar._locked;ch._enc=prevChar._enc;}
+    if(prevChar&&prevChar.locked)ch.locked=prevChar.locked;
+    if(prevChar&&prevChar.pinned)ch.pinned=prevChar.pinned;
     if(i>=0)D.chars[i]=ch;
   } else {
     D.chars.push(ch);
