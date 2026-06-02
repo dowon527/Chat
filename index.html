@@ -6113,12 +6113,9 @@ function openStatsModal(){
   // 누적 합산은 별도 저장된 값 사용 (5개 슬라이딩과 무관)
   const totalKRW=(D.costTotal&&roomId&&D.costTotal[roomId])||log.reduce((s,l)=>s+l.krw,0);
 
-  // 전체 턴수
-  let totalTurns=0;
-  rooms.forEach(r=>{
-    const h=D.histories[r.id]||[];
-    totalTurns+=Math.floor(h.filter(m=>m.role!=='summary_note').length/2);
-  });
+  // 현재 방 턴수 (user 메시지 기준)
+  const curHist=D.histories[roomId]||[];
+  const totalTurns=curHist.filter(m=>m.role==='user').length;
 
   const body=$('stats-body');
 
