@@ -1609,24 +1609,34 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <div id="gemini-key-st" style="margin-bottom:8px"></div>
         <!-- Gemini 모델 카드 -->
         <div id="gemini-model-list" style="display:flex;flex-direction:column;gap:4px"></div>
-        <!-- Thinking 토글 + Budget -->
-        <div style="margin-top:10px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <div>
-              <div style="font-size:12px;color:var(--t2)">Thinking 비활성화</div>
-              <div style="font-size:10px;color:var(--t3);margin-top:1px">Flash만 적용 · Pro는 budget 조절</div>
+        <!-- Thinking 토글 + Budget/Level -->
+        <div style="margin-top:10px" id="thinking-section">
+          <div id="thinking-25-wrap">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div>
+                <div style="font-size:12px;color:var(--t2)">Thinking 비활성화</div>
+                <div style="font-size:10px;color:var(--t3);margin-top:1px">Flash만 적용 · Pro는 budget 조절</div>
+              </div>
+              <label class="p-toggle">
+                <input type="checkbox" id="gemini-no-thinking" onchange="D.geminiNoThinking=this.checked;save();updateThinkingBudgetUI()">
+                <span class="p-slider"></span>
+              </label>
             </div>
-            <label class="p-toggle">
-              <input type="checkbox" id="gemini-no-thinking" onchange="D.geminiNoThinking=this.checked;save();updateThinkingBudgetUI()">
-              <span class="p-slider"></span>
-            </label>
+            <div id="thinking-budget-wrap" style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;color:var(--t3);flex-shrink:0">Budget</span>
+              <input type="range" id="thinking-budget-slider" min="0" max="7" step="1" value="4"
+                style="flex:1;accent-color:var(--teal);height:3px;cursor:pointer"
+                oninput="updateThinkingBudgetLabel(this.value)">
+              <span id="thinking-budget-label" style="font-size:10px;color:var(--teal);min-width:40px;text-align:right">보통</span>
+            </div>
           </div>
-          <div id="thinking-budget-wrap" style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:11px;color:var(--t3);flex-shrink:0">Budget</span>
-            <input type="range" id="thinking-budget-slider" min="0" max="7" step="1" value="4"
-              style="flex:1;accent-color:var(--teal);height:3px;cursor:pointer"
-              oninput="updateThinkingBudgetLabel(this.value)">
-            <span id="thinking-budget-label" style="font-size:10px;color:var(--teal);min-width:40px;text-align:right">보통</span>
+          <div id="thinking-3x-wrap" style="display:none">
+            <div style="font-size:12px;color:var(--t2);margin-bottom:6px">Thinking Level <span style="font-size:10px;color:var(--t3)">(끄기 불가)</span></div>
+            <div style="display:flex;gap:6px">
+              <button onclick="setThinkingLevel('low')" id="tlvl-low" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--s3);font-size:11px;color:var(--t2);cursor:pointer;font-family:'Noto Sans KR',sans-serif">낮음</button>
+              <button onclick="setThinkingLevel('medium')" id="tlvl-medium" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--s3);font-size:11px;color:var(--t2);cursor:pointer;font-family:'Noto Sans KR',sans-serif">보통</button>
+              <button onclick="setThinkingLevel('high')" id="tlvl-high" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--s3);font-size:11px;color:var(--t2);cursor:pointer;font-family:'Noto Sans KR',sans-serif">높음</button>
+            </div>
           </div>
         </div>
         <div style="font-size:11px;color:var(--t3);margin-top:8px">
@@ -2148,7 +2158,7 @@ const GENRES=[
 
 let D={
   key:'', model:'claude-sonnet-4-6',
-  geminiKey:'', geminiModel:'gemini-2.5-flash', geminiNoThinking:false, geminiThinkingBudget:4096,
+  geminiKey:'', geminiModel:'gemini-2.5-flash', geminiNoThinking:false, geminiThinkingBudget:4096, geminiThinkingLevel:'low',
   activeApi:'claude', outputLength:2,
   chars:[], activeChar:null,
   rooms:{},
@@ -2232,7 +2242,7 @@ function save(){
         safeHistories[k]=arr.filter(m=>m&&m.role&&(m.content!=null)).map(m=>({role:m.role,content:String(m.content),time:m.time||'',model:m.model||''}));
       }
     });
-    const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,geminiNoThinking:D.geminiNoThinking||false,geminiThinkingBudget:D.geminiThinkingBudget||4096,activeApi:D.activeApi,
+    const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,geminiNoThinking:D.geminiNoThinking||false,geminiThinkingBudget:D.geminiThinkingBudget||4096,geminiThinkingLevel:D.geminiThinkingLevel||'low',activeApi:D.activeApi,
       outputLength:D.outputLength, chatFontSize:D.chatFontSize, chatFontId:D.chatFontId,
       chars:liteChars,activeChar:D.activeChar,activeRoom:D.activeRoom,
       rooms:D.rooms,histories:safeHistories,
@@ -2686,6 +2696,18 @@ const THINKING_BUDGET_PRESETS=[
   {label:'많음',budget:8192},
   {label:'최대',budget:12288},
 ];
+function setThinkingLevel(lvl){
+  D.geminiThinkingLevel=lvl;
+  save();
+  ['low','medium','high'].forEach(l=>{
+    const btn=$('tlvl-'+l);
+    if(btn){
+      btn.style.background=l===lvl?'var(--accent2)':'var(--s3)';
+      btn.style.color=l===lvl?'#fff':'var(--t2)';
+      btn.style.borderColor=l===lvl?'var(--accent2)':'var(--border2)';
+    }
+  });
+}
 function updateThinkingBudgetLabel(val){
   const p=THINKING_BUDGET_PRESETS[parseInt(val)];
   const lbl=$('thinking-budget-label');
@@ -2694,17 +2716,34 @@ function updateThinkingBudgetLabel(val){
   save();
 }
 function updateThinkingBudgetUI(){
-  const wrap=$('thinking-budget-wrap');
-  if(!wrap) return;
-  // Flash+비활성화면 budget 슬라이더 숨김
-  const isFlash=!D.geminiModel.includes('pro');
-  const noThink=D.geminiNoThinking;
-  wrap.style.opacity=(isFlash&&noThink)?'0.3':'1';
-  wrap.style.pointerEvents=(isFlash&&noThink)?'none':'auto';
+  const is3x=D.geminiModel&&(D.geminiModel.includes('gemini-3')||D.geminiModel.includes('3.1')||D.geminiModel.includes('3-'));
+  const wrap25=$('thinking-25-wrap');
+  const wrap3x=$('thinking-3x-wrap');
+  if(wrap25) wrap25.style.display=is3x?'none':'block';
+  if(wrap3x) wrap3x.style.display=is3x?'block':'none';
+  if(!is3x){
+    const budgetWrap=$('thinking-budget-wrap');
+    const isFlash=D.geminiModel&&D.geminiModel.includes('flash');
+    const noThink=D.geminiNoThinking;
+    if(budgetWrap){
+      budgetWrap.style.opacity=(isFlash&&noThink)?'0.3':'1';
+      budgetWrap.style.pointerEvents=(isFlash&&noThink)?'none':'auto';
+    }
+  }
 }
 function getThinkingConfig(){
   if(!D.geminiModel) return {};
-  const isFlash=!D.geminiModel.includes('pro');
+  const model=D.geminiModel;
+  const isFlash=model.includes('flash');
+  const is3x=model.includes('gemini-3')||model.includes('3.1')||model.includes('3-');
+
+  if(is3x){
+    // 3.x 모델: thinkingLevel 사용 (끄기 불가, low/medium/high)
+    const lvl=D.geminiThinkingLevel||'low';
+    return {thinkingConfig:{thinkingLevel:lvl}};
+  }
+
+  // 2.5 모델: thinkingBudget 사용
   if(isFlash&&D.geminiNoThinking) return {thinkingConfig:{thinkingBudget:0}};
   const budget=D.geminiThinkingBudget!=null?D.geminiThinkingBudget:4096;
   return {thinkingConfig:{thinkingBudget:budget}};
@@ -4590,6 +4629,7 @@ function openModal(id){
       budgetSlider.value=idx>=0?idx:4;
       updateThinkingBudgetLabel(budgetSlider.value);
     }
+    setThinkingLevel(D.geminiThinkingLevel||'low');
     updateThinkingBudgetUI();
     updateKeySt(); updateGeminiKeySt();
     renderModelCards();
