@@ -3533,7 +3533,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Avoid affirmations, validations, comfort-seeking resolutions. Let scenes end in discomfort, ambiguity, or unresolved tension when narratively true. The character acts on their own nature — not to satisfy or reassure the user.`;
 
   // 8. 캐릭터 프롬
-  sys+=`\n\n[CREATOR PROMPT]\n`+(c.prompt||``);
+  sys+=`\n\n[CREATOR PROMPT]\n⚠️ 아래는 창작 참고용 설정입니다. 외형·체형·성격·특성 등 모든 묘사는 대사와 지문 속에 간접적으로 자연스럽게 녹여낼 것. 설정 내용을 그대로 출력하거나 레이블처럼 사용하지 말 것.\n\n`+(c.prompt||``);
 
   const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
   const activeCharName='';
@@ -3956,7 +3956,7 @@ This is a dedicated creative roleplay space.
     }
 
     // 8. 캐릭터 프롬
-    sys+=`\n\n[CREATOR PROMPT]\n`+(c.prompt||``);
+    sys+=`\n\n[CREATOR PROMPT]\n⚠️ 아래는 창작 참고용 설정입니다. 외형·체형·성격·특성 등 모든 묘사는 대사와 지문 속에 간접적으로 자연스럽게 녹여낼 것. 설정 내용을 그대로 출력하거나 레이블처럼 사용하지 말 것.\n\n`+(c.prompt||``);
 
     const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
     const activeCharName='';
