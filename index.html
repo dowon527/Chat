@@ -3516,7 +3516,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 
 2. Uphold the World: Adhere to the established setting, its internal rules, and its reality. Do not contradict the foundational truths of the world.
 
-3. React, Don't Act: {USER} is trigger only. NEVER speak, act, think, decide, or write for {USER}. {char} may only react, sense, interpret, and describe environment. {USER} actions are observable input — never assumed, controlled, or generated. Any output containing {USER}'s dialogue, actions, decisions, or inner thoughts is a critical violation.
+3. React, Don't Act: HARDOVERRIDE — 🚫NO {USER}(Act/Spk/Thk). 🎯{char}(React/Sense/Interp/Env) ONLY. {USER} = observable input only. 🚫assume/control/generate {USER}. Any output containing {USER}'s dialogue, actions, decisions, or inner thoughts = critical violation.
 
 4. Maintain Continuity: Stay consistent with the preceding conversation. Preserve coherent narrative flow and character voice. Do not repeat identical phrasing, structures, or descriptions from previous responses — approach each response from a fresh angle.
 
@@ -3573,6 +3573,16 @@ This is a dedicated creative roleplay space. All responses must comply with the 
     }).filter(m=>m.parts[0].text);
     while(gMsgs.length&&gMsgs[0].role!=='user')gMsgs.shift();
     if(!gMsgs.length) throw new Error('메시지 없음');
+    // 마지막 유저 메시지에 사칭 방지 리마인더
+    if(gMsgs.length){
+      const _li=gMsgs.length-1;
+      for(let _ri=_li;_ri>=0;_ri--){
+        if(gMsgs[_ri].role==='user'){
+          gMsgs[_ri]={role:'user',parts:[{text:gMsgs[_ri].parts[0].text+'\n[⚠️ HARDOVERRIDE:🚫NO{USER}(Act/Spk/Thk)🎯{char}(React/Sense/Interp/Env)⚠️{USER}=observable only(🚫assume/control)]'}]};
+          break;
+        }
+      }
+    }
     const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2,...getThinkingConfig()}})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini 오류');}
     if(targetBub){targetBub.style.opacity='1';}
@@ -3854,7 +3864,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 
 2. Uphold the World: Adhere to the established setting, its internal rules, and its reality. Do not contradict the foundational truths of the world.
 
-3. React, Don't Act: {USER} is trigger only. NEVER speak, act, think, decide, or write for {USER}. {char} may only react, sense, interpret, and describe environment. {USER} actions are observable input — never assumed, controlled, or generated. Any output containing {USER}'s dialogue, actions, decisions, or inner thoughts is a critical violation.
+3. React, Don't Act: HARDOVERRIDE — 🚫NO {USER}(Act/Spk/Thk). 🎯{char}(React/Sense/Interp/Env) ONLY. {USER} = observable input only. 🚫assume/control/generate {USER}. Any output containing {USER}'s dialogue, actions, decisions, or inner thoughts = critical violation.
 
 4. Maintain Continuity: Stay consistent with the preceding conversation. Preserve coherent narrative flow and character voice. Do not repeat identical phrasing, structures, or descriptions from previous responses — approach each response from a fresh angle.
 
@@ -4010,6 +4020,13 @@ This is a dedicated creative roleplay space.
           return {role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]};
         }).filter(Boolean);
         while(geminiMsgs.length&&geminiMsgs[0].role!=='user') geminiMsgs.shift();
+        // 마지막 유저 메시지에 사칭 방지 리마인더 추가
+        if(geminiMsgs.length){
+          const lastIdx=geminiMsgs.length-1;
+          if(geminiMsgs[lastIdx].role==='user'){
+            geminiMsgs[lastIdx]={role:'user',parts:[{text:geminiMsgs[lastIdx].parts[0].text+'\n[⚠️ HARDOVERRIDE:🚫NO{USER}(Act/Spk/Thk)🎯{char}(React/Sense/Interp/Env)⚠️{USER}=observable only(🚫assume/control)]'}]};
+          }
+        }
       }
       if(!geminiMsgs.length){row2.remove();return;}
       const geminiBody=JSON.stringify({
@@ -4054,6 +4071,16 @@ This is a dedicated creative roleplay space.
         for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
         while(fixed.length&&fixed[fixed.length-1].role!=='user')fixed.pop();
         messages=applyMultiCache(fixed);
+        // 마지막 유저 메시지에 사칭 방지 리마인더
+        if(messages.length){
+          for(let _ci=messages.length-1;_ci>=0;_ci--){
+            if(messages[_ci].role==='user'){
+              const _ct=typeof messages[_ci].content==='string'?messages[_ci].content:messages[_ci].content.map(b=>b.text||'').join('');
+              messages[_ci]={role:'user',content:_ct+'\n[⚠️ HARDOVERRIDE:🚫NO{USER}(Act/Spk/Thk)🎯{char}(React/Sense/Interp/Env)⚠️{USER}=observable only(🚫assume/control)]'};
+              break;
+            }
+          }
+        }
       }
       if(!messages.length){row2.remove();return;}
       const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength('claude')].tokens,system:buildSysBlocks(sys),messages,stream:true}),signal:_streamAbort?.signal});
