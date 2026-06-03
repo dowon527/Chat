@@ -8074,8 +8074,8 @@ document.addEventListener('visibilitychange',function(){
   function onViewport(){
     const kbHeight = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
     const kb = kbHeight > 50 ? kbHeight : 0;
-    if(iw) iw.style.marginBottom = kb ? kb + 'px' : '';
-    // 키보드 열리는 순간(0→높이)에만 스크롤 내리기, 수정 중엔 제외
+    if(iw) iw.style.transform = kb ? `translateY(-${kb}px)` : '';
+    if(chat) chat.style.paddingBottom = kb ? `${kb + 80}px` : '';
     if(chat && lastKb === 0 && kb > 0 && !document.querySelector('.msg-edit-area')){
       requestAnimationFrame(()=>{ chat.scrollTop = chat.scrollHeight; });
     }
