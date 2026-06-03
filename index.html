@@ -4611,7 +4611,7 @@ function renderModelCards(){
     card.className='model-card'+(D.geminiModel===m.value?' sel':'');
     const chk=D.geminiModel===m.value?'<svg width="9" height="9" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':'';
     card.innerHTML=`<div class="model-card-icon">${m.icon}</div><div class="model-card-info"><div class="model-card-name">${m.name}</div><div class="model-card-desc">${m.desc}</div></div><div class="model-card-check">${chk}</div>`;
-    card.onclick=()=>{D.geminiModel=m.value;renderModelCards();updateCostHint();};
+    card.onclick=()=>{D.geminiModel=m.value;save();renderModelCards();updateCostHint();updateThinkingBudgetUI();};
     gm.appendChild(card);
   });
 }
