@@ -559,16 +559,75 @@ body.light .msg-row.me .msg-bub{
 .empty-icon{font-size:52px;filter:grayscale(0.3)}
 .empty h3{font-size:17px;color:var(--t2);font-weight:500}
 .empty p{font-size:13px;line-height:1.7;max-width:340px;color:var(--t3)}
-/* 시작화면 empty */
 body.light .empty h3{color:#4c4b46!important}
 body.light .empty p{color:#85837D!important}
-.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
-.chip{
-  padding:7px 14px;border-radius:20px;font-size:12px;
-  border:1px solid var(--border2);background:var(--s2);
-  color:var(--t2);cursor:pointer;transition:all 0.15s;
+
+/* ── HOME CARD GRID ── */
+#welcome{
+  flex:1;display:flex;flex-direction:column;
+  color:var(--t3);padding:0;overflow-y:auto;overflow-x:hidden;
+  min-height:0;
+  background:linear-gradient(170deg,#0e0c1a 0%,#131028 30%,#181236 60%,#1c1040 100%);
+  -webkit-overflow-scrolling:touch;
 }
-.chip:hover{border-color:var(--accent);color:var(--accent);background:var(--ag2)}
+body.light #welcome{background:linear-gradient(170deg,#fff5f9 0%,#fef0ff 35%,#f8eeff 65%,#f0f0ff 100%)}
+.home-header{padding:max(72px,calc(env(safe-area-inset-top) + 64px)) 24px 12px;text-align:center}
+.home-logo{font-family:'Gowun Batang',serif;font-size:28px;background:linear-gradient(135deg,#c9a0ff,#f0a0b8,#ffb6c1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 14px rgba(200,160,255,0.35))}
+body.light .home-logo{background:linear-gradient(135deg,#d4a0f0,#e87898,#f0a0b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.home-sub{font-size:10px;color:var(--t3);margin-top:5px;letter-spacing:2px}
+#home-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:12px;padding:12px 16px 40px;max-width:960px;margin:0 auto;width:100%;
+  align-content:start;
+}
+@media(max-width:420px){#home-grid{grid-template-columns:repeat(2,1fr);gap:10px;padding:10px 12px 32px}}
+@media(min-width:900px){#home-grid{grid-template-columns:repeat(4,1fr);gap:14px}}
+.home-card{
+  display:flex;flex-direction:column;
+  border-radius:16px;overflow:hidden;
+  cursor:pointer;transition:all 0.22s cubic-bezier(0.4,0,0.2,1);
+  background:rgba(157,127,244,0.08);
+  border:none;
+  box-shadow:0 2px 12px rgba(0,0,0,0.1);
+}
+.home-card:hover{
+  transform:translateY(-4px) scale(1.02);
+  box-shadow:0 8px 28px rgba(157,127,244,0.18),0 2px 8px rgba(0,0,0,0.08);
+}
+.home-card:active{transform:scale(0.98);transition:transform 0.1s}
+body.light .home-card{background:#fff;border:none;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+body.light .home-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 8px 28px rgba(240,160,184,0.15),0 2px 8px rgba(0,0,0,0.05)}
+.home-card-emo{
+  width:100%;aspect-ratio:3/4;
+  background:linear-gradient(135deg,rgba(180,140,255,0.15),rgba(255,160,200,0.15));
+  display:flex;align-items:center;justify-content:center;
+  font-size:48px;overflow:hidden;position:relative;
+}
+body.light .home-card-emo{background:linear-gradient(135deg,rgba(255,200,220,0.2),rgba(220,200,255,0.2))}
+.home-card-emo img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.home-card-info{padding:10px 10px 12px;display:flex;flex-direction:column;gap:4px}
+.home-card-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.home-card-tags{display:flex;gap:3px;flex-wrap:nowrap;overflow:hidden}
+.home-card-pill{font-size:9px;padding:2px 7px;border-radius:12px;background:rgba(200,160,255,0.12);color:var(--t2);white-space:nowrap;flex-shrink:0}
+body.light .home-card-pill{background:rgba(240,160,184,0.1)}
+.home-card-rooms{font-size:10px;color:var(--t3)}
+.home-card-add{
+  border:1.5px dashed rgba(157,127,244,0.2);
+  background:rgba(157,127,244,0.03);
+  align-items:center;justify-content:center;
+  min-height:0;aspect-ratio:3/4;
+}
+.home-card-add:hover{background:rgba(157,127,244,0.1);border-color:rgba(157,127,244,0.35)}
+body.light .home-card-add{border-color:rgba(0,0,0,0.1);background:rgba(240,160,184,0.03)}
+body.light .home-card-add:hover{background:rgba(240,160,184,0.08);border-color:rgba(240,160,184,0.3)}
+/* 방 선택 팝업 */
+#room-picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:center;justify-content:center}
+#room-picker{background:var(--s1);border-radius:20px;padding:18px;min-width:240px;max-width:320px;max-height:60vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,0.3)}
+.room-pick-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px;text-align:center}
+.room-pick-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;transition:background 0.15s;margin-bottom:4px}
+.room-pick-item:hover{background:var(--s3)}
+.room-pick-name{font-size:13px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-pick-date{font-size:10px;color:var(--t3)}
 
 /* ─── INPUT ─── */
 #input-wrap{
@@ -792,17 +851,18 @@ body.light .empty p{color:#85837D!important}
 .mem-char{font-size:11px;color:var(--t3);text-align:right;margin-top:3px}
 
 /* ─── EMOJI PICKER ─── */
-.emo-wrap{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.emo-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px}
 .emo-preview{
   width:54px;height:54px;border-radius:50%;
   background:var(--s4);border:2px solid var(--border2);
   display:flex;align-items:center;justify-content:center;
-  font-size:28px;cursor:pointer;flex-shrink:0;
+  font-size:28px;line-height:1;cursor:pointer;flex-shrink:0;
   transition:border-color 0.15s;position:relative;overflow:hidden;
+  padding-bottom:4px;
 }
 .emo-preview:hover{border-color:var(--accent)}
 .emo-preview img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.emo-hint{font-size:11px;color:var(--t3);line-height:1.7}
+.emo-hint{font-size:11px;color:var(--t3);line-height:1.7;text-align:center}
 .emo-grid{
   display:grid;grid-template-columns:repeat(9,1fr);gap:3px;
   margin-top:6px;max-height:88px;overflow-y:auto;
@@ -869,13 +929,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 .pill-a{background:var(--dg);color:var(--danger)}
 .pill-s{background:var(--tg);color:var(--teal)}
 
-/* welcome screen */
-#welcome{
-  flex:1;display:flex;
-  align-items:stretch;justify-content:stretch;
-  color:var(--t3);padding:0;overflow:hidden;
-  min-height:0;
-}
+/* welcome screen - 홈 카드 그리드 CSS에서 정의됨 */
 
 /* animations */
 @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
@@ -1215,8 +1269,9 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
   <!-- 캡처 모드 바 -->
   <div id="capture-mode-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--s2);border-top:1px solid var(--border2);padding:8px 14px;z-index:200;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-      <span style="font-size:12px;color:var(--t2);flex:1">버블을 탭해서 선택하세요</span>
+      <span style="font-size:12px;color:var(--t2);flex:1" id="cap-mode-hint">버블을 탭해서 선택하세요</span>
       <span id="cap-mode-count" style="font-size:12px;color:var(--accent);font-weight:600">0개 선택</span>
+      <button id="cap-single-toggle" onclick="toggleCapSingle()" style="background:var(--s3);border:1px solid var(--border2);border-radius:20px;color:var(--t2);cursor:pointer;font-size:11px;padding:2px 10px">단일</button>
       <button id="cap-para-toggle" onclick="toggleParaMode()" style="background:var(--s3);border:1px solid var(--border2);border-radius:20px;color:var(--t2);cursor:pointer;font-size:11px;padding:2px 10px">문단선택</button>
       <button onclick="exitCaptureMode()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:2px 6px">✕ 취소</button>
     </div>
@@ -2125,6 +2180,14 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
   </div>
 </div>
 
+<!-- 방 선택 팝업 -->
+<div id="room-picker-overlay" onclick="this.style.display='none'">
+  <div id="room-picker" onclick="event.stopPropagation()">
+    <div class="room-pick-title">💬 방 선택</div>
+    <div id="room-pick-list"></div>
+  </div>
+</div>
+
 <!-- ══════════ SCRIPT ══════════ -->
 <script>
 // ─── DATA ───
@@ -2768,6 +2831,23 @@ function selectRoom(charId, roomId){
   D._openChars[charId]=true;
   save(); renderChars(); renderTopbar(); renderChat(); updateSummaryBtn();
 }
+function showRoomPicker(charId,rooms){
+  const ov=document.getElementById('room-picker-overlay');
+  const list=document.getElementById('room-pick-list');
+  if(!ov||!list)return;
+  list.innerHTML='';
+  rooms.forEach(r=>{
+    const item=document.createElement('div');
+    item.className='room-pick-item';
+    const hist=D.histories[r.id]||[];
+    const lastMsg=hist.length?hist[hist.length-1]:null;
+    const time=lastMsg&&lastMsg.time?lastMsg.time:'';
+    item.innerHTML='<div class="room-pick-name">'+(r.name||'방')+'</div>'+(time?'<div class="room-pick-date">'+time+'</div>':'');
+    item.onclick=()=>{ov.style.display='none';selectRoom(charId,r.id);};
+    list.appendChild(item);
+  });
+  ov.style.display='flex';
+}
 function forkFromMsg(histIdx){
   const charId=D.activeChar; const roomId=D.activeRoom;
   if(!charId||!roomId)return;
@@ -3075,79 +3155,63 @@ function renderChat(){
   if(!D.activeChar||!D.activeRoom){
     area.style.padding='0';
     area.style.position='relative';
+    area.style.background='transparent';
+    area.style.gap='0';
     area.innerHTML='';
     const w=document.createElement('div'); w.id='welcome';
-    w.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;display:flex;align-items:stretch;justify-content:stretch;overflow:hidden;padding:0;z-index:1';
-    // 랜덤 1장 선택
-    const _pool=HOME_IMGS.slice();
-    const _i1=Math.floor(Math.random()*_pool.length);
-    const _img1=_pool[_i1];
-    // 배경 블러 (1장 전체 블러)
-    const wBg=document.createElement('div');
-    wBg.style.cssText='position:absolute;inset:0;z-index:0;filter:blur(8px) brightness(0.55) saturate(1.1);transform:scale(1.06);background-image:url("'+_img1+'");background-size:cover;background-position:center 30%';
-    // 어두운 오버레이
-    const wOv=document.createElement('div');
-    wOv.style.cssText='position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,11,18,0.10) 0%,rgba(11,11,18,0.02) 35%,rgba(11,11,18,0.55) 100%);z-index:1';
-    // 사진 1장 중앙
-    const wRow=document.createElement('div');
-    wRow.style.cssText='position:relative;z-index:2;display:flex;width:100%;height:100%;align-items:center;justify-content:center';
-    const wImgWrap=document.createElement('div');
-    wImgWrap.style.cssText='position:relative;height:60%;max-width:360px;width:75%;overflow:hidden;border-radius:18px;box-shadow:0 8px 60px rgba(0,0,0,0.7)';
-    const wImg=document.createElement('img');
-    wImg.src=_img1;
-    wImg.style.cssText='width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block';
-    const wFade=document.createElement('div');
-    wFade.style.cssText='position:absolute;inset:0;background:linear-gradient(to bottom,transparent 55%,rgba(11,11,18,0.6) 100%)';
-    wImgWrap.appendChild(wImg); wImgWrap.appendChild(wFade);
-    wRow.appendChild(wImgWrap);
-    // 꽃 떨어지는 애니메이션
-    if(!document.getElementById('petal-style')){
-      const ps=document.createElement('style'); ps.id='petal-style';
-      ps.textContent=`
-        @keyframes petalFall{
-          0%{transform:translateY(-60px) rotate(0deg) scale(1);opacity:0}
-          8%{opacity:1}
-          85%{opacity:0.85}
-          100%{transform:translateY(110vh) rotate(720deg) scale(0.6);opacity:0}
-        }
-        @keyframes petalSway{
-          0%,100%{margin-left:0}
-          25%{margin-left:28px}
-          75%{margin-left:-28px}
-        }
-        .petal{
-          position:absolute;top:0;z-index:10;
-          font-size:22px;pointer-events:none;
-          animation:petalFall linear infinite, petalSway ease-in-out infinite;
-          will-change:transform,opacity;
-        }
-      `;
-      document.head.appendChild(ps);
+
+    const header=document.createElement('div');
+    header.className='home-header';
+    header.innerHTML='<div class="home-logo">✦ CharaChat</div><div class="home-sub">AI STORY STUDIO</div>';
+
+    const grid=document.createElement('div');
+    grid.id='home-grid';
+    const gMap=Object.fromEntries(GENRES.map(g=>[g.id,g.l]));
+    const sortedChars=[...D.chars].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
+
+    if(!sortedChars.length){
+      grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--t3);font-size:13px">스토리를 추가해보세요 ✦</div>';
     }
-    const petalEmojis=['🌸','🌺','🌸','🌼','🌸','🌺','✿','🌸'];
-    const petalContainer=document.createElement('div');
-    petalContainer.id='petal-container';
-    petalContainer.style.cssText='position:absolute;inset:0;z-index:9;pointer-events:none;overflow:hidden';
-    const numPetals=18;
-    for(let i=0;i<numPetals;i++){
-      const p=document.createElement('span');
-      p.className='petal';
-      const fallDur=(4+Math.random()*6).toFixed(2);
-      const swayDur=(2+Math.random()*3).toFixed(2);
-      const delay=(-Math.random()*10).toFixed(2);
-      const leftPct=(Math.random()*100).toFixed(1);
-      const size=(16+Math.random()*14).toFixed(0);
-      p.style.cssText=`left:${leftPct}%;font-size:${size}px;animation-duration:${fallDur}s,${swayDur}s;animation-delay:${delay}s,${delay}s;opacity:0`;
-      p.textContent=petalEmojis[i%petalEmojis.length];
-      petalContainer.appendChild(p);
-    }
-    w.appendChild(wBg); w.appendChild(wOv); w.appendChild(wRow); w.appendChild(petalContainer);
+
+    sortedChars.forEach(c=>{
+      const rooms=D.rooms[c.id]||[];
+      const tags=(c.genres&&c.genres.length)?c.genres:(c.genre?[c.genre]:[]);
+      const pills=tags.slice(0,2).map(g=>'<span class="home-card-pill">#'+(gMap[g]||g)+'</span>').join('');
+      const card=document.createElement('div');
+      card.className='home-card';
+      card.innerHTML=
+        '<div class="home-card-emo"></div>'+
+        '<div class="home-card-info">'+
+          '<div class="home-card-name">'+(c.pinned?'📌 ':'')+c.name+'</div>'+
+          '<div class="home-card-tags">'+(pills||'')+'</div>'+
+          (rooms.length?'<div class="home-card-rooms">'+rooms.length+'개 방</div>':'')+
+        '</div>';
+      const emoEl=card.querySelector('.home-card-emo');
+      renderAvatar(emoEl,c);
+      card.onclick=()=>{
+        if(rooms.length>1){showRoomPicker(c.id,rooms);}
+        else if(rooms.length===1){selectRoom(c.id,rooms[0].id);}
+        else{D.activeChar=c.id;D.activeRoom=null;save();renderTopbar();renderChat();}
+      };
+      grid.appendChild(card);
+    });
+
+    const addCard=document.createElement('div');
+    addCard.className='home-card home-card-add';
+    addCard.innerHTML='<div style="font-size:36px;opacity:0.4;line-height:1">+</div><div class="home-card-name" style="opacity:0.5">새 스토리</div>';
+    addCard.onclick=()=>openModal('char-modal');
+    grid.appendChild(addCard);
+
+    w.appendChild(header);
+    w.appendChild(grid);
     area.appendChild(w); return;
   }
   const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
   const hist=cHist();
   area.style.padding='16px 12px';
   area.style.position='';
+  area.style.background='';
+  area.style.gap='';
   area.innerHTML='';
   if(!D.activeRoom || !hist.length){
     const empty=document.createElement('div'); empty.className='empty';
@@ -6740,7 +6804,7 @@ function openStatsModal(){
       const outTok=l.outTok||0;
       const cR=l.cacheRead||0;
       const cW=l.cacheWrite||0;
-      const outIsReal=!isGemini&&outTok>0;
+      const outIsReal=outTok>0;
       const inIsReal=inTok>0;
       const turnNum=totalTurns-log.length+i+1;
       const tokRow=
@@ -6762,7 +6826,7 @@ function openStatsModal(){
             '<div style="font-size:11px;font-weight:600;color:'+(cW>0?'var(--accent)':'var(--t3)')+'">'+cW.toLocaleString()+'</div>'+
           '</div>'+
         '</div>'+
-        ((!outIsReal||!inIsReal)?'<div style="font-size:9px;color:var(--t3);margin-top:3px">* 추정값'+(isGemini?' (Gemini는 토큰 수를 반환하지 않아요)':'')+'</div>':'');
+        ((!outIsReal||!inIsReal)?'<div style="font-size:9px;color:var(--t3);margin-top:3px">* 추정값</div>':'');
       return '<div style="padding:8px 10px;background:var(--s3);border-radius:8px;font-size:12px">'+
         '<div style="display:flex;align-items:center;gap:6px">'+
           '<span style="color:var(--t3);flex-shrink:0;min-width:28px">'+turnNum+'턴</span>'+
@@ -7256,9 +7320,22 @@ function openCaptureModal(){
 
 // ─── 캡처 모드 ───
 let _capMode = false;
-let _capSelected = new Set(); // 버블 단위
-let _capParaMode = false; // 문단 선택 모드
-let _capParaSelected = new Map(); // rowIdx → Set(paraIdx)
+let _capSelected = new Set();
+let _capParaMode = false;
+let _capParaSelected = new Map();
+let _capSingleMode = false;
+
+function toggleCapSingle(){
+  _capSingleMode = !_capSingleMode;
+  const btn = document.getElementById('cap-single-toggle');
+  const hint = document.getElementById('cap-mode-hint');
+  if(btn){
+    btn.style.background = _capSingleMode ? 'var(--accent2)' : 'var(--s3)';
+    btn.style.color = _capSingleMode ? '#fff' : 'var(--t2)';
+    btn.style.borderColor = _capSingleMode ? 'var(--accent2)' : 'var(--border2)';
+  }
+  if(hint) hint.textContent = _capSingleMode ? '버블을 탭하면 바로 캡쳐돼요' : '버블을 탭해서 선택하세요';
+}
 
 function toggleParaMode(){
   _capParaMode = !_capParaMode;
@@ -7408,7 +7485,12 @@ function toggleParaMode(){
 
 function openCaptureMode(){
   _capMode = true;
+  _capSingleMode = false;
   _capSelected.clear();
+  const sBtn=document.getElementById('cap-single-toggle');
+  if(sBtn){sBtn.style.background='var(--s3)';sBtn.style.color='var(--t2)';sBtn.style.borderColor='var(--border2)';}
+  const hint=document.getElementById('cap-mode-hint');
+  if(hint)hint.textContent='버블을 탭해서 선택하세요';
   document.getElementById('capture-mode-bar').style.display = 'block';
   document.getElementById('input-wrap').style.display = 'none';
   // 버블에 캡처 선택 이벤트 붙이기
@@ -7418,6 +7500,12 @@ function openCaptureMode(){
     row._capHandler = function(e){
       if(!_capMode) return;
       e.stopPropagation();
+      if(_capSingleMode){
+        _capSelected.clear();
+        _capSelected.add(i);
+        captureSelectedIOS();
+        return;
+      }
       if(_capSelected.has(i)){ _capSelected.delete(i); row.classList.remove('cap-selected'); }
       else { _capSelected.add(i); row.classList.add('cap-selected'); }
       document.getElementById('cap-mode-count').textContent = _capSelected.size + '개 선택';
@@ -7436,6 +7524,7 @@ function openCaptureMode(){
 function exitCaptureMode(){
   _capMode = false;
   _capParaMode = false;
+  _capSingleMode = false;
   _capSelected.clear();
   _capParaSelected.clear();
   document.getElementById('capture-mode-bar').style.display = 'none';
