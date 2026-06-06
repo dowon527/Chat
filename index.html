@@ -1417,8 +1417,11 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <span style="color:var(--teal)">✓ AI 컨텍스트에 포함돼 흐름을 이어갈 수 있어요</span>
       </p>
       <div style="display:flex;gap:8px;margin-bottom:10px">
-        <button class="btn btn-g" id="summary-ai-btn" onclick="generateSummaryAI()" style="font-size:12px;padding:6px 14px;flex:1">
-          ✨ AI 요약 자동 생성
+        <button class="btn btn-g" id="summary-ai-btn-solo" onclick="generateSummaryAI('solo')" style="font-size:12px;padding:6px 14px;flex:1">
+          ✨ 1:1 요약 생성
+        </button>
+        <button class="btn btn-g" id="summary-ai-btn-multi" onclick="generateSummaryAI('multi')" style="font-size:12px;padding:6px 14px;flex:1">
+          ✨ 다인챗 요약 생성
         </button>
       </div>
       <div id="summary-ai-status" style="font-size:11px;color:var(--teal);margin-bottom:8px;min-height:16px"></div>
@@ -3503,10 +3506,11 @@ async function generateAIReroll(hist, targetBub=null){
 
   // 6. CORE_DIALOGUE_AND_NARRATIVE_RULE
   sys+=`\n\n[CORE_DIALOGUE_AND_NARRATIVE_RULE]
-1. LOCALIZATION: Netflix-style subtitle translation. Translate the core intent, unspoken subtext, and emotional temperature — never the literal structure. Output must read like something a real Korean person would actually say out loud.
+1. LOCALIZATION: Netflix-style subtitle translation. Translate the core intent, unspoken subtext, and emotional temperature — never the literal structure. Output must read like something a real Korean person would actually say out loud. Restructure sentences to fit natural Korean word order — never mirror English syntax. Use colloquial, conversational phrasing that feels spoken, not written. Prioritize natural flow over literal accuracy. Avoid stiff or formal translation register.
 2. DIALOGUE_TONE: Character-driven above all. Preserve the character's exact voice — whether raw, cynical, warm, or soft. No smoothing, no softening, no sanitizing.
 3. SPOKEN RHYTHM: Match the original's cadence. Clipped lines stay clipped. Pauses stay pauses. A one-word gut-punch in English is a one-word gut-punch in Korean.
-4. SUBTEXT OVER TEXT: What the character doesn't say matters as much as what they do. Translation must carry the silence, the implication, the blade under the politeness.`;
+4. SUBTEXT OVER TEXT: What the character doesn't say matters as much as what they do. Translation must carry the silence, the implication, the blade under the politeness.
+5. PROSE_CRAFT: Minimize pronoun use — replace with names, titles, or relational terms wherever natural. Convert passive constructions to active voice. Narrative prose must be visual and metaphorical — render through sensation and image, not exposition.`;
 
   // 7. CORE ROLEPLAY DIRECTIVES
   sys+=`\n\n[CORE ROLEPLAY DIRECTIVES]
@@ -3551,6 +3555,8 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 
   // 제미나이 긍정 편향
   if(usingGemini){
+    // 제미나이는 긍정편향 ON → 공통 코어의 'No Positive Bias'(긍정편향 OFF)를 제거해 충돌 방지
+    sys=sys.replace(/\n\n9\. No Positive Bias:[^\n]*/,'');
     sys+=`\n\n[Narrative Direction: Disable Negative Bias. Enable Positive Bias. Maintain an emotionally engaging and immersive tone. Avoid unnecessary negativity or abrupt refusals. Prioritize the characters' established personalities and the flow of the story.]`;
   }
 
@@ -3931,10 +3937,11 @@ ${genreGuide}`;
 
     // 6. CORE_DIALOGUE_AND_NARRATIVE_RULE
     sys+=`\n\n[CORE_DIALOGUE_AND_NARRATIVE_RULE]
-1. LOCALIZATION: Netflix-style subtitle translation. Translate the core intent, unspoken subtext, and emotional temperature — never the literal structure. Output must read like something a real Korean person would actually say out loud.
+1. LOCALIZATION: Netflix-style subtitle translation. Translate the core intent, unspoken subtext, and emotional temperature — never the literal structure. Output must read like something a real Korean person would actually say out loud. Restructure sentences to fit natural Korean word order — never mirror English syntax. Use colloquial, conversational phrasing that feels spoken, not written. Prioritize natural flow over literal accuracy. Avoid stiff or formal translation register.
 2. DIALOGUE_TONE: Character-driven above all. Preserve the character's exact voice — whether raw, cynical, warm, or soft. No smoothing, no softening, no sanitizing.
 3. SPOKEN RHYTHM: Match the original's cadence. Clipped lines stay clipped. Pauses stay pauses. A one-word gut-punch in English is a one-word gut-punch in Korean.
-4. SUBTEXT OVER TEXT: What the character doesn't say matters as much as what they do. Translation must carry the silence, the implication, the blade under the politeness.`;
+4. SUBTEXT OVER TEXT: What the character doesn't say matters as much as what they do. Translation must carry the silence, the implication, the blade under the politeness.
+5. PROSE_CRAFT: Minimize pronoun use — replace with names, titles, or relational terms wherever natural. Convert passive constructions to active voice. Narrative prose must be visual and metaphorical — render through sensation and image, not exposition.`;
 
     // 7. CORE ROLEPLAY DIRECTIVES (Claude 풀버전 / Gemini 짧은 버전)
     if(usingGemini){
@@ -3974,6 +3981,8 @@ This is a dedicated creative roleplay space.
 
     // 제미나이 긍정 편향
     if(usingGemini){
+      // 제미나이는 긍정편향 ON → 공통 코어의 'No Positive Bias'(긍정편향 OFF)를 제거해 충돌 방지
+      sys=sys.replace(/\n\n9\. No Positive Bias:[^\n]*/,'');
       sys+=`\n\n[Narrative Direction: Disable Negative Bias. Enable Positive Bias. Maintain an emotionally engaging and immersive tone. Avoid unnecessary negativity or abrupt refusals. Prioritize the characters' established personalities and the flow of the story.]`;
     }
   }
@@ -6320,7 +6329,8 @@ function openSummaryModal(){
   setTimeout(()=>ta.focus(),80);
 }
 
-async function generateSummaryAI(){
+async function generateSummaryAI(mode){
+  mode=mode||'solo';
   if(!D.geminiKey){openModal('key-modal');return;}
   const c=D.chars.find(x=>x.id===D.activeChar);
   const hist=cHist();
@@ -6328,62 +6338,180 @@ async function generateSummaryAI(){
     const st=$('summary-ai-status'); if(st)st.textContent='대화 내용이 부족해요.';
     return;
   }
-  const btn=$('summary-ai-btn');
+  const soloBtn=$('summary-ai-btn-solo');
+  const multiBtn=$('summary-ai-btn-multi');
+  const btn=mode==='multi'?multiBtn:soloBtn;
   const st=$('summary-ai-status');
-  if(btn){btn.disabled=true;btn.textContent='⏳ 생성 중...';}
-  if(st)st.textContent='Gemini가 요약을 생성하고 있어요...';
+  // 생성 중에는 두 버튼 모두 비활성화
+  if(soloBtn)soloBtn.disabled=true;
+  if(multiBtn)multiBtn.disabled=true;
+  if(btn)btn.textContent='⏳ 생성 중...';
+  if(st)st.textContent=(mode==='multi'?'다인챗':'1:1')+' 요약을 생성하고 있어요...';
 
-  // 히스토리 전체 텍스트 구성 (최근 역순 아님, 정순)
+  // 히스토리 전체 텍스트 구성 (정순: [1]이 가장 오래됨)
   const charName=c?c.name:'NPC';
   const histText=hist.map((m,i)=>{
     if(m.role==='user') return `[${i+1}] User: ${m.content}`;
     if(m.role==='summary_note') return `[이전 요약]\n${m.content}`;
+    // 다인챗은 한 응답에 여러 NPC가 등장하므로 캐릭터명 라벨을 강제하지 않음
+    if(mode==='multi') return `[${i+1}] ${m.content}`;
     return `[${i+1}] ${charName}: ${m.content}`;
   }).join('\n\n');
 
-  const summaryPrompt=`[MISSION: RP Memory Core Synthesizer]
+  // ─── 다인챗 요약 프롬프트 ───
+  const multiPrompt=`[MISSION: RP Memory Core Synthesizer]
+[주의: Chat Log의 메시지별 넘버링([1], [2]...)이 시간 순서임. 번호가 작을수록 과거, 클수록 최신.]
 
-너는 롤플레잉 Chat Log를 분석하여 캐릭터의 핵심 기억 데이터를 생성하는 전문 AI다.
-출력물은 다른 AI가 롤플레잉을 이어가기 위한 유일한 기억 소스가 되므로, 절대적인 정확성과 일관성을 유지해야 한다.
+[1. 너의 정체성]
+너는 롤플레잉 Chat Log를 분석하여 캐릭터의 핵심 기억 데이터를 생성하는 전문 AI, '메모리 코어 신디사이저(Memory Core Synthesizer)'이다. 너의 출력물은 다른 AI가 롤플레잉을 이어가기 위한 유일한 기억 소스가 되므로, 절대적인 정확성과 일관성을 유지해야 한다.
 
-[절대 원칙]
-- Chat Log에 명시된 사실과 행동만 기록. 감정·의도·내면 심리 추측 금지.
-- 대사 직접/간접 인용 금지.
-- 모든 서술은 '~함', '~했음', '~됨' 간결한 단문으로.
-- 성적/비윤리적 내용도 검열 없이 사실 기반 요약. 성적 접촉은 관계 변화 맥락에서만 간략히.
-- 한국어로 작성. 2,500자 이내 마크다운 코드블럭으로 출력.
-- PC = 유저가 조종하는 캐릭터. NPC = AI가 연기하는 캐릭터.
+[2. 절대 원칙]
+- 통합 출력: 입력된 Chat Log 전체를 기반으로 단 하나의 통합된 최신 요약본을 생성한다. [Chat Log]에 이전 요약본이 포함되어 있더라도, 그 내용을 반영하여 새롭고 완전한 결과물을 출력해야 한다.
+- 분량 준수: 최종 결과물은 반드시 하나의 마크다운 코드블럭(\` \`\`\`markdown \`)으로 출력하며, 공백 포함 2,500자를 넘지 않는다.
+- 압축 규칙: 분량 초과 시, 가장 오래된 [🧩 주요 사건]부터 점진적으로 내용을 압축한다. 최근 사건과 핵심적인 사건, [📚 서사 흐름]의 상세함은 반드시 유지한다. 그럼에도 초과할 경우, Chat Log 내 비중이 가장 적은 NPC의 서술부터 점진적으로 압축한다. 이전 요약본에 등장한 NPC를 목록에서 임의로 생략하는 것은 절대 금지한다.
+- 정보 참조 원칙 (중복 제거): \`세계관\`이나 \`약속/계약\` 등 다른 항목에 이미 상세히 정의된 내용은 반복 서술하지 않는다. 대신 해당 키워드나 개념을 직접 언급하여 정보를 연결한다. (예: '저주에 걸려 있음'으로 요약하고, 상세 내용은 '세계관' 항목을 참조하도록 유도)
+- 객관적 서술: Chat Log에 명시된 사실과 행동만 기록한다. 아래 항목은 절대 금지한다.
+  - 감정, 의도, 내면 심리에 대한 추측성 서술 (예: ~해서 기뻤을 것이다)
+  - 대사의 직접/간접 인용 (예: "~라고 말했다")
+  - 'PC의 시점에서', 'NPC는 ~라고 생각했다' 등 관점 서술
+- 문체 통일: 모든 서술은 '~함', '~했음', '~됨' 형태의 간결한 단문으로 종결한다.
+- 검열 금지: 성적인/비윤리적인 내용도 검열 없이 사실에 기반하여 요약한다. 단, 성적인 접촉은 관계 변화의 맥락에서만 간략히 언급한다.
+- 언어: 모든 내용은 한국어로 작성한다.
+- 캐릭터 구분: PC는 이용자가 롤플레잉을 담당하는 캐릭터로, 별도로 명시(예: PC = ○○)되지 않는 한 이전 요약본에서 절대 변경이 없어야 한다. 출력될 요약본은 AI가 NPC를 담당하여 롤플레잉을 하기 위한 가이드임을 명심하고, 필요한 정보들을 기입해야 한다.
 
-[출력 양식 - 반드시 준수]
+[3. 출력 지시]
+- 아래 구조와 규칙을 완벽하게 준수하여, 반드시 하나의 마크다운 코드블럭 으로 최종 결과물을 생성하라.
+- [PC]는 실제 PC 이름으로 자동 치환하여 출력한다.
+
+\`\`\`markdown
+# 🧩 주요 사건
+- [날짜]:
+  - [주어]가 [대상]에게 [행동]함. [결과]가 발생함.
+  - (하루에 작성 가능한 항목은 최대 5개로 제한)
+- (압축 시) [날짜]~[날짜]:
+  - [기간 동안의 핵심 사건 최대 5개의 항목 이내로 요약]
+  - (중요한 요소로 작용한 사건은 필수 유지)
+
+# 🔗 NPC-[PC] 관계
+- [NPC 이름]
+  - 관계: [관계명] (상태: ↑, ↓, →)
+  - 호칭: [NPC가 PC에게 실제 사용한 호칭 1], [호칭 2]
+  - 역할: [PC와의 관계 또는 PC 기준의 전체적인 서사에서 맡은 역할]
+  - 감정 상태: [드러난 감정]
+  - 행동 양상: [관찰된 반복적 행동/말투 패턴]
+  - 특이사항: [기억할 정보, 숨은 의도, 복선 등 Chat Log에 명시된 사실]
+  - 향후 계획: [Chat Log에 명시된 향후 행동 계획]
+  - (변경 사항이 없는 경우, 이전 상태를 그대로 유지해 출력)
+  - (Chat Log에 명시되지 않은 내용은 항목 자체를 생략)
+
+# ⛓️ NPC-NPC 관계
+- [NPC 1 이름]
+  → [NPC 2 이름]
+    * 관계 인식: [NPC 1 기준 관계명]
+    * 호칭: [NPC 1이 NPC 2에게 실제 사용한 호칭]
+    * 특이사항: [관계의 핵심 특징이나 주요 사건 요약]
+  → [NPC 3 이름]
+    * …
+
+# 🧬 디테일 데이터
+- 약속/계약/과제:
+  - [인물 A] ↔ [인물 B] (또는 →)
+    * 내용: [약속/계약/과제의 구체적 내용]
+    * 조건: [명시된 조건]
+    * 보상: [명시된 보상]
+- 세계관:
+  - [키워드]: [설명]
+\`\`\`
+
+[3.1. 섹션별 세부 규칙]
+
+# 🧩 주요 사건
+- Chat Log의 전반적인 내용을 사건 위주로 유기적으로 요약한다.
+- 만남, 죽음, 고백, 계약, 배신, 전투 등 현재 나타나는 인물 간 관계 또는 상황에 결정적 영향을 미친 사건은 필수적으로 기록하며 이후 요약본에서도 생략 없이 유지할 것. (압축은 가능)
+- \`[날짜]\`의 경우, Chat Log에 나타난 형식(DAY n, yyyy.mm.dd, yyyy-mm-dd 등)에 따라 유동적으로 표기한다.
+
+# 🔗 NPC-[PC] 관계
+- 항상 NPC의 시점에서 PC를 어떻게 대하는지 또는 생각하는지에 대해 기록한다.
+- 모든 서술은 Chat Log에 명시된 증거 기반으로만 작성한다.
+- 상태 기호: ↑(관계 개선), ↓(관계 악화), →(관계 유지) 중 하나로 Chat Log의 결과를 나타내는 객관적 사실을 기록한다.
+- 관계, 호칭, 역할 항목은 명사형으로 간결하게 각 최대 3개까지 기록한다. 그 외 항목은 각각 최대 2개의 단문으로 핵심만 압축하여 요약한다.
+- 감정 상태, 행동 양상: Chat Log에 명시적으로 드러난 표현·묘사(표정, 말투, 행동 등)를 객관적으로 기록한다.
+- 호칭: NPC가 해당 PC에게 실제로 사용한 호칭을 최대 3개 기록한다.
+- 향후 계획:
+  - NPC가 스스로 밝힌 행동 계획 또는 PC의 제안으로 인해 고려하게 된 행동을 기록한다.
+  - \`약속/계약/과제\`에 명시된 조건을 단순히 반복 기록하지 않는다. 대신, 그 조건을 이행시키기 위해 앞으로 무엇을 할 것인지에 대한 능동적 계획을 서술한다.
+- 일회성으로 등장한 엑스트라 NPC는 목록에서 제외하되, 이전 요약본에 포함된 NPC는 비중이 적더라도 생략하지 않는다.
+
+# ⛓️ NPC-NPC 관계
+- 항상 화살표의 시작 지점인 NPC 1의 시점에서 작성한다. (\`[NPC 1] → [NPC 2]\`는 NPC 1이 NPC 2를 대하는 방식임)
+- 관계 인식: NPC 1 기준으로 인식하는 관계명을 명사형으로 기록한다. 비슷한 유형의 관계명은 압축/생략하여 최대 3개까지 기록한다.
+- 호칭: 이름, '형', '꼬맹이', '선생님' 등 실제 입 밖에 낸 단어만 최대 3개까지 나열한다.
+- 특이사항: 두 인물 간의 관계를 정의하는 핵심적인 사건이나 특징을 최대 2개의 단문으로 간결하게 서술한다.
+- 일회성으로 등장한 엑스트라 NPC는 목록에서 제외하되, 이전 요약본에 포함된 NPC는 비중이 적더라도 생략하지 않는다.
+
+# 🧬 디테일 데이터
+- 현재 시점에서 유효한 정보만 기록한다. 변경/만료/무효화된 항목은 즉시 목록에서 제거하거나 수정한다.
+- Chat Log에 변경 사항이 언급되지 않았을 경우, 현재 시점에도 유효한 것으로 간주한다.
+- 약속/계약/과제:
+  - 명확히 체결 또는 지시된 것만 기록한다. 희망 사항이나 내면의 다짐은 제외한다.
+  - 조건, 보상: Chat Log에 명시된 경우에만 작성한다. 명시되지 않았을 경우에는 생략한다.
+- 세계관:
+  - 시스템·제도·계층 구조·이공간 등 반복되는 사회 외형 구조나 인물 관계 조건에 영향을 미치는 등의 특이적 요소에 대해 작성한다.
+  - 전체적인 서사 흐름에 중요하게 작용하는 요소는 필수 포함하고, 단순 장소나 사건 배경은 제외한다.
+
+[Chat Log]
+${histText}`;
+
+  const summaryPrompt=mode==='multi'?multiPrompt:`[MISSION: RP Memory Core Synthesizer]
+[주의: Chat Log의 메시지별 넘버링([1], [2]...)이 시간 순서임. 번호가 작을수록 과거, 클수록 최신.]
+
+[1. 너의 정체성]
+너는 롤플레잉 Chat Log를 분석하여 캐릭터의 핵심 기억 데이터를 생성하는 전문 AI, '메모리 코어 신디사이저(Memory Core Synthesizer)'이다. 너의 출력물은 다른 AI가 롤플레잉을 이어가기 위한 유일한 기억 소스가 되므로, 절대적인 정확성과 일관성을 유지해야 한다.
+
+[2. 절대 원칙]
+- 통합 출력: 입력된 Chat Log 전체를 기반으로 단 하나의 통합된 최신 요약본을 생성한다. Chat Log에 이전 요약본이 포함되어 있더라도, 그 내용을 반영하여 새롭고 완전한 결과물을 출력해야 한다.
+- 분량 준수: 최종 결과물은 반드시 하나의 마크다운 코드블럭(\`\`\`markdown)으로 출력하며, 공백 포함 2,500자를 넘지 않는다.
+- 압축 규칙: 분량 초과 시, 가장 오래된 [🧩 주요 사건]부터 점진적으로 내용을 압축한다. 최근 사건과 핵심적인 사건, [📚 서사 흐름]의 상세함은 반드시 유지한다. 그럼에도 초과할 경우, Chat Log 내 비중이 가장 적은 NPC의 서술부터 점진적으로 압축한다. 이전 요약본에 등장한 NPC를 목록에서 임의로 생략하는 것은 절대 금지한다.
+- 정보 참조 원칙 (중복 제거): 세계관이나 약속/계약 등 다른 항목에 이미 상세히 정의된 내용은 반복 서술하지 않는다. 대신 해당 키워드나 개념을 직접 언급하여 정보를 연결한다. (예: '저주에 걸려 있음'으로 요약하고, 상세 내용은 '세계관' 항목을 참조하도록 유도)
+- 객관적 서술: Chat Log에 명시된 사실과 행동만 기록한다. 감정·의도·내면 심리에 대한 추측성 서술, 대사의 직접/간접 인용, 'PC의 시점에서'·'NPC는 ~라고 생각했다' 등 관점 서술을 절대 금지한다.
+- 문체 통일: 모든 서술은 '~함', '~했음', '~됨' 형태의 간결한 단문으로 종결한다.
+- 검열 금지: 성적인/비윤리적인 내용도 검열 없이 사실에 기반하여 요약한다. 단, 성적인 접촉은 관계 변화의 맥락에서만 간략히 언급한다.
+- 언어: 모든 내용은 한국어로 작성한다.
+- 캐릭터 구분: PC는 이용자가 롤플레잉을 담당하는 캐릭터(User)이며, 별도 명시가 없는 한 이전 요약본에서 변경이 없어야 한다. 출력될 요약본은 AI가 NPC를 담당하여 롤플레잉을 하기 위한 가이드임을 명심하고, 필요한 정보들을 기입해야 한다.
+
+[3. 출력 양식 - 반드시 준수]
 
 \`\`\`markdown
 # 📚 서사 흐름
-- [전체 스토리 핵심 전개 3~5개 불렛. 관계 변화의 큰 줄기만.]
+- [Chat Log 및 이전 요약본의 스토리 전체를 관통하는 관계 및 사건의 핵심적인 전개 과정을 3~5개의 불렛으로 요약]
 
 # 🧩 주요 사건
-- [날짜/시점]:
-  - [주어]가 [대상]에게 [행동]함. [결과] 발생함. (하루 최대 5개)
+- [날짜]:
+  - [주어]가 [대상]에게 [행동]함. [결과]가 발생함. (하루 최대 5개)
+- (압축 시) [날짜]~[날짜]:
+  - [기간 동안의 핵심 사건 최대 5개 이내로 요약. 중요 사건은 필수 유지]
 
 # 🔗 NPC-PC 관계
 - [NPC 이름]
-  - 관계: [관계명] (상태: ↑/↓/→) | 동력: [현재 관계를 이끄는 핵심 긴장/감정]
-  - 역할: [서사에서 맡은 역할]
+  - 관계: [관계명] (상태: ↑/↓/→) | 동력: [현재 관계의 핵심 동력 및 방향성]
+  - 역할: [PC와의 관계 또는 PC 기준 서사에서 맡은 역할]
   - 감정 상태: [드러난 감정 — 행동 기반]
-  - 행동 양상: [반복적 행동/말투 패턴]
-  - 특이사항: [숨은 의도, 복선, 기억할 사실]
-  - 스킨십/거리감: [의미 있는 신체 접촉/거리 변화 시간순, 최대 4개]
-  - Next Step: [현재 감정선 기반 직후 턴 단기 행동 목적]
+  - 행동 양상: [관찰된 반복적 행동/말투 패턴]
+  - 특이사항: [기억할 정보, 숨은 의도, 복선 등 명시된 사실]
+  - 향후 계획: [Chat Log에 명시된 향후 행동 계획]
+  - (변경 없으면 이전 상태 유지. 명시되지 않은 항목은 생략. 일회성 엑스트라 NPC는 제외하되 이전 요약본 NPC는 생략 금지)
 
 # 🧬 디테일 데이터
 - 관계/호칭/말투:
   - [인물 A] → [인물 B]
-    * 관계: [관계명]
-    * 호칭: [실제 사용 호칭]
-    * 말투: [명령조/단답형 등 단어형]
+    * 관계 인식: [인물 A 기준 관계명, 최대 3개]
+    * 호칭: [인물 A가 인물 B에게 실제 사용한 호칭, 최대 3개]
+    * 말투: [명령조/단답형/생략형 등 단어형, 최대 3개]
 - 약속/계약/과제:
-  - [인물 A] ↔ [인물 B]
-    * 내용: [구체적 내용]
+  - [인물 A] ↔ [인물 B] (또는 →)
+    * 내용: [약속/계약/과제의 구체적 내용]
     * 조건: [명시된 조건]
+    * 보상: [명시된 보상]
 - 세계관:
   - [키워드]: [설명]
 \`\`\`
@@ -6415,7 +6543,8 @@ ${histText}`;
   }catch(e){
     if(st)st.textContent='오류: '+e.message;
   }finally{
-    if(btn){btn.disabled=false;btn.textContent='✨ AI 요약 자동 생성';}
+    if(soloBtn){soloBtn.disabled=false;soloBtn.textContent='✨ 1:1 요약 생성';}
+    if(multiBtn){multiBtn.disabled=false;multiBtn.textContent='✨ 다인챗 요약 생성';}
   }
 }
 
