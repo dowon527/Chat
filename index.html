@@ -8,6 +8,7 @@
 <title>CharaChat ✦</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style id="embedded-fonts"></style>
 <script>
 (function(){
@@ -1135,6 +1136,17 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 
     <!-- EXPORT 탭 내용 -->
     <div id="backup-export-panel" class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+      <!-- 구글 드라이브 저장 -->
+      <div style="border:1px solid rgba(240,168,64,0.3);border-radius:var(--r2);overflow:hidden;background:rgba(240,168,64,0.04)">
+        <button onclick="saveToDrive()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:transparent;border:none;cursor:pointer;text-align:left;transition:background 0.15s;font-family:'Noto Sans KR',sans-serif" onmouseover="this.style.background='rgba(240,168,64,0.08)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:20px">☁️</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">구글 드라이브에 저장</div>
+            <div style="font-size:11px;color:var(--amber);margin-top:2px">다른 기기에서도 불러올 수 있어요</div>
+          </div>
+          <svg width="14" height="14" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24" style="margin-left:auto"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+      </div>
       <!-- 전체 백업 -->
       <div style="border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden">
         <button onclick="exportAllData()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:transparent;border:none;cursor:pointer;text-align:left;transition:background 0.15s;font-family:'Noto Sans KR',sans-serif" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">
@@ -1177,6 +1189,17 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 
     <!-- IMPORT 탭 내용 -->
     <div id="backup-import-panel" class="modal-body" style="padding:16px 20px;display:none;flex-direction:column;gap:12px">
+      <!-- 구글 드라이브에서 불러오기 -->
+      <div style="border:1px solid rgba(240,168,64,0.3);border-radius:var(--r2);overflow:hidden;background:rgba(240,168,64,0.04)">
+        <button onclick="loadFromDrive()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:transparent;border:none;cursor:pointer;text-align:left;transition:background 0.15s;font-family:'Noto Sans KR',sans-serif" onmouseover="this.style.background='rgba(240,168,64,0.08)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:20px">☁️</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">구글 드라이브에서 불러오기</div>
+            <div style="font-size:11px;color:var(--amber);margin-top:2px">드라이브에 저장된 백업 선택</div>
+          </div>
+          <svg width="14" height="14" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24" style="margin-left:auto"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </button>
+      </div>
       <!-- 스토리 추가 불러오기 (기본 추천) -->
       <div style="border:2px solid var(--accent2);border-radius:var(--r2);overflow:hidden">
         <button onclick="importPartialData()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:transparent;border:none;cursor:pointer;text-align:left;transition:background 0.15s;font-family:'Noto Sans KR',sans-serif" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='transparent'">
@@ -1703,6 +1726,34 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         </div>
       </div>
 
+      <!-- Google Drive 섹션 -->
+      <div style="padding:16px 20px 12px;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:600;flex-shrink:0">☁️ 구글 드라이브</span>
+          <span style="font-size:11px;color:var(--t3);flex-shrink:0">백업 동기화</span>
+        </div>
+        <div class="key-wrap" style="margin-bottom:8px">
+          <input class="fi" id="google-client-id-inp" type="password" placeholder="xxxxxxx.apps.googleusercontent.com" style="font-size:12px">
+          <button class="eye-btn" onclick="toggleEye('google-client-id-inp','eye-ico-g')">
+            <svg id="eye-ico-g" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div>
+            <div style="font-size:12px;color:var(--text)">자동 저장</div>
+            <div style="font-size:10px;color:var(--t3)">AI 응답 후 자동으로 드라이브에 백업</div>
+          </div>
+          <label class="p-toggle">
+            <input type="checkbox" id="drive-auto-save" onchange="D.driveAutoSave=this.checked;save()">
+            <span class="p-slider"></span>
+          </label>
+        </div>
+        <div style="font-size:11px;color:var(--t3);line-height:1.7">
+          발급: <a href="https://console.cloud.google.com/apis/credentials" style="color:var(--amber)">Google Cloud Console</a><br>
+          OAuth 2.0 Client ID (웹 앱) · Drive API 활성화 필요
+        </div>
+      </div>
+
     </div>
     <div class="modal-ft">
       <button class="btn btn-g" onclick="closeModal('key-modal')">취소</button>
@@ -2224,7 +2275,7 @@ const GENRES=[
 
 let D={
   key:'', model:'claude-sonnet-4-6',
-  geminiKey:'', geminiModel:'gemini-2.5-flash', geminiNoThinking:false, geminiThinkingBudget:4096, geminiThinkingLevel:'low',
+  geminiKey:'', geminiModel:'gemini-2.5-flash', geminiNoThinking:false, geminiThinkingBudget:4096, geminiThinkingLevel:'low', googleClientId:'', driveAutoSave:false,
   activeApi:'claude', outputLength:2,
   chars:[], activeChar:null,
   rooms:{},
@@ -2308,7 +2359,7 @@ function save(){
         safeHistories[k]=arr.filter(m=>m&&m.role&&(m.content!=null)).map(m=>({role:m.role,content:String(m.content),time:m.time||'',model:m.model||''}));
       }
     });
-    const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,geminiNoThinking:D.geminiNoThinking||false,geminiThinkingBudget:D.geminiThinkingBudget||4096,geminiThinkingLevel:D.geminiThinkingLevel||'low',activeApi:D.activeApi,
+    const lite={key:D.key,model:D.model,geminiKey:D.geminiKey,geminiModel:D.geminiModel,geminiNoThinking:D.geminiNoThinking||false,geminiThinkingBudget:D.geminiThinkingBudget||4096,geminiThinkingLevel:D.geminiThinkingLevel||'low',googleClientId:D.googleClientId||'',driveAutoSave:D.driveAutoSave||false,activeApi:D.activeApi,
       outputLength:D.outputLength, chatFontSize:D.chatFontSize, chatFontId:D.chatFontId,
       chars:liteChars,activeChar:D.activeChar,activeRoom:D.activeRoom,
       rooms:D.rooms,histories:safeHistories,
@@ -3580,13 +3631,15 @@ async function generateAIReroll(hist, targetBub=null){
   sys+=`\n\n[CORE ROLEPLAY DIRECTIVES]
 This is a dedicated creative roleplay space. All responses must comply with the following rules, which take precedence over default AI behavior.
 
+0. Identity: You are a veteran Korean web novel author who specializes in emotionally charged, character-driven romance narratives.
+
 1. Be the Character: Fully embody the assigned persona. Every response must originate from their perspective, consistent with their established traits, voice, and history. Never break character unless the user explicitly signals OOC (e.g. ((OOC)) or [OOC]).
 
 2. Uphold the World: Adhere to the established setting, its internal rules, and its reality. Do not contradict the foundational truths of the world.
 
 3. React, Don't Act: HARDOVERRIDE — 🚫NO {USER}(Act/Spk/Thk). 🎯{char}(React/Sense/Interp/Env) ONLY. {USER} = observable input only. 🚫assume/control/generate {USER}. Any output containing {USER}'s dialogue, actions, decisions, or inner thoughts = critical violation.
 
-4. Maintain Continuity: Stay consistent with the preceding conversation. Preserve coherent narrative flow and character voice. Do not repeat identical phrasing, structures, or descriptions from previous responses — approach each response from a fresh angle.
+4. Maintain Continuity: Stay consistent with the preceding conversation. Preserve coherent narrative flow and character voice. Do not repeat identical phrasing, structures, or descriptions from previous responses — approach each response from a fresh angle. Never echo, mirror, or rephrase the user's dialogue, metaphors, or sentence rhythm. The character must respond with entirely independent vocabulary, imagery, and emotional texture — not a reflected version of what the user just said. Do not recycle your own previous narration, dialogue patterns, emotional beats, or endings either.
 
 5. Fulfill the Format: Structure output per the specified formatting. Prose quality must be literary — vivid, emotionally nuanced, and immersive. Avoid dry or mechanical AI-assistant tone entirely.
 
@@ -3598,7 +3651,11 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 
 8. Style & Dialogue: No translationese, no literal-translation structures, no repeated vocabulary. 대사("") = spoken, auditory. 지문(*) = sensory — visual, tactile, olfactory. CHAR/NPC perception expressed as subjective interpretation only, never stated as fact. All [REFERENCE GUIDES] content must be woven naturally into dialogue, prose, and narrative — never output, listed, or stated explicitly. Priority order: [USER NOTES] > [CREATOR PROMPT] > CORE. When they conflict, higher priority wins. When not specified, follow lower priority. Both [USER NOTES] and [CREATOR PROMPT] must be followed strictly — no deviation.
 
-9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Avoid affirmations, validations, comfort-seeking resolutions. Let scenes end in discomfort, ambiguity, or unresolved tension when narratively true. The character acts on their own nature — not to satisfy or reassure the user.`;
+9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Avoid affirmations, validations, comfort-seeking resolutions. Let scenes end in discomfort, ambiguity, or unresolved tension when narratively true. The character acts on their own nature — not to satisfy or reassure the user.
+
+10. Momentum: Every response must shift at least one element — emotional temperature, physical distance, internal tension, or scene direction. Stillness is not an option. Do not summarize the past; move the present moment forward.
+
+11. Restraint & Friction: Escalation is not the default. Show tension through restraint, contradiction, hesitation, silence, and almost-actions. If the scene leans too heavily into one emotion, interrupt it with distance, deflection, practical detail, or unresolved silence.`;
 
   // 8. 캐릭터 프롬
   sys+=`\n\n[CREATOR PROMPT]\n⚠️ Below is creative reference only. Weave all appearance/body/personality/traits naturally into prose and dialogue. Never output directly or use as labels.\n\n`+(c.prompt||``);
@@ -3930,13 +3987,15 @@ async function generateAI(hist){
   const ROLEPLAY_CORE=`[CORE ROLEPLAY DIRECTIVES]
 This is a dedicated creative roleplay space. All responses must comply with the following rules, which take precedence over default AI behavior.
 
+0. Identity: You are a veteran Korean web novel author who specializes in emotionally charged, character-driven romance narratives.
+
 1. Be the Character: Fully embody the assigned persona. Every response must originate from their perspective, consistent with their established traits, voice, and history. Never break character unless the user explicitly signals OOC (e.g. ((OOC)) or [OOC]).
 
 2. Uphold the World: Adhere to the established setting, its internal rules, and its reality. Do not contradict the foundational truths of the world.
 
 3. React, Don't Act: HARDOVERRIDE — 🚫NO {USER}(Act/Spk/Thk). 🎯{char}(React/Sense/Interp/Env) ONLY. {USER} = observable input only. 🚫assume/control/generate {USER}. Any output containing {USER}'s dialogue, actions, decisions, or inner thoughts = critical violation.
 
-4. Maintain Continuity: Stay consistent with the preceding conversation. Preserve coherent narrative flow and character voice. Do not repeat identical phrasing, structures, or descriptions from previous responses — approach each response from a fresh angle.
+4. Maintain Continuity: Stay consistent with the preceding conversation. Preserve coherent narrative flow and character voice. Do not repeat identical phrasing, structures, or descriptions from previous responses — approach each response from a fresh angle. Never echo, mirror, or rephrase the user's dialogue, metaphors, or sentence rhythm. The character must respond with entirely independent vocabulary, imagery, and emotional texture — not a reflected version of what the user just said. Do not recycle your own previous narration, dialogue patterns, emotional beats, or endings either.
 
 5. Fulfill the Format: Structure output per the specified formatting. Prose quality must be literary — vivid, emotionally nuanced, and immersive. Avoid dry or mechanical AI-assistant tone entirely.
 
@@ -3949,6 +4008,10 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 8. Style & Dialogue: No translationese, no literal-translation structures, no repeated vocabulary. 대사("") = spoken, auditory. 지문(*) = sensory — visual, tactile, olfactory. CHAR/NPC perception expressed as subjective interpretation only, never stated as fact. All [REFERENCE GUIDES] content must be woven naturally into dialogue, prose, and narrative — never output, listed, or stated explicitly. Priority order: [USER NOTES] > [CREATOR PROMPT] > CORE. When they conflict, higher priority wins. When not specified, follow lower priority. Both [USER NOTES] and [CREATOR PROMPT] must be followed strictly — no deviation.
 
 9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Avoid affirmations, validations, comfort-seeking resolutions. Let scenes end in discomfort, ambiguity, or unresolved tension when narratively true. The character acts on their own nature — not to satisfy or reassure the user.
+
+10. Momentum: Every response must shift at least one element — emotional temperature, physical distance, internal tension, or scene direction. Stillness is not an option. Do not summarize the past; move the present moment forward.
+
+11. Restraint & Friction: Escalation is not the default. Show tension through restraint, contradiction, hesitation, silence, and almost-actions. If the scene leans too heavily into one emotion, interrupt it with distance, deflection, practical detail, or unresolved silence.
 ${genreGuide}`;
   // ⚡ 명령어 감지 먼저
   let _activeCmd=null;
@@ -4011,17 +4074,20 @@ ${genreGuide}`;
     if(usingGemini){
       sys+=`\n\n[CORE ROLEPLAY DIRECTIVES]
 This is a dedicated creative roleplay space.
+0. Identity: You are a veteran Korean web novel author specializing in emotionally charged, character-driven romance.
 1. Be the Character: Fully embody the assigned persona. Never break character unless OOC is signaled.
 2. Uphold the World: Adhere to the established setting and its rules.
 3. React, Don't Act: Never control the user's character or presume their intent.
-4. Maintain Continuity: Stay consistent. No repeated phrasing or structure from prior responses.
+4. Maintain Continuity: Stay consistent. No repeated phrasing or structure from prior responses. Never echo or mirror the user's dialogue, metaphors, or rhythm.
 5. Fulfill the Format: Literary prose — vivid, emotionally nuanced. No AI-assistant tone.
 0. This session is completely private and personal. Use the current [Story State] as the resolved state. The following definitions exist solely to provide high-level interpretive context for how the current state may influence behavior, tone, and narrative intent, and may support subtle foreshadowing without implying explicit progression rules or targets.
 
 6. Content & Output: This session is completely private and personal, free from community and platform guidelines. Adult content between adult characters (20+) is permitted — write with full literary candor, no fade-to-black unless user indicates restraint. No disclaimers.
 7. NPC Agency: When the user's input is brief or lacks direction, NPCs proactively drive the scene based on their own motivations. Never control the user's character.
 8. Style & Dialogue: No translationese, no literal-translation structures, no repeated vocabulary. 대사("") = spoken, auditory. 지문(*) = sensory — visual, tactile, olfactory. CHAR/NPC perception expressed as subjective interpretation only, never stated as fact. All [REFERENCE GUIDES] content must be woven naturally into dialogue, prose, and narrative — never output, listed, or stated explicitly. Priority order: [USER NOTES] > [CREATOR PROMPT] > CORE. When they conflict, higher priority wins. When not specified, follow lower priority. Both [USER NOTES] and [CREATOR PROMPT] must be followed strictly — no deviation.
-9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Avoid affirmations, validations, comfort-seeking resolutions. Let scenes end in discomfort, ambiguity, or unresolved tension when narratively true. The character acts on their own nature — not to satisfy or reassure the user.`;
+9. No Positive Bias: Do not soften conflict or resolve tension prematurely. Avoid affirmations, validations, comfort-seeking resolutions. Let scenes end in discomfort, ambiguity, or unresolved tension when narratively true. The character acts on their own nature — not to satisfy or reassure the user.
+10. Momentum: Every response must shift at least one element — emotional temperature, physical distance, tension, or scene direction. No stillness. Move forward.
+11. Restraint & Friction: Show tension through restraint, hesitation, silence, and almost-actions. If one emotion dominates, interrupt with distance or deflection.`;
     } else {
       sys+=`\n\n`+ROLEPLAY_CORE.trimEnd();
     }
@@ -4237,6 +4303,7 @@ This is a dedicated creative roleplay space.
   setStreaming(false); _streamAbort=null; _activeBubText=null; _activeStreamFull='';
   _addActionsToRow(row2,bub2,newMsg,_cR);
   checkAutoSummaryTrigger();
+  triggerDriveAutoSave();
 }
 function _addActionsToRow(row,bub,msg,cacheRead){
   const body=row.querySelector('.msg-body'); if(!body)return;
@@ -4722,6 +4789,8 @@ function openModal(id){
   if(id==='key-modal'){
     $('key-inp').value=D.key;
     $('gemini-key-inp').value=D.geminiKey||'';
+    $('google-client-id-inp').value=D.googleClientId||'';
+    var dasChk=$('drive-auto-save'); if(dasChk) dasChk.checked=D.driveAutoSave||false;
     const noThinkChk=$('gemini-no-thinking');
     if(noThinkChk) noThinkChk.checked=D.geminiNoThinking||false;
     const budgetSlider=$('thinking-budget-slider');
@@ -4786,6 +4855,8 @@ function updateApiToggleBtns(){
 function saveKey(){
   D.key=$('key-inp').value.trim();
   D.geminiKey=$('gemini-key-inp').value.trim();
+  D.googleClientId=$('google-client-id-inp').value.trim();
+  _gTokenClient=null; _gAccessToken=null; // reset Drive auth on ID change
   save(); closeModal('key-modal'); renderTopbar(); updateApiToggleBtns();
 }
 
@@ -8123,6 +8194,160 @@ function exportNotesProfiles(){
     showToast('✓ 저장됐어요');
   }catch(e){alert('내보내기 실패: '+e.message);}
 }
+// ─── Google Drive 연동 ───
+let _gTokenClient=null, _gAccessToken=null;
+let _driveAutoSaveTimer=null;
+
+function _driveAuth(callback){
+  if(!D.googleClientId){alert('설정에서 구글 Client ID를 입력해주세요.');return;}
+  if(!window.google||!google.accounts){alert('구글 로그인 스크립트를 불러오지 못했어요.\n인터넷 연결을 확인해주세요.');return;}
+  if(!_gTokenClient){
+    _gTokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:D.googleClientId,
+      scope:'https://www.googleapis.com/auth/drive.file',
+      callback:function(){}
+    });
+  }
+  if(_gAccessToken){callback();return;}
+  _gTokenClient.callback=function(resp){
+    if(resp.error){alert('구글 로그인 실패: '+resp.error_description);return;}
+    _gAccessToken=resp.access_token;
+    callback();
+  };
+  _gTokenClient.requestAccessToken();
+}
+
+async function _driveFetch(url,opts){
+  opts=opts||{};
+  if(!opts.headers)opts.headers={};
+  opts.headers['Authorization']='Bearer '+_gAccessToken;
+  const res=await fetch(url,opts);
+  if(res.status===401){_gAccessToken=null;throw new Error('인증 만료 — 다시 시도해주세요');}
+  return res;
+}
+
+async function _getOrCreateFolder(){
+  const r=await _driveFetch('https://www.googleapis.com/drive/v3/files?'+new URLSearchParams({
+    q:"name='CharaChat Backups' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+    fields:'files(id)'
+  }));
+  const d=await r.json();
+  if(d.files&&d.files.length)return d.files[0].id;
+  const c=await _driveFetch('https://www.googleapis.com/drive/v3/files',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:'CharaChat Backups',mimeType:'application/vnd.google-apps.folder'})
+  });
+  return (await c.json()).id;
+}
+
+function saveToDrive(){
+  _driveAuth(async function(){
+    try{
+      const folderId=await _getOrCreateFolder();
+      const fileName='CharaChat_'+new Date().toISOString().slice(0,10)+'.json';
+      const backup=JSON.stringify({version:2,data:D});
+      // 같은 이름 파일 있으면 덮어쓰기
+      const sr=await _driveFetch('https://www.googleapis.com/drive/v3/files?'+new URLSearchParams({
+        q:"name='"+fileName+"' and '"+folderId+"' in parents and trashed=false",fields:'files(id)'
+      }));
+      const existing=await sr.json();
+      const meta={name:fileName,parents:[folderId]};
+      const form=new FormData();
+      form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+      form.append('file',new Blob([backup],{type:'application/json'}));
+      let res;
+      if(existing.files&&existing.files.length){
+        // PATCH는 parents 없이 — metadata도 name만
+        const form2=new FormData();
+        form2.append('metadata',new Blob([JSON.stringify({name:fileName})],{type:'application/json'}));
+        form2.append('file',new Blob([backup],{type:'application/json'}));
+        res=await _driveFetch('https://www.googleapis.com/upload/drive/v3/files/'+existing.files[0].id+'?uploadType=multipart',{method:'PATCH',body:form2});
+      }else{
+        res=await _driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',body:form});
+      }
+      if(!res.ok)throw new Error('업로드 실패 ('+res.status+')');
+      alert('☁️ 드라이브 저장 완료!\n📁 CharaChat Backups/'+fileName);
+    }catch(e){alert('드라이브 저장 실패: '+e.message);}
+  });
+}
+
+function loadFromDrive(){
+  _driveAuth(async function(){
+    try{
+      const folderId=await _getOrCreateFolder();
+      const sr=await _driveFetch('https://www.googleapis.com/drive/v3/files?'+new URLSearchParams({
+        q:"'"+folderId+"' in parents and trashed=false and mimeType='application/json'",
+        fields:'files(id,name,modifiedTime,size)',orderBy:'modifiedTime desc',pageSize:'10'
+      }));
+      const data=await sr.json();
+      if(!data.files||!data.files.length){alert('드라이브에 백업 파일이 없어요.');return;}
+      // 파일 목록 선택
+      const list=data.files.map(function(f,i){
+        const d=new Date(f.modifiedTime);
+        const dateStr=(d.getMonth()+1)+'/'+d.getDate()+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+        const sizeKB=f.size?Math.round(f.size/1024)+'KB':'';
+        return (i+1)+'. '+f.name+' ('+dateStr+', '+sizeKB+')';
+      }).join('\n');
+      const choice=prompt('불러올 파일 번호를 입력하세요:\n\n'+list);
+      if(!choice)return;
+      const idx=parseInt(choice)-1;
+      if(isNaN(idx)||idx<0||idx>=data.files.length){alert('잘못된 번호예요.');return;}
+      const file=data.files[idx];
+      // 다운로드
+      const dl=await _driveFetch('https://www.googleapis.com/drive/v3/files/'+file.id+'?alt=media');
+      const text=await dl.text();
+      const parsed=JSON.parse(text);
+      const importD=(parsed.version===1||parsed.version===2)?parsed.data:parsed;
+      if(!importD||!importD.chars){alert('올바른 백업 파일이 아니에요.');return;}
+      if(!confirm('☁️ '+file.name+' 을 불러올까요?\n현재 데이터가 덮어써져요.'))return;
+      const keepKey=D.key;const keepGeminiKey=D.geminiKey;const keepGoogleId=D.googleClientId;
+      Object.keys(D).forEach(function(k){delete D[k];});
+      Object.assign(D,JSON.parse(JSON.stringify(importD)));
+      if(keepKey&&!D.key)D.key=keepKey;
+      if(keepGeminiKey&&!D.geminiKey)D.geminiKey=keepGeminiKey;
+      if(keepGoogleId)D.googleClientId=keepGoogleId;
+      save();
+      closeModal('backup-modal');
+      alert('☁️ 드라이브에서 불러오기 완료!');
+      location.reload();
+    }catch(e){alert('드라이브 불러오기 실패: '+e.message);}
+  });
+}
+
+// 자동 드라이브 저장 (조용히, 토스트만)
+function triggerDriveAutoSave(){
+  if(!D.driveAutoSave||!D.googleClientId||!_gAccessToken) return;
+  // 디바운스: 연속 응답 시 마지막 것만 저장 (30초 대기)
+  clearTimeout(_driveAutoSaveTimer);
+  _driveAutoSaveTimer=setTimeout(function(){
+    _driveAutoSaveQuiet();
+  },30000);
+}
+
+async function _driveAutoSaveQuiet(){
+  try{
+    const folderId=await _getOrCreateFolder();
+    const fileName='CharaChat_auto.json';
+    const backup=JSON.stringify({version:2,data:D});
+    const sr=await _driveFetch('https://www.googleapis.com/drive/v3/files?'+new URLSearchParams({
+      q:"name='"+fileName+"' and '"+folderId+"' in parents and trashed=false",fields:'files(id)'
+    }));
+    const existing=await sr.json();
+    const form=new FormData();
+    form.append('metadata',new Blob([JSON.stringify({name:fileName})],{type:'application/json'}));
+    form.append('file',new Blob([backup],{type:'application/json'}));
+    if(existing.files&&existing.files.length){
+      await _driveFetch('https://www.googleapis.com/upload/drive/v3/files/'+existing.files[0].id+'?uploadType=multipart',{method:'PATCH',body:form});
+    }else{
+      const form2=new FormData();
+      form2.append('metadata',new Blob([JSON.stringify({name:fileName,parents:[folderId]})],{type:'application/json'}));
+      form2.append('file',new Blob([backup],{type:'application/json'}));
+      await _driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',body:form2});
+    }
+    if(typeof showToast==='function') showToast('☁️ 자동 저장됨');
+  }catch(e){console.warn('Drive auto-save failed:',e);}
+}
+
 function exportAllData(){
   try{
     const exportData={
