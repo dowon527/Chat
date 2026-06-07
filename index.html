@@ -3656,7 +3656,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
     const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2,...getThinkingConfig()}})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini 오류');}
     if(targetBub){targetBub.style.opacity='1';}
-    const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf=''; let _gIn=0,_gOut=0;
+    const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf=''; let _gIn=0,_gOut=0,_gThink=0;
     while(true){
       const {done,value}=await reader.read(); if(done)break;
       buf+=decoder.decode(value,{stream:true});
@@ -3668,12 +3668,12 @@ This is a dedicated creative roleplay space. All responses must comply with the 
           const j=JSON.parse(d);
           const parts=j.candidates?.[0]?.content?.parts||[];
           for(const p of parts){if(p.thought)continue;if(p.text){full+=p.text;if(targetBub){targetBub.innerHTML=renderMsgContent(full);const area=$('chat');area.scrollTop=area.scrollHeight;}}}
-          if(j.usageMetadata){if(j.usageMetadata.promptTokenCount)_gIn=j.usageMetadata.promptTokenCount;if(j.usageMetadata.candidatesTokenCount)_gOut=j.usageMetadata.candidatesTokenCount;}
+          if(j.usageMetadata){if(j.usageMetadata.promptTokenCount)_gIn=j.usageMetadata.promptTokenCount;if(j.usageMetadata.candidatesTokenCount)_gOut=j.usageMetadata.candidatesTokenCount;if(j.usageMetadata.thoughtsTokenCount)_gThink=j.usageMetadata.thoughtsTokenCount;}
         }catch(e){}
       }
     }
     if(!full) throw new Error('응답 비어있음');
-    return {full,cacheRead:0,cacheWrite:0,inputTok:_gIn||0,outputTok:_gOut||0};
+    return {full,cacheRead:0,cacheWrite:0,inputTok:_gIn||0,outputTok:_gOut||0,thinkTok:_gThink||0};
   } else {
     const rawMsgs=buildContextMsgs(hist).map(m=>{
       if(m.role==='summary_note')return{role:'assistant',content:`[스토리 요약]\n${m.content}`};
@@ -4080,7 +4080,7 @@ This is a dedicated creative roleplay space.
   _activeBubText=bubText2;
   _activeStreamFull='';
   setStreaming(true);
-  let full=''; let gCacheRead=0,gCacheWrite=0,gInputTok=0,gOutputTok=0;
+  let full=''; let gCacheRead=0,gCacheWrite=0,gInputTok=0,gOutputTok=0,gThinkTok=0;
   try{
     if(usingGemini){
       let geminiMsgs;
@@ -4124,6 +4124,7 @@ This is a dedicated creative roleplay space.
             if(j.usageMetadata){
               if(j.usageMetadata.promptTokenCount) gInputTok=j.usageMetadata.promptTokenCount;
               if(j.usageMetadata.candidatesTokenCount) gOutputTok=j.usageMetadata.candidatesTokenCount;
+              if(j.usageMetadata.thoughtsTokenCount) gThinkTok=j.usageMetadata.thoughtsTokenCount;
             }
           }catch(e){}
         }
@@ -4229,8 +4230,9 @@ This is a dedicated creative roleplay space.
     const _realIn=gInputTok||_inTok;
     const _cW=gCacheWrite||0;
     const _realOut=gOutputTok||0;
+    const _realThink=gThinkTok||0;
     if(_cR||_cW){if(!D.lastCacheStats)D.lastCacheStats={};D.lastCacheStats[D.activeRoom]={read:_cR,write:_cW,input:_realIn,time:now()};save();}
-    logTurnCost(D.activeRoom, full, usingGemini?D.geminiModel:D.model, bd, _realIn, _cR, _cW, _realOut);
+    logTurnCost(D.activeRoom, full, usingGemini?D.geminiModel:D.model, bd, _realIn, _cR, _cW, _realOut, _realThink);
   }
   setStreaming(false); _streamAbort=null; _activeBubText=null; _activeStreamFull='';
   _addActionsToRow(row2,bub2,newMsg,_cR);
@@ -6802,13 +6804,16 @@ function openStatsModal(){
       const isGemini=l.model&&l.model.includes('gemini');
       const inTok=l.inTok||0;
       const outTok=l.outTok||0;
+      const thinkTok=l.thinkTok||0;
       const cR=l.cacheRead||0;
       const cW=l.cacheWrite||0;
       const outIsReal=outTok>0;
       const inIsReal=inTok>0;
+      const hasThink=thinkTok>0;
       const turnNum=totalTurns-log.length+i+1;
+      const cols=hasThink?'repeat(5,1fr)':'repeat(4,1fr)';
       const tokRow=
-        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:5px">'+
+        '<div style="display:grid;grid-template-columns:'+cols+';gap:2px;margin-top:5px">'+
           '<div style="background:var(--s4);border-radius:5px;padding:4px 6px;text-align:center">'+
             '<div style="font-size:9px;color:var(--t3)">입력'+(inIsReal?'':'*')+'</div>'+
             '<div style="font-size:11px;font-weight:600;color:var(--text)">'+inTok.toLocaleString()+'</div>'+
@@ -6817,6 +6822,10 @@ function openStatsModal(){
             '<div style="font-size:9px;color:var(--t3)">출력'+(outIsReal?'':'*')+'</div>'+
             '<div style="font-size:11px;font-weight:600;color:var(--text)">'+outTok.toLocaleString()+'</div>'+
           '</div>'+
+          (hasThink?'<div style="background:rgba(240,168,64,0.10);border-radius:5px;padding:4px 6px;text-align:center">'+
+            '<div style="font-size:9px;color:var(--t3)">사고</div>'+
+            '<div style="font-size:11px;font-weight:600;color:var(--amber)">'+thinkTok.toLocaleString()+'</div>'+
+          '</div>':'')+
           '<div style="background:'+(cR>0?'rgba(56,217,192,0.10)':'var(--s4)')+';border-radius:5px;padding:4px 6px;text-align:center">'+
             '<div style="font-size:9px;color:var(--t3)">캐시읽기</div>'+
             '<div style="font-size:11px;font-weight:600;color:'+(cR>0?'var(--teal)':'var(--t3)')+'">'+cR.toLocaleString()+'</div>'+
@@ -6989,9 +6998,9 @@ function applyMultiCache(fixed){
     return{role:m.role,content:[{type:'text',text:txt,cache_control:{type:'ephemeral'}}]};
   });
 }
-function calcTurnCostKRW(outputText, model, inTokOverride, cacheRead, cacheWrite, outTokOverride){
+function calcTurnCostKRW(outputText, model, inTokOverride, cacheRead, cacheWrite, outTokOverride, thinkTokOverride){
   const KRW=1420;
-  const outTok=outTokOverride||Math.round(outputText.length*(model&&model.includes('gemini')?0.65:0.6));
+  const outTok=(outTokOverride||Math.round(outputText.length*(model&&model.includes('gemini')?0.65:0.6)))+(thinkTokOverride||0);
   const inTok=inTokOverride||3000;
   const cR=cacheRead||0; const cW=cacheWrite||0;
   const plainIn=Math.max(0, inTok-cR-cW);
@@ -7015,13 +7024,13 @@ function calcTurnCostKRW(outputText, model, inTokOverride, cacheRead, cacheWrite
   }
   return Math.round(costUSD*KRW*10)/10;
 }
-function logTurnCost(roomId, content, model, breakdown, inTok, cacheRead, cacheWrite, outTok){
+function logTurnCost(roomId, content, model, breakdown, inTok, cacheRead, cacheWrite, outTok, thinkTok){
   if(!D.costLog)D.costLog={};
   if(!D.costLog[roomId])D.costLog[roomId]=[];
   if(!D.costTotal)D.costTotal={};
-  const krw=calcTurnCostKRW(content,model,inTok,cacheRead||0,cacheWrite||0,outTok||0);
+  const krw=calcTurnCostKRW(content,model,inTok,cacheRead||0,cacheWrite||0,outTok||0,thinkTok||0);
   D.costTotal[roomId]=(D.costTotal[roomId]||0)+krw;
-  D.costLog[roomId].push({model,krw,time:now(),breakdown:breakdown||null,inTok:inTok||0,cacheRead:cacheRead||0,cacheWrite:cacheWrite||0,outTok:outTok||0});
+  D.costLog[roomId].push({model,krw,time:now(),breakdown:breakdown||null,inTok:inTok||0,cacheRead:cacheRead||0,cacheWrite:cacheWrite||0,outTok:outTok||0,thinkTok:thinkTok||0});
   if(D.costLog[roomId].length>10) D.costLog[roomId]=D.costLog[roomId].slice(-10);
   save();
 }
