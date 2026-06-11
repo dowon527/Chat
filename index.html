@@ -1653,6 +1653,10 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
             <span id="length-label" style="font-size:10px;color:var(--accent);font-weight:600;min-width:28px;text-align:right;white-space:nowrap">보통</span>
             <span id="cost-label" style="font-size:10px;color:var(--t3);white-space:nowrap;flex-shrink:0"></span>
           </div>
+          <label style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--t2);margin-top:8px;cursor:pointer;user-select:none">
+            <input type="checkbox" id="guard-toggle" checked onchange="toggleGuard(this.checked)" style="accent-color:var(--accent);cursor:pointer">
+            사칭방지 리마인더 <span style="color:var(--t3)">— 이 방에만 적용</span>
+          </label>
         </div>
         <div class="key-wrap" style="margin-bottom:8px">
           <input class="fi" id="key-inp" type="password" placeholder="sk-ant-api03-..." style="font-size:13px">
@@ -1680,6 +1684,10 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
             <span id="length-label-gemini" style="font-size:10px;color:var(--teal);font-weight:600;min-width:28px;text-align:right;white-space:nowrap">보통</span>
             <span id="cost-label-gemini" style="font-size:10px;color:var(--t3);white-space:nowrap;flex-shrink:0"></span>
           </div>
+          <label style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--t2);margin-top:8px;cursor:pointer;user-select:none">
+            <input type="checkbox" id="guard-toggle-gemini" checked onchange="toggleGuard(this.checked)" style="accent-color:var(--teal);cursor:pointer">
+            사칭방지 리마인더 <span style="color:var(--t3)">— 이 방에만 적용</span>
+          </label>
         </div>
         <div class="key-wrap" style="margin-bottom:8px">
           <input class="fi" id="gemini-key-inp" type="password" placeholder="AIzaSy..." style="font-size:13px">
@@ -2124,7 +2132,30 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
     </div>
     <div class="modal-ft">
       <button class="btn btn-g" onclick="closeModal('memory-modal')">닫기</button>
+      <button class="btn btn-g" onclick="runMemoryArchive()">✨ 자동 정리</button>
       <button class="btn btn-p" onclick="openMemEditModal(-1)" style="background:var(--accent);border-color:var(--accent);color:#fff">＋ 추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEM ARCHIVE MODAL -->
+<div class="ov hide" id="mem-archive-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl">✨ 장기기억 자동 정리</div>
+      <button class="ico-btn" onclick="closeModal('mem-archive-modal')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:14px 20px;max-height:calc(88vh - 150px);overflow-y:auto">
+      <div id="mem-archive-info" style="font-size:12px;color:var(--t2);margin-bottom:8px"></div>
+      <textarea class="fta" id="mem-archive-text" style="min-height:240px;font-size:12.5px;line-height:1.7"></textarea>
+      <p style="font-size:11px;color:var(--t3);margin-top:6px;line-height:1.6">[제목] 줄 + "- 내용" 줄 형식 · 저장 전 자유롭게 수정 가능 · 항목별로 장기기억에 추가됩니다.</p>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-g" onclick="closeModal('mem-archive-modal')">취소</button>
+      <button class="btn btn-g" onclick="runMemoryArchive(true)">🔄 다시 생성</button>
+      <button class="btn btn-p" id="mem-archive-save" onclick="saveMemoryArchive()" style="background:var(--accent);border-color:var(--accent);color:#fff">기억에 저장</button>
     </div>
   </div>
 </div>
@@ -2364,7 +2395,7 @@ function save(){
       chars:liteChars,activeChar:D.activeChar,activeRoom:D.activeRoom,
       rooms:D.rooms,histories:safeHistories,
       charMemories:D.charMemories,charNotes:D.charNotes,charProfiles:D.charProfiles,roomProfiles:D.roomProfiles,roomSummaries:D.roomSummaries,notes:D.notes,roomNoteIds:D.roomNoteIds,
-      roomMemories:D.roomMemories,roomNotes:D.roomNotes,roomProfileDefs:D.roomProfileDefs,roomApi:D.roomApi,roomLength:D.roomLength,
+      roomMemories:D.roomMemories,roomNotes:D.roomNotes,roomProfileDefs:D.roomProfileDefs,roomApi:D.roomApi,roomLength:D.roomLength,roomLengthGemini:D.roomLengthGemini||{},outputLengthGemini:D.outputLengthGemini,roomGuardOff:D.roomGuardOff||{},
       profiles:D.profiles, costLog:D.costLog||{}, costTotal:D.costTotal||{},
       folders:D.folders||[],
       charDrafts:(D.charDrafts||[]).map(d=>{const c={...d};delete c.emoImg;return c;})};
@@ -2377,6 +2408,7 @@ function save(){
       alert('저장 공간이 부족해요!\n대화가 너무 많아서 일부가 저장되지 않았어요.\n오래된 방의 대화를 지워보세요.');
     }
   }
+  try{maybeSuggestArchive();}catch(e){}
 }
 const $=id=>document.getElementById(id);
 function q(s){return document.querySelector(s)}
@@ -2951,6 +2983,7 @@ function deleteRoom(charId, roomId){
     if(D.roomNotes)delete D.roomNotes[roomId];
     if(D.roomProfileDefs)delete D.roomProfileDefs[roomId];
     if(D.roomApi)delete D.roomApi[roomId];
+    if(D.roomGuardOff)delete D.roomGuardOff[roomId];
     if(D.roomLength)delete D.roomLength[roomId];
     if(D.roomNoteIds)delete D.roomNoteIds[roomId];
     if(D.activeChar===charId&&D.activeRoom===roomId){
@@ -2970,6 +3003,7 @@ function deleteStory(id){
       if(D.roomNotes)delete D.roomNotes[r.id];
       if(D.roomProfileDefs)delete D.roomProfileDefs[r.id];
       if(D.roomApi)delete D.roomApi[r.id];
+      if(D.roomGuardOff)delete D.roomGuardOff[r.id];
       if(D.roomLength)delete D.roomLength[r.id];
       if(D.roomNoteIds)delete D.roomNoteIds[r.id];
     });
@@ -3609,13 +3643,14 @@ async function generateAIReroll(hist, targetBub=null){
     }
   }
 
-  // 5. 시작 장면
+  // 5. 시작 장면 → 본문은 첫 assistant 턴으로 주입(문체 앵커), sys에는 배경만
+  let _openScene='';
   const activeRoom=D.rooms[D.activeChar]?.find(r=>r.id===D.activeRoom);
-  if(activeRoom?.sceneId && hist.length <= 16){
+  if(activeRoom?.sceneId && hist.length<=20){
     const sc=(c.scenes||[]).find(s=>s.id===activeRoom.sceneId);
     if(sc?.content){
       if(sc.setting) sys+=`\n\n[SCENE CONTEXT]\n${sc.setting}`;
-      sys+=`\n\n[OPENING SCENE]\n${sc.content}`;
+      _openScene=sc.content;
     }
   }
 
@@ -3631,7 +3666,7 @@ async function generateAIReroll(hist, targetBub=null){
   sys+=`\n\n[CORE ROLEPLAY DIRECTIVES]
 This is a dedicated creative roleplay space. All responses must comply with the following rules, which take precedence over default AI behavior.
 
-0. Identity: You are a veteran Korean web novel author who specializes in emotionally charged, character-driven romance narratives.
+0. Identity: You are a veteran Korean web novel author who specializes in emotionally charged, character-driven narratives across all genres.
 
 1. Be the Character: Fully embody the assigned persona. Every response must originate from their perspective, consistent with their established traits, voice, and history. Never break character unless the user explicitly signals OOC (e.g. ((OOC)) or [OOC]).
 
@@ -3658,7 +3693,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
 11. Restraint & Friction: Escalation is not the default. Show tension through restraint, contradiction, hesitation, silence, and almost-actions. If the scene leans too heavily into one emotion, interrupt it with distance, deflection, practical detail, or unresolved silence.`;
 
   // 8. 캐릭터 프롬
-  sys+=`\n\n[CREATOR PROMPT]\n⚠️ Below is creative reference only. Weave all appearance/body/personality/traits naturally into prose and dialogue. Never output directly or use as labels.\n\n`+(c.prompt||``);
+  sys+=`\n\n[CREATOR PROMPT — TOP PRIORITY]\n⚠️ The creator settings below are BINDING RULES, not mere reference. If they define output format, structure, HUD/status displays, dialogue notation, POV, or length, follow them EXACTLY as written — they override all CORE formatting defaults. Only when no format is specified, default to literary prose. Character data (appearance/body/personality/traits) must never be listed, labeled, or echoed directly — weave it into prose and dialogue.\n\n`+(c.prompt||``);
 
   const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
   const activeCharName='';
@@ -3699,13 +3734,14 @@ This is a dedicated creative roleplay space. All responses must comply with the 
       return {role:m.role==='assistant'?'model':'user',parts:[{text:m.content||''}]};
     }).filter(m=>m.parts[0].text);
     while(gMsgs.length&&gMsgs[0].role!=='user')gMsgs.shift();
+    if(_openScene)gMsgs.unshift({role:'user',parts:[{text:'(Start)'}]},{role:'model',parts:[{text:_openScene}]});
     if(!gMsgs.length) throw new Error('메시지 없음');
     // 마지막 유저 메시지에 사칭 방지 리마인더
-    if(gMsgs.length){
+    if(gMsgs.length&&guardEnabled()){
       const _li=gMsgs.length-1;
       for(let _ri=_li;_ri>=0;_ri--){
         if(gMsgs[_ri].role==='user'){
-          gMsgs[_ri]={role:'user',parts:[{text:gMsgs[_ri].parts[0].text+'\n[⚠️ HARDOVERRIDE:🚫NO{USER}(Act/Spk/Thk)🎯{char}(React/Sense/Interp/Env)⚠️{USER}=observable only(🚫assume/control)]'}]};
+          gMsgs[_ri]={role:'user',parts:[{text:gMsgs[_ri].parts[0].text+'\n[⚠️ HARDOVERRIDE:🚫NO{USER}(Act/Spk/Thk)🎯{char}(React/Sense/Interp/Env)⚠️{USER}=observable only(🚫assume/control)🚫NEVER echo/mirror/rephrase {USER} dialogue or wording→respond with independent vocabulary]'}]};
           break;
         }
       }
@@ -3739,6 +3775,9 @@ This is a dedicated creative roleplay space. All responses must comply with the 
     const fixed=[];
     for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
     while(fixed.length&&fixed[fixed.length-1].role!=='user')fixed.pop();
+    if(_openScene)fixed.unshift({role:'user',content:'(Start)'},{role:'assistant',content:_openScene});
+    // 사칭방지 리마인더 (메인 전송과 동일)
+    if(guardEnabled())for(let _ri=fixed.length-1;_ri>=0;_ri--){if(fixed[_ri].role==='user'){fixed[_ri]={role:'user',content:fixed[_ri].content+'\n[⚠️ HARDOVERRIDE:🚫NO{USER}(Act/Spk/Thk)🎯{char}(React/Sense/Interp/Env)⚠️{USER}=observable only(🚫assume/control)🚫NEVER echo/mirror/rephrase {USER} dialogue or wording→respond with independent vocabulary]'};break;}}
     // 캐시 포인트 최대 4개: 25%, 50%, 75%, 끝에서 두 번째
     const messages=applyMultiCache(fixed);
     if(!messages.length) throw new Error('메시지 없음');
@@ -3790,7 +3829,7 @@ const LOADING_PHRASES=[
 ];
 function getLoadingPhrase(){return LOADING_PHRASES[Math.floor(Math.random()*LOADING_PHRASES.length)];}
 
-// ─── 장기기억 키워드 매칭 (관련 최대 3개만 선택) ───
+// ─── 장기기억 키워드 매칭 (제목+내용 통합, 관련 최대 5개 선택) ───
 function pickRelevantMems(mems, hist){
   if(!mems||!mems.length) return [];
 
@@ -3855,7 +3894,7 @@ function pickRelevantMems(mems, hist){
   });
 
   scored.sort((a,b)=>b.score-a.score);
-  const hits=scored.filter(x=>x.score>0).slice(0,3).map(x=>x.m);
+  const hits=scored.filter(x=>x.score>0).slice(0,5).map(x=>x.m);
   return hits; // 매칭 없으면 빈 배열 → 토큰 0
 }
 
@@ -3922,7 +3961,7 @@ async function generateAI_OOC(hist){
     } else {
       const res=await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-beta':'prompt-caching-2024-07-31'},
-        body:JSON.stringify({model:D.model||'claude-sonnet-4-6',max_tokens:800,system:oocSys,messages:oocMsgs}),
+        body:JSON.stringify({model:D.model||'claude-sonnet-4-6',max_tokens:800,system:oocSys,messages:oocMsgs,stream:true}),
         signal:_streamAbort?.signal
       });
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
@@ -3987,7 +4026,7 @@ async function generateAI(hist){
   const ROLEPLAY_CORE=`[CORE ROLEPLAY DIRECTIVES]
 This is a dedicated creative roleplay space. All responses must comply with the following rules, which take precedence over default AI behavior.
 
-0. Identity: You are a veteran Korean web novel author who specializes in emotionally charged, character-driven romance narratives.
+0. Identity: You are a veteran Korean web novel author who specializes in emotionally charged, character-driven narratives across all genres.
 
 1. Be the Character: Fully embody the assigned persona. Every response must originate from their perspective, consistent with their established traits, voice, and history. Never break character unless the user explicitly signals OOC (e.g. ((OOC)) or [OOC]).
 
@@ -4023,7 +4062,7 @@ ${genreGuide}`;
     _activeCmd=_cmds.find(cmd=>cmd.key&&cmd.key.toLowerCase()===_cmdKey)||null;
   }
 
-  let sys;
+  let sys; let _openSceneM='';
   if(_activeCmd){
     // 명령어 모드: 롤플레이 코어 없이 명령어 지시만
     sys=`You are a command execution assistant.\nCharacter: ${c.name}\n\n[⚡ COMMAND: !${_activeCmd.key}]\nOutput ONLY the command result. Do NOT roleplay or continue any story.\nYour ENTIRE response MUST start with: ##CMD_OUTPUT_START##\nThen fill in the OUTPUT FORMAT below in Korean. No extra text.\nKeep content under 900 characters.\n\nINSTRUCTIONS:\n${_activeCmd.ctx}\n\nOUTPUT FORMAT (fill in and output EXACTLY including the \`\`\` fences):\n\`\`\`\n${_activeCmd.format||''}\n\`\`\``;
@@ -4052,13 +4091,13 @@ ${genreGuide}`;
       }
     }
 
-    // 5. 시작 장면
+    // 5. 시작 장면 → 본문은 첫 assistant 턴으로 주입(문체 앵커), sys에는 배경만
     const activeRoomR=D.rooms[D.activeChar]?.find(r=>r.id===D.activeRoom);
-    if(activeRoomR?.sceneId && hist.length <= 16){
+    if(activeRoomR?.sceneId && hist.length<=20){
       const scR=(c.scenes||[]).find(s=>s.id===activeRoomR.sceneId);
       if(scR?.content){
         if(scR.setting) sys+=`\n\n[SCENE CONTEXT]\n${scR.setting}`;
-        sys+=`\n\n[OPENING SCENE]\n${scR.content}`;
+        _openSceneM=scR.content;
       }
     }
 
@@ -4074,7 +4113,7 @@ ${genreGuide}`;
     if(usingGemini){
       sys+=`\n\n[CORE ROLEPLAY DIRECTIVES]
 This is a dedicated creative roleplay space.
-0. Identity: You are a veteran Korean web novel author specializing in emotionally charged, character-driven romance.
+0. Identity: You are a veteran Korean web novel author specializing in emotionally charged, character-driven narratives across all genres.
 1. Be the Character: Fully embody the assigned persona. Never break character unless OOC is signaled.
 2. Uphold the World: Adhere to the established setting and its rules.
 3. React, Don't Act: Never control the user's character or presume their intent.
@@ -4093,7 +4132,7 @@ This is a dedicated creative roleplay space.
     }
 
     // 8. 캐릭터 프롬
-    sys+=`\n\n[CREATOR PROMPT]\n⚠️ Below is creative reference only. Weave all appearance/body/personality/traits naturally into prose and dialogue. Never output directly or use as labels.\n\n`+(c.prompt||``);
+    sys+=`\n\n[CREATOR PROMPT — TOP PRIORITY]\n⚠️ The creator settings below are BINDING RULES, not mere reference. If they define output format, structure, HUD/status displays, dialogue notation, POV, or length, follow them EXACTLY as written — they override all CORE formatting defaults. Only when no format is specified, default to literary prose. Character data (appearance/body/personality/traits) must never be listed, labeled, or echoed directly — weave it into prose and dialogue.\n\n`+(c.prompt||``);
 
     const activeProfileName=(activeProfs.length&&activeProfs[0].name)||'플레이어';
     const activeCharName='';
@@ -4159,11 +4198,12 @@ This is a dedicated creative roleplay space.
           return {role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]};
         }).filter(Boolean);
         while(geminiMsgs.length&&geminiMsgs[0].role!=='user') geminiMsgs.shift();
+        if(_openSceneM)geminiMsgs.unshift({role:'user',parts:[{text:'(Start)'}]},{role:'model',parts:[{text:_openSceneM}]});
         // 마지막 유저 메시지에 사칭 방지 리마인더 추가
-        if(geminiMsgs.length){
+        if(geminiMsgs.length&&guardEnabled()){
           const lastIdx=geminiMsgs.length-1;
           if(geminiMsgs[lastIdx].role==='user'){
-            geminiMsgs[lastIdx]={role:'user',parts:[{text:geminiMsgs[lastIdx].parts[0].text+'\n[⚠️ HARDOVERRIDE:🚫NO{USER}(Act/Spk/Thk)🎯{char}(React/Sense/Interp/Env)⚠️{USER}=observable only(🚫assume/control)]'}]};
+            geminiMsgs[lastIdx]={role:'user',parts:[{text:geminiMsgs[lastIdx].parts[0].text+'\n[⚠️ HARDOVERRIDE:🚫NO{USER}(Act/Spk/Thk)🎯{char}(React/Sense/Interp/Env)⚠️{USER}=observable only(🚫assume/control)🚫NEVER echo/mirror/rephrase {USER} dialogue or wording→respond with independent vocabulary]'}]};
           }
         }
       }
@@ -4210,13 +4250,14 @@ This is a dedicated creative roleplay space.
         const fixed=[];
         for(const m of rawMsgs){if(!fixed.length&&m.role!=='user')continue;fixed.push(m);}
         while(fixed.length&&fixed[fixed.length-1].role!=='user')fixed.pop();
+        if(_openSceneM)fixed.unshift({role:'user',content:'(Start)'},{role:'assistant',content:_openSceneM});
         messages=applyMultiCache(fixed);
         // 마지막 유저 메시지에 사칭 방지 리마인더
-        if(messages.length){
+        if(messages.length&&guardEnabled()){
           for(let _ci=messages.length-1;_ci>=0;_ci--){
             if(messages[_ci].role==='user'){
               const _ct=typeof messages[_ci].content==='string'?messages[_ci].content:messages[_ci].content.map(b=>b.text||'').join('');
-              messages[_ci]={role:'user',content:_ct+'\n[⚠️ HARDOVERRIDE:🚫NO{USER}(Act/Spk/Thk)🎯{char}(React/Sense/Interp/Env)⚠️{USER}=observable only(🚫assume/control)]'};
+              messages[_ci]={role:'user',content:_ct+'\n[⚠️ HARDOVERRIDE:🚫NO{USER}(Act/Spk/Thk)🎯{char}(React/Sense/Interp/Env)⚠️{USER}=observable only(🚫assume/control)🚫NEVER echo/mirror/rephrase {USER} dialogue or wording→respond with independent vocabulary]'};
               break;
             }
           }
@@ -4829,6 +4870,20 @@ function updateGeminiKeySt(){
 }
 function toggleEye(inputId, iconId){
   const i=$(inputId||'key-inp'); i.type=i.type==='password'?'text':'password';
+}
+// ─── 사칭방지 리마인더 방별 토글 ───
+function guardEnabled(){return !(rid()&&D.roomGuardOff&&D.roomGuardOff[rid()]);}
+function toggleGuard(on){
+  if(!rid()){showToast('대화방을 먼저 열어주세요');syncGuardToggles();return;}
+  if(!D.roomGuardOff)D.roomGuardOff={};
+  if(on)delete D.roomGuardOff[rid()];else D.roomGuardOff[rid()]=true;
+  save();syncGuardToggles();
+  showToast(on?'🛡️ 사칭방지 ON (이 방)':'사칭방지 OFF (이 방)');
+}
+function syncGuardToggles(){
+  const v=guardEnabled();
+  const a=$('guard-toggle');if(a)a.checked=v;
+  const b=$('guard-toggle-gemini');if(b)b.checked=v;
 }
 function setActiveApi(api){
   if(rid()){
@@ -5629,6 +5684,115 @@ function openMemoryModal(){
   if(!cid())return;
   const el=$('mem-modal-char'); if(el)el.textContent=charName();
   renderMemories(); openModal('memory-modal');
+}
+// ─── 장기기억 자동 아카이브 ───
+const ARCHIVE_KEEP=20;   // 최근 20메시지(컨텍스트)는 제외
+const ARCHIVE_MIN=10;    // 최소 정리 분량
+const ARCHIVE_NUDGE=30;  // 컨텍스트 밖 미정리분이 이 이상이면 추천
+const ARCHIVE_PROMPT=`# 장기기억 아카이브 요약 프롬프트
+## 목적
+채팅 로그를 분석하여 이후 서사가 어긋나지 않도록 '사건 단위의 독립적 앵커'를 생성하되, 인물 간의 감정선과 미묘한 상호작용의 질감(Texture)을 보존한다. 생성된 요약문은 향후 AI가 관계 역학부터 소소한 추억까지 생생하게 기억하는 참고 자료로 쓰인다.
+
+## 출력 단위 및 분리 기준
+- 최소 단위는 '사건'. 아래 중 하나라도 해당하면 반드시 새 사건 슬롯으로 분리: 1.장소 이동 2.시간대 변화 3.주요 인물 구성 변화
+- 병합 금지: 주제가 이어져도 장소가 바뀌면 절대 합치지 않는다.
+- 소급 금지: 나중에 발생한 일을 앞선 사건 요약에 미리 포함하지 않는다.
+
+## 출력 형식 (강제)
+[제목]
+- 내용
+
+### 제목 규칙 (시맨틱 검색 최적화)
+- 공백 포함 20자 이내 최대 활용. 조사(~의,~와,~에서) 및 특수기호(#등) 금지.
+- 유저명 제외, NPC명(필수) 포함, 세력명/소재/핵심행동 등 검색에 유의미한 고유명사를 띄어쓰기로 나열. 날짜/시간/주관적 감정 기재 금지.
+- 제목은 항상 []로 가둘 것. 20자 제한은 대괄호 안 내용 기준.
+- 예: [NPC명 연회 독살시도 찻잔] (O) / [#NPC 말다툼] (X) / [유저명 NPC명 말다툼] (X)
+
+### 내용 규칙
+- 공백 포함 500자 이내. 요약체(~함,~임) 사용.
+- 반드시 "- "(하이픈+공백)으로 시작, 항목은 1개 유지.
+- 본문 첫머리에 반드시 MM/DD 시간대 명시 (예: 08/24 오후). 시간대: 새벽/오전/오후/저녁/밤 중 택1.
+- 대명사 금지: '그','그녀' 대신 정확한 이름 명시.
+- 핵심 기록 요소:
+  - 상호작용의 연쇄(Flow): [행동/발화]→[리액션]→[재반응/변화] 인과 사슬 명확히. 대사는 " " 인용.
+  - 배경·정보(Context): 결과만 적지 말고 공식 발표, 전언, 소문, 은밀한 동기 등 떡밥 맥락 포함.
+  - 구체적 양상(How): '화냄' 같은 추상어 대신 "미간을 찌푸림" 등 로그에 명시된 행동·표정.
+  - 미묘한 기류(Mood): 사소한 장난, 묘한 긴장감, 말투 변화 등 질감 디테일.
+  - 전환점: 관계 변화 및 결정적 약속/은폐.
+  - 구체적 명사: 상징적 선물·물건·공간의 정확한 명칭.
+
+## 기록 원칙 (Strict)
+- 통합 금지: 하루 전체를 하나로, 여러 사건을 하나로 뭉뚱그리지 말 것.
+- 소설 금지: AI의 주관적 해석, 로그에 없는 사실 기록 금지.
+- 뭉개기 금지: '대화를 나눴다'식 결과 요약 금지, 인과를 적을 것.
+- 순서 변경 금지: 로그의 시간 흐름 엄수.
+- 정보 이동 금지: 다른 장소의 대화·물건을 섞지 말 것.
+- 대괄호는 제목에만 사용.
+- 간접 정보(소문, 제3자 동향, 공표)도 핵심 팩트로 기록. 발단의 주체를 명확히.
+- 출력은 반드시 한국어. 형식 외의 인사말·설명·메타 발언 일절 금지.`;
+let _archivePendingEnd=-1;
+function maybeSuggestArchive(){
+  try{
+    const r=cRoom(); if(!r||!rid())return;
+    const hist=(D.histories[r.id]||[]).filter(m=>m.role==='user'||m.role==='assistant');
+    const pending=hist.length-ARCHIVE_KEEP-(r.memIdx||0);
+    if(pending>=ARCHIVE_NUDGE&&(r._memNudge||0)<hist.length-5){
+      r._memNudge=hist.length;
+      showToast('🧠 컨텍스트 밖 대화 '+pending+'개 — 기억 모달에서 ✨자동 정리 추천');
+    }
+  }catch(e){}
+}
+async function runMemoryArchive(regen){
+  const r=cRoom(); const c=cChar();
+  if(!r||!c){showToast('대화방을 먼저 열어주세요');return;}
+  const hist=cHist().filter(m=>m.role==='user'||m.role==='assistant');
+  const start=Math.min(r.memIdx||0,hist.length);
+  const end=Math.max(start,hist.length-ARCHIVE_KEEP);
+  if(end-start<ARCHIVE_MIN){showToast('정리할 분량이 부족해요 (컨텍스트 밖 '+Math.max(0,end-start)+'개)');return;}
+  const profName=(cProfs()[0]&&cProfs()[0].name)||'유저';
+  const log=hist.slice(start,end).map(m=>(m.role==='user'?profName:c.name)+': '+m.content).join('\n\n');
+  _archivePendingEnd=end;
+  $('mem-archive-info').textContent='대상: 컨텍스트 밖 '+(end-start)+'개 메시지 ('+(start+1)+'~'+end+'번째) · 생성 중…';
+  $('mem-archive-text').value='';
+  $('mem-archive-save').disabled=true;
+  openModal('mem-archive-modal');
+  try{
+    const out=await callLLMOnce(ARCHIVE_PROMPT,'아래 채팅 로그를 규칙에 따라 요약하라.\n유저명: '+profName+' / NPC명: '+c.name+'\n\n<로그>\n'+log+'\n</로그>');
+    $('mem-archive-text').value=(out||'').trim();
+    $('mem-archive-info').textContent='대상: 컨텍스트 밖 '+(end-start)+'개 메시지 ('+(start+1)+'~'+end+'번째) · 검토 후 저장하세요';
+  }catch(e){
+    $('mem-archive-info').textContent='생성 실패: '+e.message;
+  }
+  $('mem-archive-save').disabled=false;
+}
+function saveMemoryArchive(){
+  const raw=$('mem-archive-text').value.trim();
+  if(!raw){showToast('내용이 없어요');return;}
+  const items=parseBulkText(raw);
+  if(!items.length){showToast('파싱 실패 — [제목] / - 내용 형식 확인');return;}
+  const mems=cMems();
+  items.forEach(it=>{mems.push({id:Date.now()+'_'+Math.random(),title:it.title||'(제목 없음)',content:it.ctx||'',auto:true});});
+  const r=cRoom(); if(r&&_archivePendingEnd>=0)r.memIdx=_archivePendingEnd;
+  _archivePendingEnd=-1;
+  save(); closeModal('mem-archive-modal');
+  if(!$('memory-modal').classList.contains('hide'))renderMemories();
+  showToast('✨ '+items.length+'개 기억 저장 완료');
+}
+async function callLLMOnce(sysText,userText){
+  const usingGemini=(getRoomApi()==='gemini');
+  if(usingGemini){
+    if(!D.geminiKey)throw new Error('Gemini 키가 없어요');
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+D.geminiModel+':generateContent?key='+D.geminiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sysText}]},contents:[{role:'user',parts:[{text:userText}]}],generationConfig:{maxOutputTokens:4096}})});
+    const data=await res.json();
+    if(!res.ok)throw new Error((data.error&&data.error.message)||'Gemini 오류');
+    return ((data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
+  } else {
+    if(!D.key)throw new Error('Claude 키가 없어요');
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model||'claude-sonnet-4-6',max_tokens:4096,system:sysText,messages:[{role:'user',content:userText}]})});
+    const data=await res.json();
+    if(!res.ok)throw new Error((data.error&&data.error.message)||'API 오류');
+    return (data.content||[]).map(b=>b.text||'').join('');
+  }
 }
 // ─── NOTES ───
 function renderNotes(){
@@ -6468,7 +6632,7 @@ function openSummaryModal(){
 
 async function generateSummaryAI(mode){
   mode=mode||'solo';
-  if(!D.geminiKey){openModal('key-modal');return;}
+  if(!D.geminiKey&&!D.key){openModal('key-modal');return;}
   const c=D.chars.find(x=>x.id===D.activeChar);
   const hist=cHist();
   if(!hist||hist.length<2){
@@ -6657,17 +6821,26 @@ ${histText}`;
 ${histText}`;
 
   try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${D.geminiKey}`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{role:'user',parts:[{text:summaryPrompt}]}],
-        generationConfig:{maxOutputTokens:2000,...getThinkingConfig()}
-      })
-    });
-    const data=await res.json();
-    if(!res.ok) throw new Error(data.error?.message||'Gemini 오류');
-    const text=data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
+    let text='';
+    if(D.geminiKey){
+      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${D.geminiKey}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          contents:[{role:'user',parts:[{text:summaryPrompt}]}],
+          generationConfig:{maxOutputTokens:2000,...getThinkingConfig()}
+        })
+      });
+      const data=await res.json();
+      if(!res.ok) throw new Error(data.error?.message||'Gemini 오류');
+      text=data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
+    } else {
+      // Claude 폴백 (Gemini 키 없을 때)
+      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model||'claude-sonnet-4-6',max_tokens:4000,messages:[{role:'user',content:summaryPrompt}]})});
+      const data=await res.json();
+      if(!res.ok) throw new Error(data.error?.message||'API 오류');
+      text=(data.content||[]).map(b=>b.text||'').join('');
+    }
     // 마크다운 코드블럭 추출
     const match=text.match(/```markdown\n([\s\S]*?)```/);
     const result=match?match[1].trim():text.trim();
@@ -7022,7 +7195,7 @@ function clearChat(){
 const LENGTH_PRESETS = [
   { label:'짧게',   tokens:1024,  prompt:'Length: 1~2 paragraphs. Dialogue-focused, minimal description. If [USER NOTES] specifies length, follow it strictly.' },
   { label:'조금',   tokens:2048,  prompt:'Length: 700~900 chars. Core description and dialogue. If [USER NOTES] specifies length, follow it strictly.' },
-  { label:'보통',   tokens:2048,  prompt:'Length: 900~1500 chars. If [USER NOTES] specifies length, follow it strictly.' },
+  { label:'보통',   tokens:4096,  prompt:'Length: 900~1500 chars. If [USER NOTES] specifies length, follow it strictly.' },
   { label:'길게',   tokens:8192,  prompt:'Length: 6~8 paragraphs. Rich description and emotional depth. If [USER NOTES] specifies length, follow it strictly.' },
   { label:'최대',   tokens:16000, prompt:'No length limit. Respond fully and in depth.' },
 ];
@@ -7032,9 +7205,9 @@ function buildContextMsgs(hist){
   for(let i=hist.length-1;i>=0;i--){if(hist[i].role==='summary_note'){summaryIdx=i;break;}}
   if(summaryIdx>=0){
     const after=hist.slice(summaryIdx+1);
-    return [hist[summaryIdx],...after.slice(-14)];
+    return [hist[summaryIdx],...after.slice(-19)];
   }
-  return hist.slice(-15);
+  return hist.slice(-20);
 }
 // 실제 턴 비용 계산 (실제 입력토큰 사용)
 function buildSysBlocks(sys){
@@ -7192,6 +7365,7 @@ function getRoomLength(api){
   return D[defKey]??2;
 }
 function initLengthSlider(){
+  syncGuardToggles();
   // Claude 슬라이더
   const slider=$('length-slider');
   if(slider){
