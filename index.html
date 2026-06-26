@@ -1250,13 +1250,12 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
     </div>
     <div class="tb-acts">
       <div style="display:flex;gap:3px;align-items:center">
-        <button id="api-btn-claude" onclick="setActiveApi('claude')" title="Claude"
-          style="padding:4px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;font-weight:500;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s">
-          Claude
-        </button>
-        <button id="api-btn-gemini" onclick="setActiveApi('gemini')" title="Gemini"
-          style="padding:4px 8px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px;font-weight:500;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s">
-          Gemini
+        <button id="model-pill-btn" onclick="openModelPickerSheet()" title="모델 선택"
+          style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;border:1px solid var(--border2);background:var(--s3);color:var(--text);cursor:pointer;font-size:11.5px;font-weight:600;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s;max-width:130px"
+          onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'">
+          <span id="model-pill-icon" style="font-size:13px;line-height:1">⚡</span>
+          <span id="model-pill-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">하이퍼챗</span>
+          <svg width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink:0;opacity:0.6"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <button onclick="openModal('key-modal')" title="API 키 설정"
           style="padding:4px 7px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12px;transition:all 0.15s"
@@ -1653,10 +1652,6 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
             <span id="length-label" style="font-size:10px;color:var(--accent);font-weight:600;min-width:28px;text-align:right;white-space:nowrap">보통</span>
             <span id="cost-label" style="font-size:10px;color:var(--t3);white-space:nowrap;flex-shrink:0"></span>
           </div>
-          <label style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--t2);margin-top:8px;cursor:pointer;user-select:none">
-            <input type="checkbox" id="guard-toggle" checked onchange="toggleGuard(this.checked)" style="accent-color:var(--accent);cursor:pointer">
-            사칭방지 리마인더 <span style="color:var(--t3)">— 이 방에만 적용</span>
-          </label>
         </div>
         <div class="key-wrap" style="margin-bottom:8px">
           <input class="fi" id="key-inp" type="password" placeholder="sk-ant-api03-..." style="font-size:13px">
@@ -1684,10 +1679,6 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
             <span id="length-label-gemini" style="font-size:10px;color:var(--teal);font-weight:600;min-width:28px;text-align:right;white-space:nowrap">보통</span>
             <span id="cost-label-gemini" style="font-size:10px;color:var(--t3);white-space:nowrap;flex-shrink:0"></span>
           </div>
-          <label style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--t2);margin-top:8px;cursor:pointer;user-select:none">
-            <input type="checkbox" id="guard-toggle-gemini" checked onchange="toggleGuard(this.checked)" style="accent-color:var(--teal);cursor:pointer">
-            사칭방지 리마인더 <span style="color:var(--t3)">— 이 방에만 적용</span>
-          </label>
         </div>
         <div class="key-wrap" style="margin-bottom:8px">
           <input class="fi" id="gemini-key-inp" type="password" placeholder="AIzaSy..." style="font-size:13px">
@@ -1759,6 +1750,20 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
         <div style="font-size:11px;color:var(--t3);line-height:1.7">
           발급: <a href="https://console.cloud.google.com/apis/credentials" style="color:var(--amber)">Google Cloud Console</a><br>
           OAuth 2.0 Client ID (웹 앱) · Drive API 활성화 필요
+        </div>
+      </div>
+
+      <!-- 사칭방지 리마인더 (통합) -->
+      <div style="padding:14px 20px;border-top:1px solid var(--border);background:var(--s2)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="min-width:0;flex:1">
+            <div style="font-size:13px;color:var(--text);font-weight:500">🛡️ 사칭방지 리마인더</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:3px;line-height:1.5">현재 대화방에만 적용 · Claude · Gemini 공통</div>
+          </div>
+          <label class="p-toggle" style="flex-shrink:0">
+            <input type="checkbox" id="guard-toggle" checked onchange="toggleGuard(this.checked)">
+            <span class="p-slider"></span>
+          </label>
         </div>
       </div>
 
@@ -4813,7 +4818,7 @@ function renderModelCards(){
     card.className='model-card'+(D.model===m.value?' sel':'');
     const chk=D.model===m.value?'<svg width="9" height="9" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':'';
     card.innerHTML=`<div class="model-card-icon">${m.icon}</div><div class="model-card-info"><div class="model-card-name">${m.name}</div><div class="model-card-desc">${m.desc}</div></div><div class="model-card-check">${chk}</div>`;
-    card.onclick=()=>{D.model=m.value;renderModelCards();updateCostHint();};
+    card.onclick=()=>{D.model=m.value;save();renderModelCards();updateCostHint();updateModelPill();};
     cl.appendChild(card);
   });
   GEMINI_MODELS.forEach(m=>{
@@ -4821,7 +4826,7 @@ function renderModelCards(){
     card.className='model-card'+(D.geminiModel===m.value?' sel':'');
     const chk=D.geminiModel===m.value?'<svg width="9" height="9" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':'';
     card.innerHTML=`<div class="model-card-icon">${m.icon}</div><div class="model-card-info"><div class="model-card-name">${m.name}</div><div class="model-card-desc">${m.desc}</div></div><div class="model-card-check">${chk}</div>`;
-    card.onclick=()=>{D.geminiModel=m.value;save();renderModelCards();updateCostHint();updateThinkingBudgetUI();};
+    card.onclick=()=>{D.geminiModel=m.value;save();renderModelCards();updateCostHint();updateThinkingBudgetUI();updateModelPill();};
     gm.appendChild(card);
   });
 }
@@ -4883,7 +4888,6 @@ function toggleGuard(on){
 function syncGuardToggles(){
   const v=guardEnabled();
   const a=$('guard-toggle');if(a)a.checked=v;
-  const b=$('guard-toggle-gemini');if(b)b.checked=v;
 }
 function setActiveApi(api){
   if(rid()){
@@ -4892,20 +4896,128 @@ function setActiveApi(api){
   } else {
     D.activeApi=api;
   }
-  save(); updateApiToggleBtns(); renderTopbar(); updateCostHint();
+  save(); updateModelPill(); renderTopbar(); updateCostHint();
 }
 function getRoomApi(){
   if(rid()&&D.roomApi&&D.roomApi[rid()])return D.roomApi[rid()];
   return D.activeApi||'claude';
 }
-function updateApiToggleBtns(){
-  const claude=$('api-btn-claude'); const gemini=$('api-btn-gemini');
-  const btns=[claude,gemini].filter(Boolean);
-  btns.forEach(b=>{b.style.background='var(--s3)';b.style.color='var(--t2)';b.style.borderColor='var(--border2)';});
+function updateModelPill(){
+  const btn=$('model-pill-btn'); if(!btn)return;
+  const iconEl=$('model-pill-icon'); const nameEl=$('model-pill-name');
   const a=getRoomApi();
-  const active=a==='gemini'?gemini:claude;
-  const col='var(--accent2)';
-  if(active){active.style.background=col;active.style.color='#fff';active.style.borderColor=col;}
+  let m=null;
+  if(a==='gemini'){
+    m=GEMINI_MODELS.find(x=>x.value===D.geminiModel)||GEMINI_MODELS[0];
+  } else {
+    m=CLAUDE_MODELS.find(x=>x.value===D.model)||CLAUDE_MODELS[0];
+  }
+  if(!m)return;
+  if(iconEl)iconEl.textContent=m.icon;
+  if(nameEl){
+    // "하이퍼챗 (Opus 4.7)" -> "하이퍼챗 4.7"
+    // "플래쉬챗 3.5 (Gemini 3.5 Flash)" -> "플래쉬챗 3.5" (이미 버전 있으면 그대로)
+    const versionMatch=m.name.match(/\(([^)]+)\)/);
+    const base=m.name.replace(/\s*\(.*\)\s*$/,'').trim();
+    const hasVerInBase=/\d/.test(base);
+    const ver=versionMatch?(versionMatch[1].match(/[\d.]+/)||[''])[0]:'';
+    nameEl.textContent=(ver&&!hasVerInBase)?`${base} ${ver}`:base;
+  }
+  const col=a==='gemini'?'var(--teal)':'var(--accent)';
+  btn.style.borderColor=col;
+}
+// 하위 호환: 기존 코드가 updateApiToggleBtns()를 호출해도 동작
+function updateApiToggleBtns(){updateModelPill();}
+
+// ─── 모델 선택 바텀시트 ───
+function openModelPickerSheet(){
+  document.querySelectorAll('.model-picker-sheet').forEach(s=>s.remove());
+  const curApi=getRoomApi();
+  const curClaude=D.model;
+  const curGemini=D.geminiModel;
+  const hasClaudeKey=!!D.key;
+  const hasGeminiKey=!!D.geminiKey;
+
+  const sheet=document.createElement('div');
+  sheet.className='model-picker-sheet';
+  sheet.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.5)';
+
+  const card=(m,api,isSel,disabled)=>`
+    <div class="mps-item${isSel?' sel':''}${disabled?' dim':''}" data-api="${api}" data-value="${m.value}"
+      style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:${disabled?'default':'pointer'};border-radius:12px;border:1.5px solid ${isSel?'var(--accent)':'transparent'};background:${isSel?'var(--ag2)':'transparent'};margin-bottom:4px;transition:background 0.12s;opacity:${disabled?'0.45':'1'}">
+      <div style="font-size:20px;width:30px;text-align:center;flex-shrink:0">${m.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span>${m.name}</span>
+          ${disabled?'<span style="font-size:10px;padding:1px 6px;border-radius:6px;background:var(--s4);color:var(--t3)">키 없음</span>':''}
+        </div>
+        <div style="font-size:11.5px;color:var(--t3);margin-top:2px;line-height:1.4">${m.desc}</div>
+      </div>
+      <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid ${isSel?'var(--accent)':'var(--border3)'};background:${isSel?'var(--accent)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
+        ${isSel?'<svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':''}
+      </div>
+    </div>`;
+
+  const claudeCards=CLAUDE_MODELS.map(m=>card(m,'claude',curApi==='claude'&&curClaude===m.value,!hasClaudeKey)).join('');
+  const geminiCards=GEMINI_MODELS.map(m=>card(m,'gemini',curApi==='gemini'&&curGemini===m.value,!hasGeminiKey)).join('');
+
+  sheet.innerHTML=`
+    <div style="background:var(--s2);border-radius:var(--r3) var(--r3) 0 0;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;border-top:1px solid var(--border2);animation:ctxSlideUp 0.25s ease">
+      <div style="width:36px;height:4px;border-radius:2px;background:var(--border3);margin:10px auto 6px;flex-shrink:0"></div>
+      <div style="padding:6px 20px 12px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:15px;font-weight:700;color:var(--text)">모델 선택</div>
+        <button onclick="document.querySelectorAll('.model-picker-sheet').forEach(s=>s.remove())"
+          style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:4px 8px">✕</button>
+      </div>
+      <div style="overflow-y:auto;padding:0 12px 8px;flex:1">
+        <div style="font-size:11px;color:var(--t3);font-weight:600;padding:4px 8px 6px;letter-spacing:0.3px">🤖 ANTHROPIC · CLAUDE</div>
+        ${claudeCards}
+        <div style="height:8px"></div>
+        <div style="font-size:11px;color:var(--t3);font-weight:600;padding:4px 8px 6px;letter-spacing:0.3px">✨ GOOGLE · GEMINI</div>
+        ${geminiCards}
+      </div>
+      <div style="padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px">
+        <button onclick="document.querySelectorAll('.model-picker-sheet').forEach(s=>s.remove());openModal('key-modal')"
+          style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12.5px;font-family:'Noto Sans KR',sans-serif">
+          🔑 API 키 설정
+        </button>
+        <button onclick="document.querySelectorAll('.model-picker-sheet').forEach(s=>s.remove())"
+          style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:12.5px;font-weight:600;font-family:'Noto Sans KR',sans-serif">
+          닫기
+        </button>
+      </div>
+    </div>`;
+
+  // 아이템 클릭 핸들러
+  sheet.addEventListener('click',e=>{
+    if(e.target===sheet){sheet.remove();return;}
+    const item=e.target.closest('.mps-item');
+    if(!item||item.classList.contains('dim'))return;
+    const api=item.dataset.api;
+    const value=item.dataset.value;
+    if(api==='claude'){
+      D.model=value;
+    } else {
+      D.geminiModel=value;
+    }
+    // 자동으로 해당 API로 전환
+    if(rid()){
+      if(!D.roomApi)D.roomApi={};
+      D.roomApi[rid()]=api;
+    } else {
+      D.activeApi=api;
+    }
+    save();
+    updateModelPill();
+    updateCostHint();
+    if(typeof updateThinkingBudgetUI==='function')updateThinkingBudgetUI();
+    renderTopbar();
+    if(typeof renderModelCards==='function')renderModelCards();
+    sheet.remove();
+    showToast('✓ '+(CLAUDE_MODELS.concat(GEMINI_MODELS).find(m=>m.value===value)?.name||value));
+  });
+
+  document.body.appendChild(sheet);
 }
 function saveKey(){
   D.key=$('key-inp').value.trim();
@@ -5941,12 +6053,33 @@ function renderMsgContent(text){
 
   // ① 코드블록을 먼저 추출하여 플레이스홀더로 치환 (이스케이프 전에!)
   const codeBlocks=[];
-  text=text.replace(/```([\s\S]*?)```/g,(_,code)=>{
+  text=text.replace(/```([\s\S]*?)```/g,(_,raw)=>{
     const idx=codeBlocks.length;
-    const inner=code.trim();
+    // 첫 줄에 제목 태그가 있는지 확인 (```제목\n...)
+    let title='INFO';
+    let inner=raw;
+    const m=raw.match(/^([^\n]*)\n([\s\S]*)$/);
+    if(m){
+      const firstLine=m[1].trim();
+      // 첫 줄이 30자 이내고, 비어있지 않으면 제목으로 사용
+      if(firstLine.length>0 && firstLine.length<=30){
+        title=firstLine;
+        inner=m[2];
+      } else if(firstLine.length===0){
+        // 첫 줄이 빈 줄이면 기본 INFO, 본문은 둘째 줄부터
+        inner=m[2];
+      }
+    }
+    inner=inner.replace(/^\n+/,'').replace(/\s+$/,'');
     const safe=inner.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const titleSafe=title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const codeSize=Math.max(11,(D.chatFontSize||15)-1);
-    codeBlocks.push(`<pre style="background:#0a0a0a;border-radius:8px;padding:10px 12px;overflow-x:auto;font-size:${codeSize}px;line-height:1.6;margin:6px 0;font-family:monospace;white-space:pre-wrap;color:#e4e2f0">${safe}</pre>`);
+    codeBlocks.push(
+      `<div style="margin:8px 0;border-radius:12px;overflow:hidden;border:1px solid var(--border2);background:#0a0a0a">`+
+        `<div style="background:var(--ag2);padding:9px 16px;font-size:11.5px;font-weight:700;letter-spacing:1.8px;color:var(--t3);text-transform:uppercase;border-bottom:1px solid var(--border)">${titleSafe}</div>`+
+        `<pre style="background:#0a0a0a;margin:0;padding:14px 16px;overflow-x:auto;font-size:${codeSize}px;line-height:1.75;font-family:inherit;white-space:pre-wrap;color:#e4e2f0">${safe}</pre>`+
+      `</div>`
+    );
     return `\x00CODE${idx}\x00`;
   });
 
