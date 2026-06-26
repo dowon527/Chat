@@ -6096,8 +6096,8 @@ function renderMsgContent(text){
   // 줄바꿈
   t=t.replace(/\n/g,'<br>');
 
-  // ④ 플레이스홀더를 실제 코드블록 HTML로 복원
-  t=t.replace(/\x00CODE(\d+)\x00/g,(_,i)=>codeBlocks[+i]);
+  // ④ 플레이스홀더를 실제 코드블록 HTML로 복원 (앞뒤 <br> 흡수해서 공백 제거)
+  t=t.replace(/(?:<br>\s*){0,3}\x00CODE(\d+)\x00(?:\s*<br>){0,3}/g,(_,i)=>codeBlocks[+i]);
   // ⑤ 이미지 플레이스홀더 복원
   t=t.replace(/\x00IMG(\d+)\x00/g,(_,i)=>imgBlocks[+i]);
   return t;
