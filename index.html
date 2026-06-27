@@ -128,12 +128,12 @@ body.light input[type="checkbox"]{accent-color:var(--accent2)}
 #sb-toggle{
   display:none;
   width:32px;height:32px;border-radius:var(--r);
-  background:transparent;border:1px solid var(--border);
+  background:var(--s1);border:1px solid var(--border2);
   color:var(--t2);cursor:pointer;
   align-items:center;justify-content:center;
   transition:all 0.15s;flex-shrink:0;
 }
-#sb-toggle:hover{background:var(--s2);border-color:var(--border2);color:var(--text)}
+#sb-toggle:hover{background:var(--s2);color:var(--text)}
 @media(max-width:700px){
   #sidebar{
     position:fixed;top:0;left:0;bottom:0;
@@ -700,6 +700,33 @@ body.light .home-card-add:hover{background:rgba(240,160,184,0.08);border-color:r
 .modal-ttl{font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
 .modal-ttl svg{color:var(--accent);opacity:0.9}
 .modal-body{padding:20px;overflow-y:auto;flex:1}
+
+/* 설정 메뉴 패널 시스템 */
+.sm-panel{display:none;flex-direction:column}
+.sm-panel.on{display:flex}
+.sm-section-label{font-size:10.5px;color:var(--t3);font-weight:600;letter-spacing:0.7px;padding:18px 20px 6px;text-transform:uppercase}
+.sm-section-label:first-child{padding-top:8px}
+.sm-item{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 20px;
+  background:transparent;border:none;width:100%;
+  cursor:pointer;color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;font-size:13.5px;
+  text-align:left;transition:background 0.12s;
+  border-bottom:1px solid var(--border);
+}
+.sm-item:hover{background:var(--s2)}
+.sm-item:last-child{border-bottom:none}
+.sm-item-icon{width:22px;text-align:center;font-size:16px;flex-shrink:0;opacity:0.9}
+.sm-item-label{flex:1;min-width:0}
+.sm-item-chev{opacity:0.4;flex-shrink:0}
+.sm-back{
+  display:flex;align-items:center;gap:6px;
+  padding:10px 16px;background:transparent;border:none;
+  color:var(--t2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  font-size:13px;border-bottom:1px solid var(--border);
+}
+.sm-back:hover{color:var(--text)}
 .modal-ft{
   padding:13px 20px;border-top:1px solid var(--border);
   display:flex;gap:8px;justify-content:flex-end;flex-shrink:0
@@ -1102,6 +1129,10 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></svg>
       장기 기억
     </button>
+    <button class="sb-btn" onclick="openModal('user-settings-modal')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><line x1="4" y1="6" x2="11" y2="6"/><line x1="15" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="14" y2="18"/><line x1="18" y1="18" x2="20" y2="18"/><circle cx="13" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg>
+      사용자 설정
+    </button>
 
     <div style="display:flex;gap:4px;padding:2px 0">
       <button class="sb-btn" style="flex:1;justify-content:center;gap:4px" onclick="openBackupModal('export')">
@@ -1251,18 +1282,17 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
     <div class="tb-acts">
       <div style="display:flex;gap:3px;align-items:center">
         <button id="model-pill-btn" onclick="openModelPickerSheet()" title="모델 선택"
-          style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;border:1px solid var(--border2);background:var(--s3);color:var(--text);cursor:pointer;font-size:11.5px;font-weight:600;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s;max-width:130px"
-          onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'">
+          style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;border:1px solid var(--border2);background:var(--s1);color:var(--text);cursor:pointer;font-size:11.5px;font-weight:600;font-family:'Noto Sans KR',sans-serif;transition:all 0.15s;max-width:130px"
+          onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='var(--s1)'">
           <span id="model-pill-icon" style="font-size:13px;line-height:1">⚡</span>
           <span id="model-pill-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">하이퍼챗</span>
           <svg width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink:0;opacity:0.6"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <button onclick="openModal('key-modal')" title="API 키 설정"
-          style="padding:4px 7px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12px;transition:all 0.15s"
-          onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'">🔑</button>
-        <button onclick="openSettingsModal()" title="환경설정"
-          style="padding:4px 7px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12px;transition:all 0.15s"
-          onmouseover="this.style.background='var(--s4)'" onmouseout="this.style.background='var(--s3)'">⚙️</button>
+        <button onclick="openModal('key-modal')" title="설정"
+          style="padding:6px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--s1);color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s"
+          onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='var(--s1)'">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="4" y1="6" x2="11" y2="6"/><line x1="15" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="14" y2="18"/><line x1="18" y1="18" x2="20" y2="18"/><circle cx="13" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg>
+        </button>
       </div>
     </div>
   </div>
@@ -1353,37 +1383,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
   </div>
 </div>
 
-<!-- ══════════ SETTINGS MODAL ══════════ -->
-<div class="ov hide" id="settings-modal">
-  <div class="modal" style="max-width:360px">
-    <div class="modal-hd">
-      <div class="modal-ttl">⚙️ 환경설정</div>
-      <button class="ico-btn" onclick="closeModal('settings-modal')">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:20px">
-      <!-- 글자 크기 -->
-      <div>
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">💬 채팅 글자 크기</div>
-        <div style="display:flex;gap:6px">
-          <button class="settings-font-btn" onclick="setChatFont(13)" data-size="13" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12px;transition:all 0.15s">작게</button>
-          <button class="settings-font-btn" onclick="setChatFont(15)" data-size="15" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:13px;transition:all 0.15s">보통</button>
-          <button class="settings-font-btn" onclick="setChatFont(17)" data-size="17" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:14px;transition:all 0.15s">크게</button>
-          <button class="settings-font-btn" onclick="setChatFont(19)" data-size="19" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:15px;transition:all 0.15s">더 크게</button>
-        </div>
-      </div>
-      <!-- 폰트 -->
-      <div>
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">✦ 채팅 폰트</div>
-        <div id="font-list" style="display:flex;flex-direction:column;gap:6px"></div>
-      </div>
-    </div>
-    <div class="modal-ft">
-      <button class="btn btn-g" onclick="closeModal('settings-modal')">닫기</button>
-    </div>
-  </div>
-</div>
+<!-- ══════════ SETTINGS MODAL (key-modal로 통합됨, openSettingsModal()이 key-modal을 열도록 변경) ══════════ -->
 
 <!-- ══════════ SEARCH MODAL ══════════ -->
 <!-- ══════════ CAPTURE MODAL ══════════ -->
@@ -1572,12 +1572,17 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 <div class="ov hide" id="note-modal">
   <div class="modal">
     <div class="modal-hd">
-      <div class="modal-ttl">
-        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-        유저 노트
-        <span id="note-modal-char" style="font-size:11px;font-weight:400;color:var(--accent);background:var(--ag2);padding:2px 8px;border-radius:20px;margin-left:4px"></span>
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+        <button class="ico-btn" id="back-from-note-modal" style="display:none;flex-shrink:0" onclick="smBack('note-modal')" title="뒤로">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="modal-ttl" style="min-width:0">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+          유저 노트
+          <span id="note-modal-char" style="font-size:11px;font-weight:400;color:var(--accent);background:var(--ag2);padding:2px 8px;border-radius:20px;margin-left:4px"></span>
+        </div>
       </div>
-      <button class="ico-btn" onclick="closeModal('note-modal')">
+      <button class="ico-btn" onclick="closeModal('note-modal');_settingsBackTo=null">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
@@ -1586,7 +1591,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
       <div id="note-list"></div>
     </div>
     <div class="modal-ft">
-      <button class="btn btn-g" onclick="closeModal('note-modal')">닫기</button>
+      <button class="btn btn-g" onclick="closeModal('note-modal');_settingsBackTo=null">닫기</button>
       <button class="btn btn-p" onclick="openNoteAdd()" style="background:var(--accent);border-color:var(--accent);color:#fff">+ 새 노트</button>
     </div>
   </div>
@@ -1627,6 +1632,190 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 <!-- ══════════ MODALS ══════════ -->
 
 <!-- KEY MODAL -->
+<!-- ══════════ USER SETTINGS MODAL (왼쪽 사이드바에서 열림 · 전체 설정) ══════════ -->
+<div class="ov hide" id="user-settings-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ttl">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="4" y1="6" x2="11" y2="6"/><line x1="15" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="14" y2="18"/><line x1="18" y1="18" x2="20" y2="18"/><circle cx="13" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg>
+        사용자 설정
+      </div>
+      <button class="ico-btn" onclick="closeModal('user-settings-modal')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:0">
+
+      <!-- ─── MAIN MENU 패널 (사용자 설정) ─── -->
+      <div id="sm-panel-main-us" class="sm-panel on">
+        <button class="sm-item" onclick="smShow('claude')">
+          <span class="sm-item-icon">🤖</span>
+          <span class="sm-item-label">Claude API</span>
+          <svg class="sm-item-chev" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="sm-item" onclick="smShow('gemini')">
+          <span class="sm-item-icon">✨</span>
+          <span class="sm-item-label">Gemini API</span>
+          <svg class="sm-item-chev" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="sm-item" onclick="smShow('font')">
+          <span class="sm-item-icon">✦</span>
+          <span class="sm-item-label">글꼴 · 글자 크기</span>
+          <svg class="sm-item-chev" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="sm-item" onclick="smShow('drive')">
+          <span class="sm-item-icon">☁️</span>
+          <span class="sm-item-label">Google Drive</span>
+          <svg class="sm-item-chev" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+
+      <div id="sm-panel-claude" class="sm-panel">
+        <button class="sm-back" onclick="smShow('main-us')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          뒤로
+        </button>
+        <div style="padding:16px 20px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <span style="font-size:14px;font-weight:600;flex-shrink:0">🤖 Claude</span>
+            <span style="font-size:11px;color:var(--t3);flex-shrink:0">Anthropic</span>
+          </div>
+          <div class="key-wrap" style="margin-bottom:8px">
+            <input class="fi" id="key-inp" type="password" placeholder="sk-ant-api03-..." style="font-size:13px">
+            <button class="eye-btn" onclick="toggleEye('key-inp','eye-ico')">
+              <svg id="eye-ico" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div id="key-st" style="margin-bottom:8px"></div>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px">
+            발급: <a href="https://console.anthropic.com" style="color:var(--accent)">console.anthropic.com</a>
+          </div>
+        </div>
+      </div>
+
+      <div id="sm-panel-gemini" class="sm-panel">
+        <button class="sm-back" onclick="smShow('main-us')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          뒤로
+        </button>
+        <div style="padding:16px 20px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <span style="font-size:14px;font-weight:600;flex-shrink:0">✨ Gemini</span>
+            <span style="font-size:11px;color:var(--t3);flex-shrink:0">Google</span>
+          </div>
+          <div class="key-wrap" style="margin-bottom:8px">
+            <input class="fi" id="gemini-key-inp" type="password" placeholder="AIzaSy..." style="font-size:13px">
+            <button class="eye-btn" onclick="toggleEye('gemini-key-inp','eye-ico2')">
+              <svg id="eye-ico2" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div id="gemini-key-st" style="margin-bottom:8px"></div>
+          <!-- Thinking 토글 + Budget/Level -->
+          <div style="margin-top:10px" id="thinking-section">
+            <div id="thinking-25-wrap">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div>
+                  <div style="font-size:12px;color:var(--t2)">Thinking 비활성화</div>
+                  <div style="font-size:10px;color:var(--t3);margin-top:1px">Flash만 적용 · Pro는 budget 조절</div>
+                </div>
+                <label class="p-toggle">
+                  <input type="checkbox" id="thinking-toggle" onchange="toggleThinking(this.checked)">
+                  <span class="p-slider"></span>
+                </label>
+              </div>
+              <div id="thinking-budget-wrap" style="margin-top:10px;display:none">
+                <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:6px">
+                  Thinking Budget: <span id="thinking-budget-label" style="color:var(--teal);font-weight:600">중간</span>
+                </label>
+                <input type="range" id="thinking-budget-slider" min="0" max="3" step="1" value="2"
+                  oninput="updateThinkingBudget(this.value)"
+                  style="width:100%;accent-color:var(--teal);height:3px;cursor:pointer">
+                <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--t3);margin-top:2px">
+                  <span>없음</span><span>낮음</span><span>중간</span><span>높음</span>
+                </div>
+              </div>
+            </div>
+            <div id="thinking-3-wrap" style="display:none">
+              <div style="font-size:11px;color:var(--t3);margin-bottom:6px">
+                Thinking 강도: <span id="thinking-level-label" style="color:var(--teal);font-weight:600">낮음</span>
+              </div>
+              <div style="display:flex;gap:4px">
+                <button class="thinking-lvl-btn" data-level="low" onclick="setThinkingLevel('low')" style="flex:1;padding:5px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px">낮음</button>
+                <button class="thinking-lvl-btn" data-level="medium" onclick="setThinkingLevel('medium')" style="flex:1;padding:5px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px">중간</button>
+                <button class="thinking-lvl-btn" data-level="high" onclick="setThinkingLevel('high')" style="flex:1;padding:5px;border-radius:7px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:11px">높음</button>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--t3);margin-top:10px">
+            발급: <a href="https://aistudio.google.com/apikey" style="color:var(--teal)">aistudio.google.com/apikey</a>
+            <br><span style="color:var(--teal)">Flash 계열 무료 티어 있음</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="sm-panel-font" class="sm-panel">
+        <button class="sm-back" onclick="smShow('main-us')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          뒤로
+        </button>
+        <div style="padding:16px 20px">
+          <div style="margin-bottom:20px">
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">💬 채팅 글자 크기</div>
+            <div style="display:flex;gap:6px">
+              <button class="settings-font-btn" onclick="setChatFont(13)" data-size="13" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12px;transition:all 0.15s">작게</button>
+              <button class="settings-font-btn" onclick="setChatFont(15)" data-size="15" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:13px;transition:all 0.15s">보통</button>
+              <button class="settings-font-btn" onclick="setChatFont(17)" data-size="17" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:14px;transition:all 0.15s">크게</button>
+              <button class="settings-font-btn" onclick="setChatFont(19)" data-size="19" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:15px;transition:all 0.15s">더 크게</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">✦ 채팅 폰트</div>
+            <div id="font-list" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="sm-panel-drive" class="sm-panel">
+        <button class="sm-back" onclick="smShow('main-us')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          뒤로
+        </button>
+        <div style="padding:16px 20px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <span style="font-size:14px;font-weight:600;flex-shrink:0">☁️ 구글 드라이브</span>
+            <span style="font-size:11px;color:var(--t3);flex-shrink:0">백업 동기화</span>
+          </div>
+          <div class="key-wrap" style="margin-bottom:10px">
+            <input class="fi" id="google-client-id-inp" type="password" placeholder="xxxxxxx.apps.googleusercontent.com" style="font-size:12px">
+            <button class="eye-btn" onclick="toggleEye('google-client-id-inp','eye-ico-g')">
+              <svg id="eye-ico-g" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div>
+              <div style="font-size:12px;color:var(--text)">자동 저장</div>
+              <div style="font-size:10px;color:var(--t3);margin-top:1px">AI 응답 후 자동으로 드라이브에 백업</div>
+            </div>
+            <label class="p-toggle">
+              <input type="checkbox" id="drive-auto-save" onchange="D.driveAutoSave=this.checked;save()">
+              <span class="p-slider"></span>
+            </label>
+          </div>
+          <div style="font-size:11px;color:var(--t3);line-height:1.7;margin-top:10px">
+            발급: <a href="https://console.cloud.google.com/apis/credentials" style="color:var(--amber)">Google Cloud Console</a><br>
+            OAuth 2.0 Client ID (웹 앱) · Drive API 활성화 필요
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-g" onclick="closeModal('user-settings-modal')">취소</button>
+      <button class="btn btn-p" onclick="saveKey();closeModal('user-settings-modal')">저장</button>
+    </div>
+  </div>
+</div>
+
 <div class="ov hide" id="key-modal">
   <div class="modal">
     <div class="modal-hd">
@@ -1640,132 +1829,43 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
     </div>
     <div class="modal-body" style="padding:0">
 
-      <!-- CLAUDE 섹션 -->
-      <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <span style="font-size:13px;font-weight:600;flex-shrink:0">🤖 Claude</span>
-          <span style="font-size:11px;color:var(--t3);flex-shrink:0">Anthropic</span>
-          <div style="flex:1;display:flex;align-items:center;gap:6px;margin-left:4px;min-width:0">
-            <input type="range" id="length-slider" min="0" max="4" step="1" value="2"
-              oninput="updateLengthSlider(this.value,'claude')"
-              style="flex:1;accent-color:var(--accent);height:3px;cursor:pointer;min-width:0">
-            <span id="length-label" style="font-size:10px;color:var(--accent);font-weight:600;min-width:28px;text-align:right;white-space:nowrap">보통</span>
-            <span id="cost-label" style="font-size:10px;color:var(--t3);white-space:nowrap;flex-shrink:0"></span>
-          </div>
-        </div>
-        <div class="key-wrap" style="margin-bottom:8px">
-          <input class="fi" id="key-inp" type="password" placeholder="sk-ant-api03-..." style="font-size:13px">
-          <button class="eye-btn" onclick="toggleEye('key-inp','eye-ico')">
-            <svg id="eye-ico" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-        </div>
-        <div id="key-st" style="margin-bottom:8px"></div>
-        <!-- Claude 모델 카드 -->
-        <div id="claude-model-list" style="display:flex;flex-direction:column;gap:4px"></div>
-        <div style="font-size:11px;color:var(--t3);margin-top:8px">
-          발급: <a href="https://console.anthropic.com" style="color:var(--accent)">console.anthropic.com</a>
-        </div>
-      </div>
-
-      <!-- GEMINI 섹션 -->
-      <div style="padding:16px 20px 12px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <span style="font-size:13px;font-weight:600;flex-shrink:0">✨ Gemini</span>
-          <span style="font-size:11px;color:var(--t3);flex-shrink:0">Google</span>
-          <div style="flex:1;display:flex;align-items:center;gap:6px;margin-left:4px;min-width:0">
-            <input type="range" id="length-slider-gemini" min="0" max="4" step="1" value="2"
-              oninput="updateLengthSlider(this.value,'gemini')"
-              style="flex:1;accent-color:var(--teal);height:3px;cursor:pointer;min-width:0">
-            <span id="length-label-gemini" style="font-size:10px;color:var(--teal);font-weight:600;min-width:28px;text-align:right;white-space:nowrap">보통</span>
-            <span id="cost-label-gemini" style="font-size:10px;color:var(--t3);white-space:nowrap;flex-shrink:0"></span>
-          </div>
-        </div>
-        <div class="key-wrap" style="margin-bottom:8px">
-          <input class="fi" id="gemini-key-inp" type="password" placeholder="AIzaSy..." style="font-size:13px">
-          <button class="eye-btn" onclick="toggleEye('gemini-key-inp','eye-ico2')">
-            <svg id="eye-ico2" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-        </div>
-        <div id="gemini-key-st" style="margin-bottom:8px"></div>
-        <!-- Gemini 모델 카드 -->
-        <div id="gemini-model-list" style="display:flex;flex-direction:column;gap:4px"></div>
-        <!-- Thinking 토글 + Budget/Level -->
-        <div style="margin-top:10px" id="thinking-section">
-          <div id="thinking-25-wrap">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-              <div>
-                <div style="font-size:12px;color:var(--t2)">Thinking 비활성화</div>
-                <div style="font-size:10px;color:var(--t3);margin-top:1px">Flash만 적용 · Pro는 budget 조절</div>
-              </div>
-              <label class="p-toggle">
-                <input type="checkbox" id="gemini-no-thinking" onchange="D.geminiNoThinking=this.checked;save();updateThinkingBudgetUI()">
-                <span class="p-slider"></span>
-              </label>
-            </div>
-            <div id="thinking-budget-wrap" style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:11px;color:var(--t3);flex-shrink:0">Budget</span>
-              <input type="range" id="thinking-budget-slider" min="0" max="7" step="1" value="4"
-                style="flex:1;accent-color:var(--teal);height:3px;cursor:pointer"
-                oninput="updateThinkingBudgetLabel(this.value)">
-              <span id="thinking-budget-label" style="font-size:10px;color:var(--teal);min-width:40px;text-align:right">보통</span>
-            </div>
-          </div>
-          <div id="thinking-3x-wrap" style="display:none">
-            <div style="font-size:12px;color:var(--t2);margin-bottom:6px">Thinking Level <span style="font-size:10px;color:var(--t3)">(끄기 불가)</span></div>
-            <div style="display:flex;gap:6px">
-              <button onclick="setThinkingLevel('low')" id="tlvl-low" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--s3);font-size:11px;color:var(--t2);cursor:pointer;font-family:'Noto Sans KR',sans-serif">낮음</button>
-              <button onclick="setThinkingLevel('medium')" id="tlvl-medium" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--s3);font-size:11px;color:var(--t2);cursor:pointer;font-family:'Noto Sans KR',sans-serif">보통</button>
-              <button onclick="setThinkingLevel('high')" id="tlvl-high" style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--s3);font-size:11px;color:var(--t2);cursor:pointer;font-family:'Noto Sans KR',sans-serif">높음</button>
-            </div>
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--t3);margin-top:8px">
-          발급: <a href="https://aistudio.google.com/apikey" style="color:var(--teal)">aistudio.google.com/apikey</a>
-          &nbsp;·&nbsp; <span style="color:var(--teal)">Flash 계열 무료 티어 있음</span>
-        </div>
-      </div>
-
-      <!-- Google Drive 섹션 -->
-      <div style="padding:16px 20px 12px;border-top:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <span style="font-size:13px;font-weight:600;flex-shrink:0">☁️ 구글 드라이브</span>
-          <span style="font-size:11px;color:var(--t3);flex-shrink:0">백업 동기화</span>
-        </div>
-        <div class="key-wrap" style="margin-bottom:8px">
-          <input class="fi" id="google-client-id-inp" type="password" placeholder="xxxxxxx.apps.googleusercontent.com" style="font-size:12px">
-          <button class="eye-btn" onclick="toggleEye('google-client-id-inp','eye-ico-g')">
-            <svg id="eye-ico-g" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div>
-            <div style="font-size:12px;color:var(--text)">자동 저장</div>
-            <div style="font-size:10px;color:var(--t3)">AI 응답 후 자동으로 드라이브에 백업</div>
-          </div>
-          <label class="p-toggle">
-            <input type="checkbox" id="drive-auto-save" onchange="D.driveAutoSave=this.checked;save()">
-            <span class="p-slider"></span>
-          </label>
-        </div>
-        <div style="font-size:11px;color:var(--t3);line-height:1.7">
-          발급: <a href="https://console.cloud.google.com/apis/credentials" style="color:var(--amber)">Google Cloud Console</a><br>
-          OAuth 2.0 Client ID (웹 앱) · Drive API 활성화 필요
-        </div>
-      </div>
-
-      <!-- 사칭방지 리마인더 (통합) -->
-      <div style="padding:14px 20px;border-top:1px solid var(--border);background:var(--s2)">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-          <div style="min-width:0;flex:1">
-            <div style="font-size:13px;color:var(--text);font-weight:500">🛡️ 사칭방지 리마인더</div>
-            <div style="font-size:11px;color:var(--t3);margin-top:3px;line-height:1.5">현재 대화방에만 적용 · Claude · Gemini 공통</div>
+      <!-- ─── MAIN MENU 패널 ─── -->
+      <div id="sm-panel-main" class="sm-panel on">
+        <div class="sm-section-label">채팅방 설정</div>
+        <button class="sm-item" onclick="openFromSettings('openNoteModal','room')">
+          <span class="sm-item-icon">📄</span>
+          <span class="sm-item-label">유저 노트</span>
+          <svg class="sm-item-chev" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="sm-item" onclick="openFromSettings('openProfileModal')">
+          <span class="sm-item-icon">👤</span>
+          <span class="sm-item-label">대화 프로필</span>
+          <svg class="sm-item-chev" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="sm-item" onclick="openFromSettings('openMemoryModal')">
+          <span class="sm-item-icon">💬</span>
+          <span class="sm-item-label">요약 메모리</span>
+          <svg class="sm-item-chev" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <div class="sm-item" style="cursor:default">
+          <span class="sm-item-icon">🛡️</span>
+          <div class="sm-item-label">
+            <div>사칭방지 리마인더</div>
+            <div style="font-size:10.5px;color:var(--t3);margin-top:2px">이 방에만 적용</div>
           </div>
           <label class="p-toggle" style="flex-shrink:0">
             <input type="checkbox" id="guard-toggle" checked onchange="toggleGuard(this.checked)">
             <span class="p-slider"></span>
           </label>
         </div>
+
       </div>
+
+      <!-- ─── CLAUDE API 패널 ─── -->
+
+      <!-- ─── GEMINI API 패널 ─── -->
+
+      <!-- ─── 글꼴 패널 ─── -->
 
     </div>
     <div class="modal-ft">
@@ -2065,12 +2165,17 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 <div class="ov hide" id="profile-modal">
   <div class="modal">
     <div class="modal-hd">
-      <div class="modal-ttl">
-        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        유저 프로필
-        <span id="profile-modal-char" style="font-size:11px;font-weight:400;color:var(--accent);background:var(--ag);padding:2px 8px;border-radius:20px;margin-left:4px"></span>
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+        <button class="ico-btn" id="back-from-profile-modal" style="display:none;flex-shrink:0" onclick="smBack('profile-modal')" title="뒤로">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="modal-ttl" style="min-width:0">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          유저 프로필
+          <span id="profile-modal-char" style="font-size:11px;font-weight:400;color:var(--accent);background:var(--ag);padding:2px 8px;border-radius:20px;margin-left:4px"></span>
+        </div>
       </div>
-      <button class="ico-btn" onclick="closeModal('profile-modal')">
+      <button class="ico-btn" onclick="closeModal('profile-modal');_settingsBackTo=null">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
@@ -2079,7 +2184,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
       <div class="profile-list" id="profile-list"></div>
     </div>
     <div class="modal-ft">
-      <button class="btn btn-g" onclick="closeModal('profile-modal')">닫기</button>
+      <button class="btn btn-g" onclick="closeModal('profile-modal');_settingsBackTo=null">닫기</button>
       <button class="btn btn-p" onclick="openProfileAdd()" style="background:var(--accent2);border-color:var(--accent2)">+ 새 프로필</button>
     </div>
   </div>
@@ -2123,12 +2228,17 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 <div class="ov hide" id="memory-modal">
   <div class="modal">
     <div class="modal-hd">
-      <div class="modal-ttl">
-        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></svg>
-        장기 기억
-        <span id="mem-modal-char" style="font-size:11px;font-weight:400;color:var(--accent);background:var(--ag);padding:2px 8px;border-radius:20px;margin-left:4px"></span>
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+        <button class="ico-btn" id="back-from-memory-modal" style="display:none;flex-shrink:0" onclick="smBack('memory-modal')" title="뒤로">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="modal-ttl" style="min-width:0">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></svg>
+          장기 기억
+          <span id="mem-modal-char" style="font-size:11px;font-weight:400;color:var(--accent);background:var(--ag);padding:2px 8px;border-radius:20px;margin-left:4px"></span>
+        </div>
       </div>
-      <button class="ico-btn" onclick="closeModal('memory-modal')">
+      <button class="ico-btn" onclick="closeModal('memory-modal');_settingsBackTo=null">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
@@ -2136,7 +2246,7 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
       <div class="mem-list" id="mem-list"></div>
     </div>
     <div class="modal-ft">
-      <button class="btn btn-g" onclick="closeModal('memory-modal')">닫기</button>
+      <button class="btn btn-g" onclick="closeModal('memory-modal');_settingsBackTo=null">닫기</button>
       <button class="btn btn-g" onclick="runMemoryArchive()">✨ 자동 정리</button>
       <button class="btn btn-p" onclick="openMemEditModal(-1)" style="background:var(--accent);border-color:var(--accent);color:#fff">＋ 추가</button>
     </div>
@@ -2317,7 +2427,7 @@ let D={
   rooms:{},
   histories:{},
   charMemories:{}, charNotes:{}, charProfiles:{}, roomProfiles:{}, roomSummaries:{}, roomNoteIds:{},
-  roomMemories:{}, roomNotes:{}, roomProfileDefs:{}, roomApi:{}, roomLength:{}, notes:[],
+  roomMemories:{}, roomNotes:{}, roomProfileDefs:{}, roomApi:{}, roomLength:{}, roomTokenMult:{}, notes:[],
   profiles:[],
   folders:[], // [{id, name, emoji, open}]
   charDrafts:[], // [{id, name, prompt, ...}]
@@ -2378,6 +2488,8 @@ function load(){
     if(D.activeApi==='puter')D.activeApi='claude';
     // 기존 costLog 5턴 초과분 정리
     if(D.costLog){Object.keys(D.costLog).forEach(k=>{if(D.costLog[k].length>10)D.costLog[k]=D.costLog[k].slice(-10);});}
+    // 방별 노트 스냅샷 마이그레이션
+    try{migrateRoomNotes();}catch(e){console.warn('roomNotes 마이그레이션 실패',e);}
   }catch(e){console.warn('load 실패',e);}
 }
 function save(){
@@ -2438,8 +2550,47 @@ function cMems(){
   if(!D.roomMemories[rid()])D.roomMemories[rid()]=[];
   return D.roomMemories[rid()];
 }
+// ─── 방별 노트 스냅샷 시스템 ───
+// D.notes        = 공용 마스터 (왼쪽 사이드바)
+// D.roomNotes[r] = 방별 독립 스냅샷 [{id,name,content,on}]
+let _noteCtx='global'; // 'global' | 'room'
+function ensureRoomNotes(roomId){
+  if(!roomId)return null;
+  if(!D.roomNotes)D.roomNotes={};
+  if(!D.roomNotes[roomId]){
+    // 마스터 풀에서 스냅샷 생성 (생성 시점의 모든 글로벌 노트)
+    // 기존에 roomNoteIds로 토글 정보가 있으면 보존
+    const onIds=(D.roomNoteIds&&D.roomNoteIds[roomId])||[];
+    D.roomNotes[roomId]=(D.notes||[]).map(n=>({
+      id:'rn_'+n.id,
+      _srcId:n.id,
+      name:n.name,
+      content:n.content,
+      on:onIds.includes(n.id)
+    }));
+  }
+  return D.roomNotes[roomId];
+}
+function migrateRoomNotes(){
+  // 처음 한 번만: 기존 roomNoteIds가 있고 roomNotes가 비어 있으면 스냅샷 생성
+  if(D._notesMigrated)return;
+  if(D.roomNoteIds){
+    Object.keys(D.roomNoteIds).forEach(rid=>{
+      if(!D.roomNotes||!D.roomNotes[rid])ensureRoomNotes(rid);
+    });
+  }
+  D._notesMigrated=true;
+  save();
+}
+
 function cNote(){
   if(!rid())return'';
+  // 우선: 방별 스냅샷 사용
+  const rn=ensureRoomNotes(rid());
+  if(rn&&rn.length){
+    return rn.filter(n=>n.on).map(n=>n.content||'').filter(c=>c.trim()).join('\n\n');
+  }
+  // 폴백 (구버전 데이터)
   if(!D.roomNoteIds)D.roomNoteIds={};
   const onIds=D.roomNoteIds[rid()]||[];
   return (D.notes||[]).filter(n=>onIds.includes(n.id)).map(n=>n.content).join('\n\n');
@@ -2869,6 +3020,19 @@ function updateThinkingBudgetLabel(val){
   D.geminiThinkingBudget=p.budget;
   save();
 }
+// 토글: Flash 모델에서 thinking 비활성화
+function toggleThinking(checked){
+  D.geminiNoThinking=!!checked;
+  save();
+  // 키 모달의 budget wrap 표시 토글
+  const wrap=$('thinking-budget-wrap');
+  if(wrap)wrap.style.display=checked?'none':'block';
+  updateThinkingBudgetUI();
+}
+// 슬라이더 input 핸들러 (label 갱신 + 저장)
+function updateThinkingBudget(val){
+  updateThinkingBudgetLabel(val);
+}
 function updateThinkingBudgetUI(){
   const is3x=D.geminiModel&&(D.geminiModel.includes('gemini-3')||D.geminiModel.includes('3.1')||D.geminiModel.includes('3-'));
   const wrap25=$('thinking-25-wrap');
@@ -3141,7 +3305,101 @@ function updateFontBtnUI(){
 }
 function openSettingsModal(){
   updateFontBtnUI();
-  openModal('settings-modal');
+  openModal('key-modal');
+}
+
+// 설정 메뉴 → 다른 모달로 이동 시 "뒤로" 처리
+let _settingsBackTo=null;
+function openFromSettings(openFnName, ...args){
+  _settingsBackTo='key-modal';
+  closeModal('key-modal');
+  if(typeof window[openFnName]==='function') window[openFnName](...args);
+  updateSmBackButtons();
+}
+function updateSmBackButtons(){
+  ['note-modal','profile-modal','memory-modal'].forEach(mid=>{
+    const btn=document.getElementById('back-from-'+mid);
+    if(btn) btn.style.display=_settingsBackTo?'inline-flex':'none';
+  });
+}
+function smBack(modalId){
+  closeModal(modalId);
+  const target=_settingsBackTo;
+  _settingsBackTo=null;
+  if(target) openModal(target);
+  updateSmBackButtons();
+}
+
+// 설정 메뉴 패널 전환 (어느 모달이든 동작)
+function smShow(name){
+  const target=document.getElementById('sm-panel-'+name);
+  if(!target)return;
+  const modal=target.closest('.ov');
+  if(modal){
+    modal.querySelectorAll('.sm-panel').forEach(p=>p.classList.remove('on'));
+  }
+  target.classList.add('on');
+  // 패널별 렌더
+  if(name==='font'||name==='font-us'){
+    renderFontList();
+    updateFontBtnUI();
+  } else if(name==='output'){
+    renderOutputPanel();
+  }
+  // 스크롤 최상단
+  if(modal){
+    const body=modal.querySelector('.modal-body');
+    if(body)body.scrollTop=0;
+  }
+}
+
+// 최대 출력량 조절 패널 렌더 (Claude + Gemini 모든 모델 한 곳에)
+function renderOutputPanel(){
+  const el=document.getElementById('output-model-list');
+  if(!el)return;
+  const all=[
+    ...CLAUDE_MODELS.map(m=>({...m,api:'claude'})),
+    ...GEMINI_MODELS.map(m=>({...m,api:'gemini'}))
+  ];
+  el.innerHTML='';
+  all.forEach(m=>{
+    const baseTokens=LENGTH_PRESETS[getRoomLength(m.api)].tokens;
+    const curMult=getTokenMult(m.value);
+    const curIdx=Math.max(0,TOKEN_MULTS.findIndex(t=>t.value===curMult));
+    const finalTokens=Math.round(baseTokens*curMult);
+    // 비용 계산 (현재 배수 기준)
+    let costStr='';
+    try{costStr=calcCostKRW(finalTokens,m.value)||'';}catch(e){}
+    const accent=m.api==='gemini'?'var(--teal)':'var(--accent)';
+    const card=document.createElement('div');
+    card.style.cssText=`padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--s2)`;
+    card.innerHTML=`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:16px;flex-shrink:0">${m.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.3">${m.name}</div>
+          <div style="font-size:10.5px;color:var(--t3);margin-top:2px">기본 ${baseTokens.toLocaleString()}토큰 · 현재 ${finalTokens.toLocaleString()}토큰</div>
+        </div>
+        <div style="font-size:10.5px;color:var(--t3);text-align:right;flex-shrink:0">
+          <div style="color:${accent};font-weight:600">${TOKEN_MULTS[curIdx].label}</div>
+          <div style="margin-top:2px">${costStr}</div>
+        </div>
+      </div>
+      <input type="range" min="0" max="3" step="1" value="${curIdx}"
+        oninput="onTokenMultChange('${m.value}',this.value)"
+        style="width:100%;accent-color:${accent};height:3px;cursor:pointer">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:4px">
+        <span>기본</span><span>1.5x</span><span>3x</span><span>5x</span>
+      </div>
+    `;
+    el.appendChild(card);
+  });
+}
+function onTokenMultChange(modelValue,idx){
+  const mult=TOKEN_MULTS[parseInt(idx)].value;
+  setTokenMult(modelValue,mult);
+  renderOutputPanel();
+  updateCostHint();
 }
 function openStoryInfo(){
   const c=D.chars.find(x=>x.id===D.activeChar); if(!c)return;
@@ -3751,7 +4009,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
         }
       }
     }
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2,...getThinkingConfig()}})});
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:gMsgs,generationConfig:{maxOutputTokens:getModelMaxTokens('gemini')*2,...getThinkingConfig()}})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini 오류');}
     if(targetBub){targetBub.style.opacity='1';}
     const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf=''; let _gIn=0,_gOut=0,_gThink=0;
@@ -3787,7 +4045,7 @@ This is a dedicated creative roleplay space. All responses must comply with the 
     const messages=applyMultiCache(fixed);
     if(!messages.length) throw new Error('메시지 없음');
     const _sysBlocks=buildSysBlocks(sys);
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength('claude')].tokens,system:_sysBlocks,messages,stream:true})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:getModelMaxTokens('claude'),system:_sysBlocks,messages,stream:true})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
     if(targetBub){targetBub.style.opacity='1';}
     const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='';
@@ -4216,7 +4474,7 @@ This is a dedicated creative roleplay space.
       const geminiBody=JSON.stringify({
         system_instruction:{parts:[{text:sys}]},
         contents:geminiMsgs,
-        generationConfig:{maxOutputTokens:LENGTH_PRESETS[getRoomLength('gemini')].tokens*2,...getThinkingConfig()}
+        generationConfig:{maxOutputTokens:getModelMaxTokens('gemini')*2,...getThinkingConfig()}
       });
       const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${D.geminiModel}:streamGenerateContent?alt=sse&key=${D.geminiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:geminiBody,signal:_streamAbort?.signal});
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini API 오류');}
@@ -4269,7 +4527,7 @@ This is a dedicated creative roleplay space.
         }
       }
       if(!messages.length){row2.remove();return;}
-      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:LENGTH_PRESETS[getRoomLength('claude')].tokens,system:buildSysBlocks(sys),messages,stream:true}),signal:_streamAbort?.signal});
+      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':D.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:D.model,max_tokens:getModelMaxTokens('claude'),system:buildSysBlocks(sys),messages,stream:true}),signal:_streamAbort?.signal});
       if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API 오류');}
       const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='';
       let _cacheRead=0,_cacheWrite=0,_inputTok=0,_outputTok=0;
@@ -4761,6 +5019,8 @@ function createRoom(){
   const room={id:roomId,name,sceneId:_newRoomSceneId||null,createdAt:Date.now(),dot:_roomEmojis[Math.floor(Math.random()*_roomEmojis.length)]};
   if(!D.rooms[charId])D.rooms[charId]=[];
   D.rooms[charId].push(room);
+  // ── 방별 노트 스냅샷 (이 방만 독립 적용) ──
+  ensureRoomNotes(roomId);
   // 시작장면이 있으면 첫 메시지 삽입
   D.histories[roomId]=[];
   if(_newRoomSceneId){
@@ -4833,11 +5093,17 @@ function renderModelCards(){
 function openModal(id){
   $(id).classList.remove('hide');
   if(id==='key-modal'){
+    // 메뉴 메인 패널로 초기화
+    smShow('main');
+    syncGuardToggles();
+  }
+  if(id==='user-settings-modal'){
+    smShow('main-us');
     $('key-inp').value=D.key;
     $('gemini-key-inp').value=D.geminiKey||'';
     $('google-client-id-inp').value=D.googleClientId||'';
     var dasChk=$('drive-auto-save'); if(dasChk) dasChk.checked=D.driveAutoSave||false;
-    const noThinkChk=$('gemini-no-thinking');
+    const noThinkChk=$('thinking-toggle');
     if(noThinkChk) noThinkChk.checked=D.geminiNoThinking||false;
     const budgetSlider=$('thinking-budget-slider');
     if(budgetSlider){
@@ -4849,10 +5115,7 @@ function openModal(id){
     setThinkingLevel(D.geminiThinkingLevel||'low');
     updateThinkingBudgetUI();
     updateKeySt(); updateGeminiKeySt();
-    renderModelCards();
     initLengthSlider();
-  }
-  if(id==='settings-modal'){
     renderFontList();
     updateFontBtnUI();
   }
@@ -4923,8 +5186,6 @@ function updateModelPill(){
     const ver=versionMatch?(versionMatch[1].match(/[\d.]+/)||[''])[0]:'';
     nameEl.textContent=(ver&&!hasVerInBase)?`${base} ${ver}`:base;
   }
-  const col=a==='gemini'?'var(--teal)':'var(--accent)';
-  btn.style.borderColor=col;
 }
 // 하위 호환: 기존 코드가 updateApiToggleBtns()를 호출해도 동작
 function updateApiToggleBtns(){updateModelPill();}
@@ -4932,42 +5193,51 @@ function updateApiToggleBtns(){updateModelPill();}
 // ─── 모델 선택 바텀시트 ───
 function openModelPickerSheet(){
   document.querySelectorAll('.model-picker-sheet').forEach(s=>s.remove());
-  const curApi=getRoomApi();
-  const curClaude=D.model;
-  const curGemini=D.geminiModel;
-  const hasClaudeKey=!!D.key;
-  const hasGeminiKey=!!D.geminiKey;
 
   const sheet=document.createElement('div');
   sheet.className='model-picker-sheet';
   sheet.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.5)';
 
-  const card=(m,api,isSel,disabled)=>`
-    <div class="mps-item${isSel?' sel':''}${disabled?' dim':''}" data-api="${api}" data-value="${m.value}"
-      style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:${disabled?'default':'pointer'};border-radius:12px;border:1.5px solid ${isSel?'var(--accent)':'transparent'};background:${isSel?'var(--ag2)':'transparent'};margin-bottom:4px;transition:background 0.12s;opacity:${disabled?'0.45':'1'}">
-      <div style="font-size:20px;width:30px;text-align:center;flex-shrink:0">${m.icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span>${m.name}</span>
-          ${disabled?'<span style="font-size:10px;padding:1px 6px;border-radius:6px;background:var(--s4);color:var(--t3)">키 없음</span>':''}
+  const card_inner=document.createElement('div');
+  card_inner.style.cssText='background:var(--s2);border-radius:var(--r3) var(--r3) 0 0;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;border-top:1px solid var(--border2);animation:ctxSlideUp 0.25s ease;overflow:hidden';
+  sheet.appendChild(card_inner);
+
+  // 리스트 뷰 렌더
+  function renderList(){
+    const curApi=getRoomApi();
+    const curClaude=D.model;
+    const curGemini=D.geminiModel;
+    const hasClaudeKey=!!D.key;
+    const hasGeminiKey=!!D.geminiKey;
+    const item=(m,api,isSel,disabled)=>`
+      <div style="display:flex;align-items:stretch;gap:0;margin-bottom:4px;border-radius:12px;border:1.5px solid ${isSel?'var(--accent)':'transparent'};background:${isSel?'var(--ag2)':'transparent'};overflow:hidden;opacity:${disabled?'0.45':'1'}">
+        <div class="mps-item" data-api="${api}" data-value="${m.value}"
+          style="flex:1;display:flex;align-items:center;gap:12px;padding:13px 12px 13px 16px;cursor:${disabled?'default':'pointer'};min-width:0">
+          <div style="font-size:20px;width:30px;text-align:center;flex-shrink:0">${m.icon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span>${m.name}</span>
+              ${disabled?'<span style="font-size:10px;padding:1px 6px;border-radius:6px;background:var(--s4);color:var(--t3)">키 없음</span>':''}
+            </div>
+            <div style="font-size:11.5px;color:var(--t3);margin-top:2px;line-height:1.4">${m.desc}</div>
+          </div>
+          <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid ${isSel?'var(--accent)':'var(--border3)'};background:${isSel?'var(--accent)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
+            ${isSel?'<svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':''}
+          </div>
         </div>
-        <div style="font-size:11.5px;color:var(--t3);margin-top:2px;line-height:1.4">${m.desc}</div>
-      </div>
-      <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid ${isSel?'var(--accent)':'var(--border3)'};background:${isSel?'var(--accent)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
-        ${isSel?'<svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':''}
-      </div>
-    </div>`;
-
-  const claudeCards=CLAUDE_MODELS.map(m=>card(m,'claude',curApi==='claude'&&curClaude===m.value,!hasClaudeKey)).join('');
-  const geminiCards=GEMINI_MODELS.map(m=>card(m,'gemini',curApi==='gemini'&&curGemini===m.value,!hasGeminiKey)).join('');
-
-  sheet.innerHTML=`
-    <div style="background:var(--s2);border-radius:var(--r3) var(--r3) 0 0;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;border-top:1px solid var(--border2);animation:ctxSlideUp 0.25s ease">
+        <button class="mps-chev" data-api="${api}" data-value="${m.value}"
+          style="background:transparent;border:none;border-left:1px solid var(--border);padding:0 14px;cursor:pointer;color:var(--t3);display:flex;align-items:center;flex-shrink:0"
+          title="모델 설정">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>`;
+    const claudeCards=CLAUDE_MODELS.map(m=>item(m,'claude',curApi==='claude'&&curClaude===m.value,!hasClaudeKey)).join('');
+    const geminiCards=GEMINI_MODELS.map(m=>item(m,'gemini',curApi==='gemini'&&curGemini===m.value,!hasGeminiKey)).join('');
+    card_inner.innerHTML=`
       <div style="width:36px;height:4px;border-radius:2px;background:var(--border3);margin:10px auto 6px;flex-shrink:0"></div>
       <div style="padding:6px 20px 12px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between">
         <div style="font-size:15px;font-weight:700;color:var(--text)">모델 선택</div>
-        <button onclick="document.querySelectorAll('.model-picker-sheet').forEach(s=>s.remove())"
-          style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:4px 8px">✕</button>
+        <button class="mps-close" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:4px 8px">✕</button>
       </div>
       <div style="overflow-y:auto;padding:0 12px 8px;flex:1">
         <div style="font-size:11px;color:var(--t3);font-weight:600;padding:4px 8px 6px;letter-spacing:0.3px">🤖 ANTHROPIC · CLAUDE</div>
@@ -4977,39 +5247,218 @@ function openModelPickerSheet(){
         ${geminiCards}
       </div>
       <div style="padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px">
-        <button onclick="document.querySelectorAll('.model-picker-sheet').forEach(s=>s.remove());openModal('key-modal')"
-          style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12.5px;font-family:'Noto Sans KR',sans-serif">
-          🔑 API 키 설정
-        </button>
-        <button onclick="document.querySelectorAll('.model-picker-sheet').forEach(s=>s.remove())"
-          style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:12.5px;font-weight:600;font-family:'Noto Sans KR',sans-serif">
-          닫기
-        </button>
-      </div>
-    </div>`;
+        <button class="mps-keys" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border2);background:var(--s3);color:var(--t2);cursor:pointer;font-size:12.5px;font-family:'Noto Sans KR',sans-serif">🔑 API 키 설정</button>
+        <button class="mps-close" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:12.5px;font-weight:600;font-family:'Noto Sans KR',sans-serif">닫기</button>
+      </div>`;
+  }
 
-  // 아이템 클릭 핸들러
+  // 디테일 뷰 렌더 (모델별 설정)
+  function renderDetail(api, modelValue){
+    const m=(api==='claude'?CLAUDE_MODELS:GEMINI_MODELS).find(x=>x.value===modelValue);
+    if(!m){renderList();return;}
+    const lengthV=getRoomLength(api);
+    const baseTokens=LENGTH_PRESETS[lengthV].tokens;
+    const mult=getTokenMult(modelValue);
+    const multIdx=Math.max(0,TOKEN_MULTS.findIndex(t=>t.value===mult));
+    const finalTokens=Math.round(baseTokens*mult);
+    let costStr=''; try{costStr=calcCostKRW(finalTokens,modelValue)||'';}catch(e){}
+    const accent=api==='gemini'?'var(--teal)':'var(--accent)';
+    // Gemini thinking 영역
+    let thinkingHtml='';
+    if(api==='gemini'){
+      const is25=modelValue.indexOf('2.5')>=0;
+      const is3=modelValue.indexOf('3.')>=0||modelValue.indexOf('3-')>=0;
+      if(is25){
+        const budgetIdx=THINKING_BUDGET_PRESETS.findIndex(p=>p.budget===(D.geminiThinkingBudget??4096));
+        thinkingHtml=`
+          <div style="margin-top:18px;padding:12px;border-radius:10px;background:var(--s3);border:1px solid var(--border)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div>
+                <div style="font-size:12px;color:var(--text);font-weight:500">Thinking 비활성화</div>
+                <div style="font-size:10.5px;color:var(--t3);margin-top:1px">Flash만 적용 · Pro는 budget 조절</div>
+              </div>
+              <label class="p-toggle">
+                <input type="checkbox" id="mps-thinking-toggle" ${D.geminiNoThinking?'checked':''}>
+                <span class="p-slider"></span>
+              </label>
+            </div>
+            <div id="mps-thinking-budget" style="${D.geminiNoThinking?'display:none;':''}margin-top:8px">
+              <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:6px">Thinking Budget: <span id="mps-budget-lbl" style="color:${accent};font-weight:600">${THINKING_BUDGET_PRESETS[budgetIdx>=0?budgetIdx:2]?.label||'중간'}</span></label>
+              <input type="range" id="mps-budget-slider" min="0" max="3" step="1" value="${budgetIdx>=0?budgetIdx:2}" style="width:100%;accent-color:${accent};height:3px;cursor:pointer">
+              <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--t3);margin-top:2px"><span>없음</span><span>낮음</span><span>중간</span><span>높음</span></div>
+            </div>
+          </div>`;
+      } else if(is3){
+        const lvl=D.geminiThinkingLevel||'low';
+        thinkingHtml=`
+          <div style="margin-top:18px;padding:12px;border-radius:10px;background:var(--s3);border:1px solid var(--border)">
+            <div style="font-size:11.5px;color:var(--t3);margin-bottom:6px">Thinking 강도: <span style="color:${accent};font-weight:600">${lvl==='low'?'낮음':lvl==='medium'?'중간':'높음'}</span></div>
+            <div style="display:flex;gap:4px">
+              <button class="mps-lvl" data-lvl="low" style="flex:1;padding:7px;border-radius:7px;border:1px solid var(--border2);background:${lvl==='low'?accent:'var(--s2)'};color:${lvl==='low'?'#fff':'var(--t2)'};cursor:pointer;font-size:11px">낮음</button>
+              <button class="mps-lvl" data-lvl="medium" style="flex:1;padding:7px;border-radius:7px;border:1px solid var(--border2);background:${lvl==='medium'?accent:'var(--s2)'};color:${lvl==='medium'?'#fff':'var(--t2)'};cursor:pointer;font-size:11px">중간</button>
+              <button class="mps-lvl" data-lvl="high" style="flex:1;padding:7px;border-radius:7px;border:1px solid var(--border2);background:${lvl==='high'?accent:'var(--s2)'};color:${lvl==='high'?'#fff':'var(--t2)'};cursor:pointer;font-size:11px">높음</button>
+            </div>
+          </div>`;
+      }
+    }
+
+    card_inner.innerHTML=`
+      <div style="width:36px;height:4px;border-radius:2px;background:var(--border3);margin:10px auto 6px;flex-shrink:0"></div>
+      <div style="padding:6px 16px 12px;flex-shrink:0;display:flex;align-items:center;gap:6px">
+        <button class="mps-back" style="background:none;border:none;color:var(--t2);cursor:pointer;padding:6px 8px;display:flex;align-items:center">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div style="font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+          <span>${m.icon}</span>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.name}</span>
+        </div>
+        <button class="mps-close" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:4px 8px">✕</button>
+      </div>
+      <div style="overflow-y:auto;padding:4px 20px 16px;flex:1">
+        <div style="font-size:11.5px;color:var(--t3);line-height:1.6;margin-bottom:16px">${m.desc}</div>
+
+        <!-- 응답 길이 (프롬프트 톤 지시) -->
+        <div style="margin-bottom:18px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <label style="font-size:12px;font-weight:600;color:var(--text)">📝 응답 톤</label>
+            <span style="font-size:11px;color:${accent};font-weight:600"><span id="mps-length-lbl">${LENGTH_PRESETS[lengthV].label}</span> · <span id="mps-base-lbl">약 ${Math.round(baseTokens/1.5).toLocaleString()}자 · ${Math.round(baseTokens/4.5).toLocaleString()}단어</span></span>
+          </div>
+          <input type="range" id="mps-length-slider" min="0" max="4" step="1" value="${lengthV}" style="width:100%;accent-color:${accent};height:3px;cursor:pointer">
+          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--t3);margin-top:2px"><span>짧게</span><span>조금</span><span>보통</span><span>길게</span><span>최대</span></div>
+          <div style="font-size:10px;color:var(--t3);margin-top:4px;line-height:1.4">AI한테 부탁할 분량</div>
+        </div>
+
+        <!-- 최대 출력 토큰 -->
+        <div style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <label style="font-size:12px;font-weight:600;color:var(--text)">🎚️ 최대 출력량</label>
+            <span style="font-size:11px;color:${accent};font-weight:600"><span id="mps-mult-lbl">${TOKEN_MULTS[multIdx].label}</span> · <span id="mps-tokens-lbl">${finalTokens.toLocaleString()}토큰</span></span>
+          </div>
+          <input type="range" id="mps-mult-slider" min="0" max="3" step="1" value="${multIdx}" style="width:100%;accent-color:${accent};height:3px;cursor:pointer">
+          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--t3);margin-top:2px"><span>기본</span><span>1.5x</span><span>3x</span><span>5x</span></div>
+          <div style="font-size:10px;color:var(--t3);margin-top:4px;line-height:1.4">실제 한도 (이만큼까지만 써짐 · 비용 기준)</div>
+        </div>
+
+        <!-- 예상 비용 -->
+        <div id="mps-cost-box" style="padding:10px 12px;border-radius:10px;background:var(--ag2);border:1px solid var(--border);font-size:11.5px;color:var(--t2)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span>예상 비용 (한 턴 최대)</span>
+            <span id="mps-cost-lbl" style="color:${accent};font-weight:600"></span>
+          </div>
+          <div id="mps-cost-detail" style="font-size:10px;color:var(--t3);margin-top:5px;line-height:1.5"></div>
+        </div>
+
+        ${thinkingHtml}
+      </div>
+      <div style="padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);border-top:1px solid var(--border);flex-shrink:0">
+        <button class="mps-select" data-api="${api}" data-value="${modelValue}"
+          style="width:100%;padding:11px;border-radius:10px;border:none;background:${accent};color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:'Noto Sans KR',sans-serif">
+          이 모델 선택
+        </button>
+      </div>`;
+
+    // 동적 슬라이더 핸들러
+    // 라벨/비용 동기화 헬퍼
+    const refreshOutput=()=>{
+      const lv=getRoomLength(api);
+      const base=LENGTH_PRESETS[lv].tokens;
+      const curMultVal=getTokenMult(modelValue);
+      const ft=Math.round(base*curMultVal);
+      const baseLbl=card_inner.querySelector('#mps-base-lbl'); if(baseLbl)baseLbl.textContent='약 '+Math.round(base/1.5).toLocaleString()+'자 · '+Math.round(base/4.5).toLocaleString()+'단어';
+      const tkLbl=card_inner.querySelector('#mps-tokens-lbl'); if(tkLbl)tkLbl.textContent=ft.toLocaleString()+'토큰';
+      // 새 estimate
+      let est=null; try{est=calcCostEstimate(ft,modelValue);}catch(e){}
+      if(est){
+        const costLbl=card_inner.querySelector('#mps-cost-lbl');
+        if(costLbl)costLbl.textContent=est.worst;
+        const detailEl=card_inner.querySelector('#mps-cost-detail');
+        if(detailEl){
+          const notes=[];
+          if(est.hasThink) notes.push('• 사고 토큰 포함');
+          if(est.cachingApplies) notes.push('• 입력 캐싱 적용 시 '+est.typical+' (출력 비용은 그대로)');
+          detailEl.innerHTML=notes.join('<br>');
+        }
+      }
+    };
+    const lengthSlider=card_inner.querySelector('#mps-length-slider');
+    if(lengthSlider){
+      lengthSlider.oninput=function(){
+        const v=parseInt(this.value);
+        if(!rid())return;
+        const key=api==='gemini'?'roomLengthGemini':'roomLength';
+        if(!D[key])D[key]={};
+        D[key][rid()]=v;
+        save();
+        const lbl=card_inner.querySelector('#mps-length-lbl');
+        if(lbl)lbl.textContent=LENGTH_PRESETS[v].label;
+        refreshOutput();
+      };
+    }
+    const multSlider=card_inner.querySelector('#mps-mult-slider');
+    if(multSlider){
+      multSlider.oninput=function(){
+        const idx=parseInt(this.value);
+        const newMult=TOKEN_MULTS[idx].value;
+        setTokenMult(modelValue,newMult);
+        const mLbl=card_inner.querySelector('#mps-mult-lbl');
+        if(mLbl)mLbl.textContent=TOKEN_MULTS[idx].label;
+        refreshOutput();
+      };
+    }
+    // Thinking 핸들러
+    const tk=card_inner.querySelector('#mps-thinking-toggle');
+    if(tk){
+      tk.onchange=function(){
+        toggleThinking(this.checked);
+        const w=card_inner.querySelector('#mps-thinking-budget');
+        if(w)w.style.display=this.checked?'none':'block';
+        refreshOutput();
+      };
+    }
+    const bs=card_inner.querySelector('#mps-budget-slider');
+    if(bs){
+      bs.oninput=function(){
+        updateThinkingBudget(this.value);
+        const p=THINKING_BUDGET_PRESETS[parseInt(this.value)];
+        const lbl=card_inner.querySelector('#mps-budget-lbl');
+        if(lbl&&p)lbl.textContent=p.label;
+        refreshOutput();
+      };
+    }
+    card_inner.querySelectorAll('.mps-lvl').forEach(b=>{
+      b.onclick=()=>{ setThinkingLevel(b.dataset.lvl); renderDetail(api,modelValue); };
+    });
+    // 초기 비용 표시
+    refreshOutput();
+  }
+
+  // 클릭 라우팅
   sheet.addEventListener('click',e=>{
     if(e.target===sheet){sheet.remove();return;}
-    const item=e.target.closest('.mps-item');
-    if(!item||item.classList.contains('dim'))return;
-    const api=item.dataset.api;
-    const value=item.dataset.value;
-    if(api==='claude'){
-      D.model=value;
-    } else {
-      D.geminiModel=value;
+    if(e.target.closest('.mps-close')){sheet.remove();return;}
+    if(e.target.closest('.mps-back')){renderList();return;}
+    if(e.target.closest('.mps-keys')){sheet.remove();openModal('key-modal');return;}
+    const chev=e.target.closest('.mps-chev');
+    if(chev){
+      renderDetail(chev.dataset.api,chev.dataset.value);
+      return;
     }
-    // 자동으로 해당 API로 전환
+    const selBtn=e.target.closest('.mps-select');
+    const item=e.target.closest('.mps-item');
+    const target=selBtn||item;
+    if(!target)return;
+    // dim 체크
+    if(item&&item.parentElement&&item.parentElement.style.opacity&&parseFloat(item.parentElement.style.opacity)<0.5)return;
+    const api=target.dataset.api;
+    const value=target.dataset.value;
+    if(api==='claude'){D.model=value;}else{D.geminiModel=value;}
     if(rid()){
       if(!D.roomApi)D.roomApi={};
       D.roomApi[rid()]=api;
     } else {
       D.activeApi=api;
     }
-    save();
-    updateModelPill();
-    updateCostHint();
+    save(); updateModelPill(); updateCostHint();
     if(typeof updateThinkingBudgetUI==='function')updateThinkingBudgetUI();
     renderTopbar();
     if(typeof renderModelCards==='function')renderModelCards();
@@ -5017,6 +5466,7 @@ function openModelPickerSheet(){
     showToast('✓ '+(CLAUDE_MODELS.concat(GEMINI_MODELS).find(m=>m.value===value)?.name||value));
   });
 
+  renderList();
   document.body.appendChild(sheet);
 }
 function saveKey(){
@@ -5907,26 +6357,35 @@ async function callLLMOnce(sysText,userText){
   }
 }
 // ─── NOTES ───
+// 현재 컨텍스트에 따라 작업 대상 노트 리스트 반환
+function _noteList(){
+  if(_noteCtx==='room' && rid()){
+    return ensureRoomNotes(rid());
+  }
+  return D.notes||[];
+}
 function renderNotes(){
   const list=$('note-list'); if(!list)return;
   list.innerHTML='';
-  const allNotes=D.notes||[];
+  const isRoom=_noteCtx==='room' && rid();
+  const allNotes=_noteList();
   if(!allNotes.length){
-    list.innerHTML='<div style="font-size:13px;color:var(--t3);padding:4px 0 12px">노트가 없어요. 아래에서 추가하세요.</div>';
+    list.innerHTML=`<div style="font-size:13px;color:var(--t3);padding:4px 0 12px">${isRoom?'이 방에 노트가 없어요. 아래에서 추가하면 이 방에만 적용돼요.':'마스터 노트가 없어요. 추가하면 새 채팅방에 자동으로 들어가요.'}</div>`;
     return;
   }
-  if(!D.roomNoteIds)D.roomNoteIds={};
   allNotes.forEach(n=>{
-    const isOn=rid()?(D.roomNoteIds[rid()]||[]).includes(n.id):false;
-    const preview=(n.content||'').slice(0,60)+(n.content&&n.content.length>60?'…':'');
+    // room 컨텍스트: n.on 사용. global 컨텍스트: 토글 없음 (마스터만 관리)
+    const isOn=isRoom?!!n.on:false;
     const card=document.createElement('div');
     card.className='profile-card'+(isOn?' on':'');
-    card.innerHTML=`
-      <div class="profile-card-hd" onclick="toggleNoteExpand('${n.id}')">
+    const toggleHtml=isRoom?`
         <label class="p-toggle" onclick="event.stopPropagation()">
           <input type="checkbox" ${isOn?'checked':''} onchange="toggleNote('${n.id}',this.checked)">
           <span class="p-slider"></span>
-        </label>
+        </label>`:'';
+    card.innerHTML=`
+      <div class="profile-card-hd" onclick="toggleNoteExpand('${n.id}')">
+        ${toggleHtml}
         <div class="profile-card-name">${n.name}</div>
         <button class="profile-del" style="color:var(--accent);font-size:12px;padding:3px 6px" onclick="event.stopPropagation();openNoteEditor('${n.id}')">✎</button>
         <button class="profile-del" onclick="event.stopPropagation();deleteNote('${n.id}')">✕</button>
@@ -5944,13 +6403,13 @@ function openNoteAdd(){
   $('note-edit-name').value='';
   $('note-edit-ctx').value='';
   $('note-edit-count').textContent='0 / 2000';
-  // 헤더 텍스트 변경
   const ttl=document.querySelector('#note-edit-modal .modal-ttl');
   if(ttl)ttl.childNodes[ttl.childNodes.length-1].textContent=' 새 노트';
   openModal('note-edit-modal');
 }
 function openNoteEditor(id){
-  const n=(D.notes||[]).find(x=>x.id===id); if(!n)return;
+  const list=_noteList();
+  const n=list.find(x=>x.id===id); if(!n)return;
   closeModal('note-modal');
   $('note-edit-id').value=id;
   $('note-edit-name').value=n.name;
@@ -5964,30 +6423,37 @@ function saveNoteEdit(){
   const id=$('note-edit-id').value;
   const name=$('note-edit-name').value.trim(); if(!name){$('note-edit-name').focus();return;}
   const content=$('note-edit-ctx').value.trim();
-  if(!D.notes)D.notes=[];
-  if(id){
-    // 수정
-    const n=D.notes.find(x=>x.id===id); if(!n)return;
-    n.name=name; n.content=content;
+  if(_noteCtx==='room' && rid()){
+    // 방별 스냅샷에 저장 (마스터 안 건드림)
+    const list=ensureRoomNotes(rid());
+    if(id){
+      const n=list.find(x=>x.id===id); if(!n)return;
+      n.name=name; n.content=content;
+    } else {
+      list.push({id:'rn_'+Date.now(),name,content,on:true});
+    }
   } else {
-    // 새 추가
-    const newId=Date.now()+'';
-    D.notes.push({id:newId,name,content});
-    if(rid()){
-      if(!D.roomNoteIds)D.roomNoteIds={};
-      if(!D.roomNoteIds[rid()])D.roomNoteIds[rid()]=[];
-      D.roomNoteIds[rid()].push(newId);
+    // 공용 마스터에 저장
+    if(!D.notes)D.notes=[];
+    if(id){
+      const n=D.notes.find(x=>x.id===id); if(!n)return;
+      n.name=name; n.content=content;
+    } else {
+      D.notes.push({id:Date.now()+'',name,content});
     }
   }
-  save(); closeModal('note-edit-modal'); openNoteModal();
+  save(); closeModal('note-edit-modal'); openNoteModal(_noteCtx);
 }
 function toggleNote(id, on){
-  if(!rid())return;
-  if(!D.roomNoteIds)D.roomNoteIds={};
-  if(!D.roomNoteIds[rid()])D.roomNoteIds[rid()]=[];
-  if(on){if(!D.roomNoteIds[rid()].includes(id))D.roomNoteIds[rid()].push(id);}
-  else{D.roomNoteIds[rid()]=D.roomNoteIds[rid()].filter(x=>x!==id);}
-  save(); renderNotes();
+  // room 컨텍스트에서만 의미 있음
+  if(_noteCtx==='room' && rid()){
+    const list=ensureRoomNotes(rid());
+    const n=list.find(x=>x.id===id); if(!n)return;
+    n.on=!!on;
+    save(); renderNotes();
+    return;
+  }
+  // (global 컨텍스트에선 토글 UI 없음)
 }
 function toggleNoteExpand(id){
   const exp=$('nexp-'+id); const chv=$('nchv-'+id);
@@ -5995,17 +6461,28 @@ function toggleNoteExpand(id){
   if(chv)chv.classList.toggle('on');
 }
 function deleteNote(id){
-  D.notes=(D.notes||[]).filter(n=>n.id!==id);
-  if(D.roomNoteIds){
-    Object.keys(D.roomNoteIds).forEach(rid=>{
-      D.roomNoteIds[rid]=(D.roomNoteIds[rid]||[]).filter(x=>x!==id);
-    });
+  if(_noteCtx==='room' && rid()){
+    // 방별 스냅샷에서만 삭제
+    if(D.roomNotes&&D.roomNotes[rid()]){
+      D.roomNotes[rid()]=D.roomNotes[rid()].filter(n=>n.id!==id);
+    }
+  } else {
+    // 마스터에서만 삭제
+    D.notes=(D.notes||[]).filter(n=>n.id!==id);
+    // 기존 호환: roomNoteIds 정리만
+    if(D.roomNoteIds){
+      Object.keys(D.roomNoteIds).forEach(rid=>{
+        D.roomNoteIds[rid]=(D.roomNoteIds[rid]||[]).filter(x=>x!==id);
+      });
+    }
   }
   save(); renderNotes();
 }
-function openNoteModal(){
-  const el=$('note-modal-char'); if(el)el.textContent=rid()?cRoom()?.name||charName():'전체';
-  // note-ctx-inp 글자수
+function openNoteModal(ctx){
+  _noteCtx=(ctx==='room')?'room':'global';
+  const el=$('note-modal-char'); if(el){
+    el.textContent=_noteCtx==='room'?(cRoom()?.name||'이 방'):'공용 마스터';
+  }
   const ta=$('note-ctx-inp');
   if(ta){ta.oninput=()=>{ $('note-ctx-count').textContent=ta.value.length+' / 1000'; };}
   renderNotes(); openModal('note-modal');
@@ -7326,11 +7803,11 @@ function clearChat(){
 
 // ── 출력량 슬라이더 ──
 const LENGTH_PRESETS = [
-  { label:'짧게',   tokens:1024,  prompt:'Length: 1~2 paragraphs. Dialogue-focused, minimal description. If [USER NOTES] specifies length, follow it strictly.' },
-  { label:'조금',   tokens:2048,  prompt:'Length: 700~900 chars. Core description and dialogue. If [USER NOTES] specifies length, follow it strictly.' },
-  { label:'보통',   tokens:4096,  prompt:'Length: 900~1500 chars. If [USER NOTES] specifies length, follow it strictly.' },
-  { label:'길게',   tokens:8192,  prompt:'Length: 6~8 paragraphs. Rich description and emotional depth. If [USER NOTES] specifies length, follow it strictly.' },
-  { label:'최대',   tokens:16000, prompt:'No length limit. Respond fully and in depth.' },
+  { label:'짧게',   tokens:500,   prompt:'Length: 1~2 paragraphs. Dialogue-focused, minimal description. If [USER NOTES] specifies length, follow it strictly.' },
+  { label:'조금',   tokens:800,   prompt:'Length: 700~900 chars. Core description and dialogue. If [USER NOTES] specifies length, follow it strictly.' },
+  { label:'보통',   tokens:1500,  prompt:'Length: 900~1500 chars. If [USER NOTES] specifies length, follow it strictly.' },
+  { label:'길게',   tokens:3500,  prompt:'Length: 6~8 paragraphs. Rich description and emotional depth. If [USER NOTES] specifies length, follow it strictly.' },
+  { label:'최대',   tokens:8000,  prompt:'No length limit. Respond fully and in depth.' },
 ];
 // 요약 있으면 요약+최근6개, 없으면 최근11개
 function buildContextMsgs(hist){
@@ -7461,6 +7938,55 @@ function calcCostKRW(outputTokens, model){
   if(krw<10) return `약 ${krw.toFixed(1)}원`;
   return `약 ${Math.round(krw)}원`;
 }
+
+// 더 정확한 추정 (thinking 토큰 + Claude 캐싱 반영)
+// returns {worst, typical}  -- worst: 캐싱 미적용 + thinking 풀, typical: 캐싱 후 평균
+function calcCostEstimate(outputTokens, model){
+  const KRW=1420;
+  const inTok=3000;
+  let inRate=3, outRate=15; // 기본 Sonnet
+  let isGemini=false;
+  if(model&&model.includes('gemini-3.5')){inRate=1.5;outRate=9;isGemini=true;}
+  else if(model==='gemini-2.5-pro'){inRate=1.25;outRate=10;isGemini=true;}
+  else if(model==='gemini-2.5-flash'){inRate=0.075;outRate=0.30;isGemini=true;}
+  else if(model==='gemini-2.5-flash-lite'){inRate=0.01;outRate=0.04;isGemini=true;}
+  else if(model&&model.includes('gemini')){inRate=1.25;outRate=10;isGemini=true;}
+  else if(model&&model.includes('opus')){inRate=5;outRate=25;}
+  else if(model&&model.includes('haiku')){inRate=0.8;outRate=4;}
+  // 기본 비용
+  const inCost=(inTok/1e6)*inRate;
+  const outCost=(outputTokens/1e6)*outRate;
+  let thinkCost=0;
+  // Gemini thinking 토큰 (출력으로 청구)
+  if(isGemini){
+    const isFlash=model.includes('flash');
+    const is3x=model.includes('gemini-3')||model.includes('3.1')||model.includes('3-');
+    let thinkBudget=0;
+    if(is3x){
+      const lvl=D.geminiThinkingLevel||'low';
+      thinkBudget=lvl==='low'?1024:lvl==='medium'?4096:8192;
+    } else if(!isFlash || !D.geminiNoThinking){
+      thinkBudget=D.geminiThinkingBudget!=null?D.geminiThinkingBudget:4096;
+    }
+    thinkCost=(thinkBudget/1e6)*outRate;
+  }
+  // Claude 캐싱: cache_read는 10% 비용 (실사용 평균치)
+  // 첫 턴 = inCost 그대로, 이후 캐싱 적용 시 ~10%
+  const worstUSD=inCost+outCost+thinkCost; // 캐싱 미적용
+  const cachedUSD=(inCost*0.1)+outCost+thinkCost; // 캐싱 활성시 평균
+  const fmt=u=>{
+    const krw=u*KRW;
+    if(krw<1)return'<1원';
+    if(krw<10)return`약 ${krw.toFixed(1)}원`;
+    return`약 ${Math.round(krw)}원`;
+  };
+  return {
+    worst:fmt(worstUSD),
+    typical:isGemini?fmt(worstUSD):fmt(cachedUSD),
+    hasThink:thinkCost>0,
+    cachingApplies:!isGemini // Claude만 캐싱
+  };
+}
 function updateCostHint(){
   // Claude
   const el=$('cost-label'); if(el){
@@ -7496,6 +8022,32 @@ function getRoomLength(api){
   const defKey=isGemini?'outputLengthGemini':'outputLength';
   if(rid()&&D[key]&&D[key][rid()]!==undefined)return D[key][rid()];
   return D[defKey]??2;
+}
+
+// ── 모델별 토큰 배수 (방별, 모델별) ──
+const TOKEN_MULTS=[
+  {label:'기본', value:1},
+  {label:'1.5x', value:1.5},
+  {label:'3x',  value:3},
+  {label:'5x',  value:5}
+];
+function getTokenMult(modelValue){
+  if(!rid()||!D.roomTokenMult||!D.roomTokenMult[rid()])return 1;
+  return D.roomTokenMult[rid()][modelValue]||1;
+}
+function setTokenMult(modelValue,mult){
+  if(!rid())return;
+  if(!D.roomTokenMult)D.roomTokenMult={};
+  if(!D.roomTokenMult[rid()])D.roomTokenMult[rid()]={};
+  D.roomTokenMult[rid()][modelValue]=mult;
+  save();
+}
+// 현재 모델에 적용될 max_tokens (응답 톤 × 배수)
+function getModelMaxTokens(api,modelValue){
+  const m=modelValue||(api==='gemini'?D.geminiModel:D.model);
+  const baseTokens=LENGTH_PRESETS[getRoomLength(api)].tokens;
+  const mult=getTokenMult(m);
+  return Math.round(baseTokens*mult);
 }
 function initLengthSlider(){
   syncGuardToggles();
