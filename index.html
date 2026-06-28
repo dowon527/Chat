@@ -907,8 +907,9 @@ body.light .home-card-add:hover{background:rgba(240,160,184,0.08);border-color:r
   transition:border-color 0.15s;position:relative;overflow:hidden;
   padding-bottom:4px;
 }
+.emo-preview:has(img){padding:0}
 .emo-preview:hover{border-color:var(--accent)}
-.emo-preview img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.emo-preview img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
 .emo-hint{font-size:11px;color:var(--t3);line-height:1.7;text-align:center}
 .emo-grid{
   display:grid;grid-template-columns:repeat(9,1fr);gap:3px;
@@ -3922,8 +3923,51 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
   addLongPress(bub,()=>{
     const hi=parseInt(row.dataset.histIdx??'-1');
     if(hi<0)return;
-    toggleBookmark(hi);
-    updateBookmarkMark(row,hi);
+    const bmks=(D.bookmarks&&D.bookmarks[D.activeRoom])||[];
+    const isBookmarked=bmks.indexOf(hi)>=0;
+    const items=[];
+    items.push({label:'수정',action:()=>editMsg(row,bub,msg)});
+    if(!isMe){
+      items.push({label:'분기',action:()=>forkFromMsg(hi)});
+    }
+    items.push({label:'복사',action:()=>{
+      const t=((row._bubText||bub).innerText||bub.innerText||'');
+      navigator.clipboard.writeText(t).then(()=>showToast('복사됐어요 ✓')).catch(()=>{});
+    }});
+    items.push({label:'선택 복사',action:()=>{
+      try{
+        const target=row._bubText||bub;
+        const range=document.createRange();
+        range.selectNodeContents(target);
+        const sel=window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        showToast('원하는 부분만 선택해 복사하세요');
+      }catch(e){showToast('선택 복사 실패');}
+    }});
+    items.push({label:isBookmarked?'북마크 해제':'북마크',action:()=>{
+      toggleBookmark(hi);
+      updateBookmarkMark(row,hi);
+      showToast(isBookmarked?'북마크 해제됐어요':'북마크에 추가됐어요 ✓');
+    }});
+    items.push({label:'삭제',danger:true,action:()=>{
+      const hist=cHist();
+      if(isMe){
+        // 유저 메시지 삭제 + 이후 모든 메시지 제거
+        if(hi>=0)hist.splice(hi);
+        save();
+        const allRows=[...$('chat').querySelectorAll('.msg-row')];
+        const domIdx=allRows.indexOf(row);
+        for(let i=allRows.length-1;i>=domIdx;i--){if(allRows[i]?.parentNode)allRows[i].remove();}
+        if(!cHist().length) renderChat();
+      } else {
+        // AI 메시지 단일 삭제
+        const idx=hist.findIndex(m=>m.role==='assistant'&&m.content===msg.content);
+        if(idx>=0){hist.splice(idx,1);save();}
+        row.remove(); renderChars();
+      }
+    }});
+    showCtxMenu(items);
   });
   // 북마크 상태 복원
   requestAnimationFrame(()=>{
@@ -8467,6 +8511,9 @@ function showPrompt(msg, defaultVal, onOk){
 function showCtxMenu(items){
   var old=document.getElementById('ctx-menu');if(old)old.remove();
   var oldOv=document.getElementById('ctx-overlay');if(oldOv)oldOv.remove();
+  // 메뉴 떴을 때 body 텍스트 선택 차단
+  document.body.style.userSelect='none';
+  document.body.style.webkitUserSelect='none';
   var overlay=document.createElement('div');
   overlay.id='ctx-overlay';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px)';
@@ -8479,7 +8526,7 @@ function showCtxMenu(items){
     btn.textContent=item.label;
     btn.addEventListener('touchstart',function(){btn.style.background='var(--s3)';},{passive:true});
     btn.addEventListener('touchend',function(){btn.style.background='';},{passive:true});
-    btn.addEventListener('click',function(e){e.stopPropagation();overlay.remove();item.action();});
+    btn.addEventListener('click',function(e){e.stopPropagation();overlay.remove();document.body.style.userSelect='';document.body.style.webkitUserSelect='';item.action();});
     menu.appendChild(btn);
   });
   var cancelBtn=document.createElement('button');
@@ -8487,10 +8534,10 @@ function showCtxMenu(items){
   cancelBtn.textContent='취소';
   cancelBtn.addEventListener('touchstart',function(){cancelBtn.style.background='var(--s3)';},{passive:true});
   cancelBtn.addEventListener('touchend',function(){cancelBtn.style.background='';},{passive:true});
-  cancelBtn.addEventListener('click',function(e){e.stopPropagation();overlay.remove();});
+  cancelBtn.addEventListener('click',function(e){e.stopPropagation();overlay.remove();document.body.style.userSelect='';document.body.style.webkitUserSelect='';});
   menu.appendChild(cancelBtn);
   overlay.appendChild(menu);
-  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+  overlay.addEventListener('click',function(e){if(e.target===overlay){overlay.remove();document.body.style.userSelect='';document.body.style.webkitUserSelect='';}});
   document.body.appendChild(overlay);
 }
 // ─── 채팅 캡처 ───
