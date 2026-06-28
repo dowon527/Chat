@@ -501,7 +501,7 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
   cursor:pointer;
 }
 /* AI 말풍선 (리롤 버튼 공간 확보) */
-.msg-row:not(.me) .msg-bub{padding-bottom:28px}
+.msg-row:not(.me):not(.summary-note) .msg-bub{padding-bottom:28px}
 /* bub-text: msg-bub 안 텍스트 컨테이너 — 폰트 크기 고정 상속 */
 .bub-text{font-size:var(--chat-font-size,15px);line-height:1.75}
 /* blockquote: ">" 시작 라인용 */
@@ -3890,24 +3890,27 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
     const bub=document.createElement('div'); bub.className='msg-bub';
     bub.style.whiteSpace='pre-wrap'; bub.style.wordBreak='break-word';
     bub.textContent=msg.content;
-    const t=document.createElement('div'); t.className='msg-t'; t.textContent=msg.time||'';
-    const acts=document.createElement('div'); acts.className='msg-actions';
-    const editBtn=document.createElement('button'); editBtn.className='msg-act-btn edit-btn';
-    editBtn.textContent='✎'; editBtn.title='수정';
-    editBtn.onclick=(e)=>{e.stopPropagation();editMsg(row,bub,msg)};
-    const delBtn=document.createElement('button'); delBtn.className='msg-act-btn del-btn';
-    delBtn.textContent='✕'; delBtn.title='삭제';
-    delBtn.onclick=(e)=>{
-      e.stopPropagation();
-      const hist=cHist();
-      const idx=hist.findIndex(m=>m.role==='summary_note'&&m.content===msg.content);
-      if(idx>=0){hist.splice(idx,1);save();}
-      row.remove(); renderChars();
-    };
-    acts.appendChild(editBtn); acts.appendChild(delBtn);
-    bub.onclick=()=>row.classList.toggle('acts-open');
-    bub.addEventListener('pointerdown',function(e){if(e.button!==2)return;e.preventDefault();e.stopPropagation();row.classList.add('acts-open');});    bub.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();});
-    body.appendChild(who); body.appendChild(bub); body.appendChild(acts);
+    // 꾹 눌러서 수정/삭제/복사/선택 복사
+    addLongPress(bub,()=>{
+      showCtxMenu([
+        {label:'수정',action:()=>editMsg(row,bub,msg)},
+        {label:'복사',action:()=>{
+          navigator.clipboard.writeText(bub.innerText||'').then(()=>showToast('복사됐어요 ✓')).catch(()=>{});
+        }},
+        {label:'선택 복사',action:()=>{
+          const body=$('sc-modal-body');
+          if(body) body.textContent=msg.content||'';
+          openModal('select-copy-modal');
+        }},
+        {label:'삭제',danger:true,action:()=>{
+          const hist=cHist();
+          const idx=hist.findIndex(m=>m.role==='summary_note'&&m.content===msg.content);
+          if(idx>=0){hist.splice(idx,1);save();}
+          row.remove(); renderChars();
+        }}
+      ]);
+    });
+    body.appendChild(who); body.appendChild(bub);
     row.appendChild(body);
     area.appendChild(row);
     if(scroll) area.scrollTop=area.scrollHeight;
