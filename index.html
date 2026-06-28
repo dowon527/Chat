@@ -985,26 +985,21 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 
 /* ─── MSG ACTION BUTTONS ─── */
 .msg-actions{
-  display:flex;gap:3px;margin-top:4px;padding:0 2px;
-  opacity:0;max-height:0;overflow:hidden;
-  transition:opacity 0.15s,max-height 0.15s;
-  pointer-events:none;
+  display:flex;gap:3px;margin-top:2px;padding:0 4px;
+  justify-content:flex-end;
+  opacity:0.5;
+  transition:opacity 0.15s;
 }
-.msg-row.acts-open .msg-actions{
-  opacity:1;max-height:32px;pointer-events:auto;
-}
-.msg-row.me .msg-actions{justify-content:flex-end}
+.msg-actions:hover{opacity:1}
 .msg-act-btn{
-  background:transparent;border:1px solid transparent;
-  border-radius:20px;color:var(--t3);cursor:pointer;
-  font-size:16px;padding:2px 8px;transition:all 0.15s;
-  line-height:1.4;display:flex;align-items:center;
+  background:transparent;border:none;
+  border-radius:50%;color:var(--t3);cursor:pointer;
+  font-size:14px;padding:4px 6px;transition:all 0.15s;
+  line-height:1;display:flex;align-items:center;justify-content:center;
   font-weight:300;
 }
 .msg-act-btn:hover{color:var(--t2)}
 .msg-act-btn.reroll:hover{color:var(--accent)}
-.msg-act-btn.edit-btn:hover{color:var(--teal)}
-.msg-act-btn.del-btn:hover{color:var(--danger)}
 
 /* 이전 답변 네비게이터 */
 .reroll-nav{
@@ -1402,6 +1397,22 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 <!-- ══════════ STATS MODAL ══════════ -->
 <!-- ══════════ STORY INFO MODAL ══════════ -->
 <!-- ══════════ PLAY GUIDE VIEW MODAL ══════════ -->
+<!-- ══════════ SELECT COPY MODAL ══════════ -->
+<div class="ov hide" id="select-copy-modal">
+  <div class="modal" style="max-width:600px;width:96%;max-height:80vh;display:flex;flex-direction:column">
+    <div class="modal-hd">
+      <div class="modal-ttl">선택 복사하기</div>
+      <button class="ico-btn" onclick="closeModal('select-copy-modal')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="sc-modal-body" style="flex:1;overflow-y:auto;font-size:14px;line-height:1.7;white-space:pre-wrap;padding:16px 20px;user-select:text;-webkit-user-select:text;color:var(--text);word-break:break-word"></div>
+    <div class="modal-ft">
+      <button class="btn btn-g" onclick="closeModal('select-copy-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
 <div class="ov hide" id="play-guide-modal">
   <div class="modal" style="max-width:600px;width:96%;height:96vh;max-height:96vh;display:flex;flex-direction:column;border-radius:18px;overflow:hidden;background:var(--bg)">
     <div style="padding:16px 18px 6px;display:flex;align-items:center">
@@ -3935,15 +3946,11 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
       navigator.clipboard.writeText(t).then(()=>showToast('복사됐어요 ✓')).catch(()=>{});
     }});
     items.push({label:'선택 복사',action:()=>{
-      try{
-        const target=row._bubText||bub;
-        const range=document.createRange();
-        range.selectNodeContents(target);
-        const sel=window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        showToast('원하는 부분만 선택해 복사하세요');
-      }catch(e){showToast('선택 복사 실패');}
+      const target=row._bubText||bub;
+      const text=target.innerText||bub.innerText||'';
+      const body=$('sc-modal-body');
+      if(body) body.textContent=text;
+      openModal('select-copy-modal');
     }});
     items.push({label:isBookmarked?'북마크 해제':'북마크',action:()=>{
       toggleBookmark(hi);
@@ -3982,33 +3989,7 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
     rerollBtn.className='msg-act-btn reroll';
     rerollBtn.textContent='↺'; rerollBtn.title='리롤';
     rerollBtn.onclick=(e)=>{e.stopPropagation();rerollMsg(row)};
-    const editBtn=document.createElement('button');
-    editBtn.className='msg-act-btn edit-btn';
-    editBtn.textContent='✎'; editBtn.title='수정';
-    editBtn.onclick=(e)=>{e.stopPropagation();editMsg(row,bub,msg)};
-    const aiDelBtn=document.createElement('button');
-    aiDelBtn.className='msg-act-btn del-btn';
-    aiDelBtn.textContent='✕'; aiDelBtn.title='삭제';
-    aiDelBtn.onclick=(e)=>{
-      e.stopPropagation();
-      const hist=cHist();
-      const idx=hist.findIndex(m=>m.role==='assistant'&&m.content===msg.content);
-      if(idx>=0){hist.splice(idx,1);save();}
-      row.remove(); renderChars();
-    };
-    const forkBtn=document.createElement('button');
-    forkBtn.className='msg-act-btn';
-    forkBtn.textContent='⑂'; forkBtn.title='여기서 분기';
-    forkBtn.onclick=(e)=>{
-      e.stopPropagation();
-      const hi=parseInt(row.dataset.histIdx??'-1');
-      if(hi<0)return;
-      forkFromMsg(hi);
-    };
-    const copyBtnAi=document.createElement('button');
-    copyBtnAi.className='msg-act-btn'; copyBtnAi.textContent='⎘'; copyBtnAi.title='복사';
-    copyBtnAi.onclick=(e)=>{e.stopPropagation();const t=(row._bubText||bub).innerText||'';navigator.clipboard.writeText(t).then(()=>showToast('복사됐어요 ✓')).catch(()=>{});row.classList.remove('acts-open');};
-    acts.appendChild(rerollBtn); acts.appendChild(forkBtn); acts.appendChild(copyBtnAi); acts.appendChild(editBtn); acts.appendChild(aiDelBtn);
+    acts.appendChild(rerollBtn);
     // nav는 말풍선 안 하단에 넣기 위해 bub 재구성
     const bubText=document.createElement('div');
     bubText.className='bub-text';
@@ -4049,41 +4030,12 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
       _updateRerollNav(row,nav,counter,prevBtn,nextBtn);
     }
     body.appendChild(acts);
-  } else {
-    // 유저: 수정 + 삭제
-    const editBtn=document.createElement('button');
-    editBtn.className='msg-act-btn edit-btn';
-    editBtn.textContent='✎'; editBtn.title='수정';
-    editBtn.onclick=(e)=>{e.stopPropagation();editMsg(row,bub,msg)};
-    const delBtn=document.createElement('button');
-    delBtn.className='msg-act-btn del-btn';
-    delBtn.textContent='✕'; delBtn.title='삭제';
-    delBtn.style.cssText='';
-    delBtn.onclick=()=>{
-      const hist=cHist();
-      let idx=parseInt(row.dataset.histIdx??'-1');
-      if(idx<0||idx>=hist.length){
-        const rows=[...$('chat').querySelectorAll('.msg-row')];
-        idx=rows.indexOf(row);
-      }
-      if(idx<0||idx>=hist.length)return;
-      // 유저 메시지 + 그 뒤 AI 응답까지 hist에서 제거
-      hist.splice(idx);
-      save(); renderChars();
-      // DOM에서 이 row 이후 전부 제거 (빈 말풍선 포함)
-      const allRows=[...$('chat').querySelectorAll('.msg-row')];
-      const domIdx=allRows.indexOf(row);
-      for(let i=allRows.length-1;i>=domIdx;i--){if(allRows[i]?.parentNode)allRows[i].remove();}
-      // 히스토리 비었으면 빈 상태 렌더
-      if(!cHist().length) renderChat();
-    };
-    const copyBtnMe=document.createElement('button');
-    copyBtnMe.className='msg-act-btn'; copyBtnMe.textContent='⎘'; copyBtnMe.title='복사';
-    copyBtnMe.onclick=(e)=>{e.stopPropagation();const t=bub.innerText||'';navigator.clipboard.writeText(t).then(()=>showToast('복사됐어요 ✓')).catch(()=>{});row.classList.remove('acts-open');};
-    acts.appendChild(copyBtnMe); acts.appendChild(editBtn); acts.appendChild(delBtn);
   }
+  // 유저 메시지엔 인라인 버튼 없음 (꾹 눌러서 컨텍스트 메뉴 사용)
 
-  body.appendChild(bub); body.appendChild(acts);
+  body.appendChild(bub);
+  // AI 메시지만 리롤 버튼 인라인 표시
+  if(!isMe) body.appendChild(acts);
   row.appendChild(body);
   area.appendChild(row);
   if(scroll) area.scrollTop=area.scrollHeight;
