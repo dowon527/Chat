@@ -500,6 +500,8 @@ body.light .char-tag-pill{background:rgba(224,92,138,0.12);color:var(--t2)}
   font-size:var(--chat-font-size,15px);line-height:1.75;white-space:pre-wrap;word-break:break-word;
   cursor:pointer;
 }
+/* AI 말풍선 (리롤 버튼 공간 확보) */
+.msg-row:not(.me) .msg-bub{padding-bottom:28px}
 /* bub-text: msg-bub 안 텍스트 컨테이너 — 폰트 크기 고정 상속 */
 .bub-text{font-size:var(--chat-font-size,15px);line-height:1.75}
 /* blockquote: ">" 시작 라인용 */
@@ -984,17 +986,19 @@ body.light .gtag:hover,body.light .gtag.sel{background:var(--accent2);color:#fff
 .modal{animation:slideIn 0.2s ease}
 
 /* ─── MSG ACTION BUTTONS ─── */
+.msg-bub{position:relative}
 .msg-actions{
-  display:flex;gap:3px;margin-top:2px;padding:0 4px;
-  justify-content:flex-end;
-  opacity:0.5;
+  position:absolute;right:8px;bottom:6px;
+  display:flex;gap:3px;
+  opacity:0.45;
   transition:opacity 0.15s;
+  z-index:2;
 }
 .msg-actions:hover{opacity:1}
 .msg-act-btn{
   background:transparent;border:none;
   border-radius:50%;color:var(--t3);cursor:pointer;
-  font-size:14px;padding:4px 6px;transition:all 0.15s;
+  font-size:14px;padding:3px 5px;transition:all 0.15s;
   line-height:1;display:flex;align-items:center;justify-content:center;
   font-weight:300;
 }
@@ -3946,8 +3950,10 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
       navigator.clipboard.writeText(t).then(()=>showToast('복사됐어요 ✓')).catch(()=>{});
     }});
     items.push({label:'선택 복사',action:()=>{
-      const target=row._bubText||bub;
-      const text=target.innerText||bub.innerText||'';
+      // 원본 텍스트 (마크다운/별표 그대로) 표시
+      const rh=row._rerollHistory||[];
+      const idx=row._rerollIdx||0;
+      const text=(rh[idx]!==undefined?rh[idx]:msg.content)||'';
       const body=$('sc-modal-body');
       if(body) body.textContent=text;
       openModal('select-copy-modal');
@@ -4034,8 +4040,8 @@ function appendMsg(msg,scroll=true,forceIdx=-1){
   // 유저 메시지엔 인라인 버튼 없음 (꾹 눌러서 컨텍스트 메뉴 사용)
 
   body.appendChild(bub);
-  // AI 메시지만 리롤 버튼 인라인 표시
-  if(!isMe) body.appendChild(acts);
+  // AI 리롤 버튼은 말풍선 안 우측 하단에 배치
+  if(!isMe) bub.appendChild(acts);
   row.appendChild(body);
   area.appendChild(row);
   if(scroll) area.scrollTop=area.scrollHeight;
